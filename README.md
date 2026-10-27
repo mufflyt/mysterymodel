@@ -11,8 +11,8 @@ An opinionated workflow for building clinical prediction models that survive pee
 
 ## Status
 
-Early, and deliberately so. The [implementation specification](inst/implementation-spec.md) is the contract of record; its section 14 requires a capability spike before any production module, and that spike is done:
-[**easystats capability matrix for `rms` objects**](inst/capability-matrix.md).
+Early, and deliberately so. The [implementation specification](inst/implementation-spec.md) is the contract of record, kept as received; settled questions are amended in the [decision log](inst/decisions.md). Section 14 requires a capability spike before any production module, and that spike is done:
+[**capability matrix for `rms` objects**](inst/capability-matrix.md).
 
 `cp_project()` is implemented and tested. Everything else on this page is the plan.
 
@@ -119,6 +119,10 @@ The architecture assumed `performance::model_performance()` could supply general
 - `performance::model_performance()` returns only AIC, BIC, R2 and an RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those come from `rms`, `pROC` and `yardstick`.
 - `parameters::model_parameters()` agrees with `coef()` exactly, to `0.00e+00` across all terms, and is safe to use.
 - `rms::vif()` and `performance::check_collinearity()` answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.
+- `report::report()` and `modelbased::estimate_relation()` both error, for the same reason: they ask for predictions, receive nothing, and fail on the empty result. No adapter fixes that short of a prediction path.
+- The usable shape is the consumer layer. `probably`, `dcurves`, `pointblank`, `GGally` and `correlation` all work, because they take a prediction vector or a data frame and never touch the fit. Compute with `rms`, then hand numbers onward.
+
+The reference analysis is a labelled corrected successor, not an exact reproduction of a legacy method ([DEC-001](inst/decisions.md)).
 
 ## Citation
 
