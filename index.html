@@ -56,7 +56,7 @@
 <h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
 <p>Early, and deliberately so. The <a href="inst/implementation-spec.html">implementation specification</a> is the contract of record, kept as received; settled questions are amended in the <a href="inst/decisions.html">decision log</a>. Section 14 requires a capability spike before any production module, and that spike is done: <a href="inst/capability-matrix.html"><strong>capability matrix for <code>rms</code> objects</strong></a>.</p>
-<p><code><a href="reference/cp_project.html">cp_project()</a></code> is implemented and tested. Everything else on this page is the plan.</p>
+<p>The statistical spine of the §15 starting milestone now runs on synthetic data: <code><a href="reference/cp_project.html">cp_project()</a></code> → <code><a href="reference/cp_model.html">cp_model()</a></code> → <code><a href="reference/cp_predict.html">cp_predict()</a></code> → <code><a href="reference/cp_validate.html">cp_validate()</a></code> → <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code>, 65 tests, <code>R CMD check</code> clean. The data-preparation and reporting ends of that chain are not built yet; the roadmap below says which.</p>
 </div>
 <div class="section level2">
 <h2 id="the-idea">The idea<a class="anchor" aria-label="anchor" href="#the-idea"></a>
@@ -197,7 +197,7 @@
 <li>
 <strong>Continuous predictors stay continuous.</strong> Nonlinearity is assessed, not assumed away by categorising.</li>
 <li>
-<strong><code>rms::lrm()</code> is the default binary-outcome model</strong>, with <code>glmnet</code> and <code>glinternet</code> as alternatives.</li>
+<strong><code><a href="https://rdrr.io/pkg/rms/man/lrm.html" class="external-link">rms::lrm()</a></code> is the default binary-outcome model</strong>, with <code>glmnet</code> and <code>glinternet</code> as alternatives.</li>
 <li>
 <strong>Interactions are prespecified</strong> and tested by likelihood ratio. Data-driven interaction discovery is reported as exploratory, and labelled that way.</li>
 <li>
@@ -243,6 +243,28 @@
 <span><span class="co">#&gt;   cluster    pid</span></span>
 <span><span class="co">#&gt;   seed       1978</span></span></code></pre></div>
 <p><code><a href="reference/cp_project.html">cp_project()</a></code> fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.</p>
+<p>Then fit, validate and draw:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_model.html">cp_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>                  interactions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prior_uti"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/cp_validate.html">cp_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;cp_validation&gt;  full-process: FALSE</span></span>
+<span><span class="co">#&gt;   apparent                 n=338 events=34 C=0.7390 (0.6441-0.8338)  slope=1.0000</span></span>
+<span><span class="co">#&gt;   bootstrap, fixed model   n=338 events=34 C=0.6917                  slope=0.7508</span></span>
+<span><span class="co">#&gt;   held out                 n=162 events=18 C=0.5949 (0.4159-0.7739)  slope=0.4922</span></span>
+<span><span class="co">#&gt;   Bootstrap validates the fixed model only. Not a strategy.</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/cp_nomogram.html">cp_nomogram</a></span><span class="op">(</span><span class="va">model</span>, out_dir <span class="op">=</span> <span class="st">"figures"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;cp_nomogram&gt;</span></span>
+<span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)</span></span>
+<span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
+<span><span class="co">#&gt;   worst gap vs cp_predict() 1.67e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   off-tick reading error    0.000948 in risk, midway between ticks</span></span></code></pre></div>
+<p>Three things in that output are deliberate.</p>
+<p><strong>Performance is reported per basis, never as one number.</strong> Apparent 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model measured three ways, and the spread is the point. The bootstrap row says in its own note that it refits one formula and does not repeat imputation, selection or tuning, so it is not validation of a modelling strategy. Full-process validation is a later release and this must not be read as providing it.</p>
+<p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/cp_predict.html">cp_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
+<p><strong>The reading error between ticks is measured and reported.</strong> A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis’s own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.</p>
 </div>
 <div class="section level2">
 <h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
@@ -269,18 +291,20 @@
 <td>v0.1</td>
 <td>cohort contract, cleaning, profile, EDA, collinearity</td>
 <td>
-<code><a href="reference/cp_project.html">cp_project()</a></code> done</td>
+<code><a href="reference/cp_project.html">cp_project()</a></code> done; <code>cp_clean()</code>, <code>cp_eda()</code>, <code>cp_collinearity()</code> to come</td>
 </tr>
 <tr>
 <td>v0.2</td>
 <td>
 <code>rms</code> modelling, nonlinearity, interaction, selection</td>
-<td>planned</td>
+<td>
+<code><a href="reference/cp_model.html">cp_model()</a></code>, <code><a href="reference/cp_predict.html">cp_predict()</a></code> done; selection to come</td>
 </tr>
 <tr>
 <td>v0.3</td>
 <td>full-process validation, calibration, nomograms</td>
-<td>planned</td>
+<td>
+<code><a href="reference/cp_validate.html">cp_validate()</a></code> and <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> done for the fixed model; full-process resampling and the flexible calibration curve to come</td>
 </tr>
 <tr>
 <td>v0.4</td>
@@ -289,19 +313,20 @@
 </tr>
 </tbody>
 </table>
+<p><code>rms</code> is now an <code>Imports</code> rather than a plan, because the package fits with it. <code>pROC</code> supplies the interval on the c-statistic and <code>digest</code> the model fingerprint.</p>
 <div class="section level3">
 <h3 id="what-the-spike-settled">What the spike settled<a class="anchor" aria-label="anchor" href="#what-the-spike-settled"></a>
 </h3>
-<p>The architecture assumed <code>performance::model_performance()</code> could supply general performance measures for the default model. It cannot. On an <code>rms::lrm()</code> fit:</p>
+<p>The architecture assumed <code>performance::model_performance()</code> could supply general performance measures for the default model. It cannot. On an <code><a href="https://rdrr.io/pkg/rms/man/lrm.html" class="external-link">rms::lrm()</a></code> fit:</p>
 <ul>
 <li>
-<code>insight::get_predicted()</code> returns <code>NULL</code>. easystats has no prediction path for <code>lrm</code>, so every prediction-dependent helper inherits that, and <code>cp_predict()</code> must call <code>rms</code> directly.</li>
+<code>insight::get_predicted()</code> returns <code>NULL</code>. easystats has no prediction path for <code>lrm</code>, so every prediction-dependent helper inherits that, and <code><a href="reference/cp_predict.html">cp_predict()</a></code> must call <code>rms</code> directly.</li>
 <li>
 <code>performance::model_performance()</code> returns only AIC, BIC, R2 and an RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those come from <code>rms</code>, <code>pROC</code> and <code>yardstick</code>.</li>
 <li>
 <code>parameters::model_parameters()</code> agrees with <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> exactly, to <code>0.00e+00</code> across all terms, and is safe to use.</li>
 <li>
-<code>rms::vif()</code> and <code>performance::check_collinearity()</code> answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.</li>
+<code><a href="https://rdrr.io/pkg/rms/man/vif.html" class="external-link">rms::vif()</a></code> and <code>performance::check_collinearity()</code> answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.</li>
 <li>
 <code>report::report()</code> and <code>modelbased::estimate_relation()</code> both error, for the same reason: they ask for predictions, receive nothing, and fail on the empty result. No adapter fixes that short of a prediction path.</li>
 <li>The usable shape is the consumer layer. <code>probably</code>, <code>dcurves</code>, <code>pointblank</code>, <code>GGally</code> and <code>correlation</code> all work, because they take a prediction vector or a data frame and never touch the fit. Compute with <code>rms</code>, then hand numbers onward.</li>
@@ -313,7 +338,7 @@
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>See <a href="CITATION.cff"><code>CITATION.cff</code></a>, or in R:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"mysterymodel"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
