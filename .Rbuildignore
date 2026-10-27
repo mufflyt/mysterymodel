@@ -8,3 +8,4 @@
 ^\.github$
 ^CITATION\.cff$
 ^\.DS_Store$
+^data-raw$

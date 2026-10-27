@@ -11,7 +11,10 @@ An opinionated workflow for building clinical prediction models that survive pee
 
 ## Status
 
-Early. `mm_spec()` is implemented and tested. Everything else on this page is the plan, written down so it can be argued with before it is built.
+Early, and deliberately so. The [implementation specification](inst/implementation-spec.md) is the contract of record; its section 14 requires a capability spike before any production module, and that spike is done:
+[**easystats capability matrix for `rms` objects**](inst/capability-matrix.md).
+
+`cp_project()` is implemented and tested. Everything else on this page is the plan.
 
 ## The idea
 
@@ -69,40 +72,53 @@ pak::pak("mufflyt/mysterymodel")
 
 ## Usage
 
-A specification is written before anything is fitted, so that a reviewer can check it against the protocol rather than reconstruct it afterwards from whichever code happened to run.
+The analysis plan is written down and checked before anything is fitted, so a reviewer can check it against the protocol rather than reconstruct it afterwards from whichever code happened to run.
 
 ```r
 library(mysterymodel)
 
-spec <- mm_spec(
-  outcome    = "matched",
-  predictors = c("step_1_score", "research_count", "sex"),
-  split_var  = "app_year",
-  split_at   = 2023
+project <- cp_project(
+  slug           = "uds",
+  outcome        = "event",
+  predictors     = c("age", "bmi", "sex"),
+  positive_class = "1",
+  cohort         = uds_cohort,
+  split_var      = "year",
+  split_at       = 2023,
+  cluster_id     = "pid"
 )
 
-spec
-#> <mysterymodel spec>
-#>   outcome    matched
-#>   predictors 3: step_1_score, research_count, sex
-#>   split      app_year < 2023 develops, the rest is held out
+project
+#> <cp_project: uds>
+#>   outcome    event (event = 1)
+#>   predictors 3: age, bmi, sex
+#>   split      year < 2023 develops, the rest is held out
+#>   cluster    pid
 #>   seed       1978
 ```
 
-`mm_spec()` refuses specifications that cannot be meant, rather than letting them fail later as something harder to read. An outcome that also appears among the predictors is the clearest case: it produces perfect discrimination, which looks like success.
+`cp_project()` fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.
 
 ## Roadmap
 
-| | |
-|---|---|
-| `mm_spec()` | done |
-| data staging, rare levels, held-out level alignment | planned |
-| imputation inside resampling | planned |
-| penalty selection and fitting | planned |
-| bootstrap optimism, full-process variant | planned |
-| calibration and recalibration | planned |
-| nomogram, with agreement assertion against the fit | planned |
-| Quarto report and provenance record | planned |
+Releases and acceptance gates are defined in full in the [specification](inst/implementation-spec.md), section 12.
+
+| release | deliverable | state |
+|---|---|---|
+| spike | easystats/`rms` capability matrix | [done](inst/capability-matrix.md) |
+| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()` done |
+| v0.2 | `rms` modelling, nonlinearity, interaction, selection | planned |
+| v0.3 | full-process validation, calibration, nomograms | planned |
+| v0.4 | Quarto, scalable modes, provenance | planned |
+
+### What the spike settled
+
+The architecture assumed `performance::model_performance()` could supply general performance measures for the default model. It cannot. On an `rms::lrm()` fit:
+
+- `insight::get_predicted()` returns `NULL`. easystats has no prediction path for `lrm`, so every prediction-dependent helper inherits that, and `cp_predict()` must call `rms` directly.
+- `performance::model_performance()` returns only AIC, BIC, R2 and an RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those come from `rms`, `pROC` and `yardstick`.
+- `parameters::model_parameters()` agrees with `coef()` exactly, to `0.00e+00` across all terms, and is safe to use.
+- `rms::vif()` and `performance::check_collinearity()` answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.
 
 ## Citation
 
