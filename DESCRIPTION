@@ -1,0 +1,24 @@
+Package: mysterymodel
+Title: Opinionated Workflow for Clinical Prediction Models
+Version: 0.0.0.9000
+Authors@R: 
+    person("Tyler", "Muffly", email = "tyler.muffly@dhha.org",
+           role = c("aut", "cre"))
+Description: An orchestration layer for clinical prediction modelling.
+    Established engines do the statistics: 'rms' for regression, internal
+    validation, calibration and nomograms, the 'easystats' packages for
+    diagnostics and interpretation, and 'tidymodels' for resampling and model
+    comparison. This package supplies the workflow holding them together and
+    the methodological safeguards that keep a published model honest. It makes
+    no model-selection decision on the analyst's behalf and hides none.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+URL: https://mufflyt.github.io/mysterymodel/,
+    https://github.com/mufflyt/mysterymodel
+BugReports: https://github.com/mufflyt/mysterymodel/issues
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/Needs/website: pkgdown
+Config/roxygen2/version: 8.1.0

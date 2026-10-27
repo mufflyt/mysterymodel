@@ -1,0 +1,12 @@
+url: https://mufflyt.github.io/mysterymodel/
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Specification
+    desc: >
+      What is being predicted, from which columns, and how the data divides.
+      Written down before anything is fitted.
+    contents:
+      - mm_spec

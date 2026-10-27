@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "mysterymodel: Opinionated Workflow for Clinical Prediction Models"
+abstract: >-
+  An orchestration layer for clinical prediction modelling. Established engines
+  do the statistics: rms for regression, internal validation, calibration and
+  nomograms, the easystats packages for diagnostics and interpretation, and
+  tidymodels for resampling and model comparison. The package supplies the
+  workflow holding them together and the methodological safeguards that keep a
+  published model honest.
+authors:
+  - family-names: Muffly
+    given-names: Tyler
+    email: tyler.muffly@dhha.org
+version: 0.0.0.9000
+date-released: "2026-10-26"
+license: MIT
+repository-code: "https://github.com/mufflyt/mysterymodel"
+url: "https://mufflyt.github.io/mysterymodel/"
+keywords:
+  - clinical-prediction-model
+  - nomogram
+  - calibration
+  - internal-validation
+  - reproducible-research
+  - R

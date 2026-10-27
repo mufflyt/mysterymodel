@@ -1,0 +1,16 @@
+citHeader("To cite mysterymodel in publications, use:")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "mysterymodel: Opinionated Workflow for Clinical Prediction Models",
+  author   = person("Tyler", "Muffly"),
+  year     = "2026",
+  note     = "R package version 0.0.0.9000",
+  url      = "https://github.com/mufflyt/mysterymodel",
+  textVersion = paste(
+    "Muffly T (2026).",
+    "mysterymodel: Opinionated Workflow for Clinical Prediction Models.",
+    "R package version 0.0.0.9000.",
+    "https://github.com/mufflyt/mysterymodel"
+  )
+)

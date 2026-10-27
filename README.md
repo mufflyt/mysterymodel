@@ -1,0 +1,117 @@
+# mysterymodel
+
+<!-- badges: start -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+An opinionated workflow for building clinical prediction models that survive peer review.
+
+`mysterymodel` is not another modelling framework. The statistics are done by engines that already do them well. What this package contributes is the orchestration between them, and the methodological safeguards that are easy to skip and expensive to skip.
+
+## Status
+
+Early. `mm_spec()` is implemented and tested. Everything else on this page is the plan, written down so it can be argued with before it is built.
+
+## The idea
+
+Three ecosystems, each used for what it is best at:
+
+| | role here |
+|---|---|
+| [**rms**](https://hbiostat.org/R/rms/) | regression, bootstrap internal validation, calibration, nomograms |
+| [**easystats**](https://easystats.github.io/easystats/) | collinearity, assumption checks, parameters, interpretation, reporting |
+| [**tidymodels**](https://www.tidymodels.org/) | resampling, feature-selection workflows, model comparison |
+
+A fourth, [mlr3](https://mlr3.org/), is worth adding for computationally heavy work on large data.
+
+### How they compare
+
+Approximate; some capabilities need extension packages.
+
+| Capability | easystats | tidymodels | rms | mlr3 |
+|---|---|---|---|---|
+| Data cleaning | strong | strong | limited | strong |
+| EDA and descriptives | excellent | good | good | moderate |
+| Collinearity diagnostics | excellent | good | limited | extensions |
+| Feature selection | moderate | strong | moderate | excellent |
+| Model development | good | excellent | excellent | excellent |
+| Nonlinear effects | good | excellent | excellent | excellent |
+| Interaction assessment | good | good | excellent | good |
+| Internal validation | partial | excellent | excellent | excellent |
+| Calibration | good | good | excellent | good |
+| Nomograms | not native | not native | excellent | not native |
+| Large-data workflows | limited | good | limited | strong |
+| Quarto reporting | excellent | excellent | good | good |
+
+`easystats` is an analysis and interpretation ecosystem. `tidymodels` and `mlr3` are model development and evaluation frameworks. `rms` is the one suited to a regression-based clinical prediction model intended for publication.
+
+## Design commitments
+
+These are the decisions that make the package opinionated. They are defaults, not locks.
+
+- **Continuous predictors stay continuous.** Nonlinearity is assessed, not assumed away by categorising.
+- **`rms::lrm()` is the default binary-outcome model**, with `glmnet` and `glinternet` as alternatives.
+- **Interactions are prespecified** and tested by likelihood ratio. Data-driven interaction discovery is reported as exploratory, and labelled that way.
+- **Selection and imputation happen inside resampling**, never once beforehand. Doing it once leaks, and the leak flatters every number downstream.
+- **Validation reports discrimination, calibration intercept and slope, Brier score, bootstrap optimism, and intervals.** Not discrimination alone.
+- **Nomograms use the native `rms` machinery**, with readable labels, configurable axes, and pagination when a model outgrows one page.
+- **No model-selection decision is made for you, and none is hidden.**
+
+The reference is Frank Harrell's *Regression Modeling Strategies*.
+
+## Installation
+
+```r
+# install.packages("pak")
+pak::pak("mufflyt/mysterymodel")
+```
+
+## Usage
+
+A specification is written before anything is fitted, so that a reviewer can check it against the protocol rather than reconstruct it afterwards from whichever code happened to run.
+
+```r
+library(mysterymodel)
+
+spec <- mm_spec(
+  outcome    = "matched",
+  predictors = c("step_1_score", "research_count", "sex"),
+  split_var  = "app_year",
+  split_at   = 2023
+)
+
+spec
+#> <mysterymodel spec>
+#>   outcome    matched
+#>   predictors 3: step_1_score, research_count, sex
+#>   split      app_year < 2023 develops, the rest is held out
+#>   seed       1978
+```
+
+`mm_spec()` refuses specifications that cannot be meant, rather than letting them fail later as something harder to read. An outcome that also appears among the predictors is the clearest case: it produces perfect discrimination, which looks like success.
+
+## Roadmap
+
+| | |
+|---|---|
+| `mm_spec()` | done |
+| data staging, rare levels, held-out level alignment | planned |
+| imputation inside resampling | planned |
+| penalty selection and fitting | planned |
+| bootstrap optimism, full-process variant | planned |
+| calibration and recalibration | planned |
+| nomogram, with agreement assertion against the fit | planned |
+| Quarto report and provenance record | planned |
+
+## Citation
+
+See [`CITATION.cff`](CITATION.cff), or in R:
+
+```r
+citation("mysterymodel")
+```
+
+## License
+
+MIT. See [LICENSE.md](LICENSE.md).
