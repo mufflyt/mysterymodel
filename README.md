@@ -14,7 +14,7 @@ An opinionated workflow for building clinical prediction models that survive pee
 Early, and deliberately so. The [implementation specification](inst/implementation-spec.md) is the contract of record, kept as received; settled questions are amended in the [decision log](inst/decisions.md). Section 14 requires a capability spike before any production module, and that spike is done:
 [**capability matrix for `rms` objects**](inst/capability-matrix.md).
 
-`cp_project()` is implemented and tested. Everything else on this page is the plan.
+The statistical spine of the §15 starting milestone now runs on synthetic data: `cp_project()` → `cp_model()` → `cp_predict()` → `cp_validate()` → `cp_nomogram()`, 65 tests, `R CMD check` clean. The data-preparation and reporting ends of that chain are not built yet; the roadmap below says which.
 
 ## The idea
 
@@ -99,6 +99,35 @@ project
 
 `cp_project()` fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.
 
+Then fit, validate and draw:
+
+```r
+model <- cp_model(project, cohort, nonlinear = "age",
+                  interactions = list(c("prior_uti", "sex")))
+
+cp_validate(model, cohort, B = 200)
+#> <cp_validation>  full-process: FALSE
+#>   apparent                 n=338 events=34 C=0.7390 (0.6441-0.8338)  slope=1.0000
+#>   bootstrap, fixed model   n=338 events=34 C=0.6917                  slope=0.7508
+#>   held out                 n=162 events=18 C=0.5949 (0.4159-0.7739)  slope=0.4922
+#>   Bootstrap validates the fixed model only. Not a strategy.
+
+cp_nomogram(model, out_dir = "figures")
+#> <cp_nomogram>
+#>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
+#>   profiles checked 27 at tabulated ticks
+#>   worst gap vs cp_predict() 1.67e-16 (tolerance 1e-06)
+#>   off-tick reading error    0.000948 in risk, midway between ticks
+```
+
+Three things in that output are deliberate.
+
+**Performance is reported per basis, never as one number.** Apparent 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model measured three ways, and the spread is the point. The bootstrap row says in its own note that it refits one formula and does not repeat imputation, selection or tuning, so it is not validation of a modelling strategy. Full-process validation is a later release and this must not be read as providing it.
+
+**The nomogram is checked against the model, not assumed to match it.** `cp_nomogram()` reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with `cp_predict()`. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.
+
+**The reading error between ticks is measured and reported.** A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis's own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.
+
 ## Roadmap
 
 Releases and acceptance gates are defined in full in the [specification](inst/implementation-spec.md), section 12.
@@ -106,10 +135,12 @@ Releases and acceptance gates are defined in full in the [specification](inst/im
 | release | deliverable | state |
 |---|---|---|
 | spike | easystats/`rms` capability matrix | [done](inst/capability-matrix.md) |
-| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()` done |
-| v0.2 | `rms` modelling, nonlinearity, interaction, selection | planned |
-| v0.3 | full-process validation, calibration, nomograms | planned |
+| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()` done; `cp_clean()`, `cp_eda()`, `cp_collinearity()` to come |
+| v0.2 | `rms` modelling, nonlinearity, interaction, selection | `cp_model()`, `cp_predict()` done; selection to come |
+| v0.3 | full-process validation, calibration, nomograms | `cp_validate()` and `cp_nomogram()` done for the fixed model; full-process resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |
+
+`rms` is now an `Imports` rather than a plan, because the package fits with it. `pROC` supplies the interval on the c-statistic and `digest` the model fingerprint.
 
 ### What the spike settled
 

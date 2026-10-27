@@ -17,7 +17,19 @@ Roxygen: list(markdown = TRUE)
 URL: https://mufflyt.github.io/mysterymodel/,
     https://github.com/mufflyt/mysterymodel
 BugReports: https://github.com/mufflyt/mysterymodel/issues
+Depends:
+    R (>= 4.1)
+Imports:
+    digest,
+    grDevices,
+    graphics,
+    pROC,
+    rms,
+    stats,
+    utils
 Suggests: 
+    ragg,
+    svglite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown

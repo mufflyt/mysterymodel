@@ -4,9 +4,29 @@ template:
   bootstrap: 5
 
 reference:
-  - title: Specification
+  - title: Specify
     desc: >
       What is being predicted, from which columns, and how the data divides.
-      Written down before anything is fitted.
+      Written down and checked before anything is fitted.
     contents:
       - cp_project
+  - title: Fit and predict
+    desc: >
+      The model, and risks from exactly that model.
+    contents:
+      - cp_model
+      - cp_predict
+  - title: Validate
+    desc: >
+      Performance on a stated basis, because apparent, bootstrap-corrected
+      and held-out numbers are not interchangeable.
+    contents:
+      - cp_validate
+  - title: Present
+    desc: >
+      A nomogram that is checked against the model it was drawn from.
+    contents:
+      - cp_nomogram
+  - title: Data
+    contents:
+      - cp_synthetic_cohort
