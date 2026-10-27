@@ -55,7 +55,7 @@
 <div class="section level2">
 <h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
-<p>Early, and deliberately so. The <a href="inst/implementation-spec.html">implementation specification</a> is the contract of record; its section 14 requires a capability spike before any production module, and that spike is done: <a href="inst/capability-matrix.html"><strong>easystats capability matrix for <code>rms</code> objects</strong></a>.</p>
+<p>Early, and deliberately so. The <a href="inst/implementation-spec.html">implementation specification</a> is the contract of record, kept as received; settled questions are amended in the <a href="inst/decisions.html">decision log</a>. Section 14 requires a capability spike before any production module, and that spike is done: <a href="inst/capability-matrix.html"><strong>capability matrix for <code>rms</code> objects</strong></a>.</p>
 <p><code><a href="reference/cp_project.html">cp_project()</a></code> is implemented and tested. Everything else on this page is the plan.</p>
 </div>
 <div class="section level2">
@@ -302,7 +302,11 @@
 <code>parameters::model_parameters()</code> agrees with <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> exactly, to <code>0.00e+00</code> across all terms, and is safe to use.</li>
 <li>
 <code>rms::vif()</code> and <code>performance::check_collinearity()</code> answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.</li>
+<li>
+<code>report::report()</code> and <code>modelbased::estimate_relation()</code> both error, for the same reason: they ask for predictions, receive nothing, and fail on the empty result. No adapter fixes that short of a prediction path.</li>
+<li>The usable shape is the consumer layer. <code>probably</code>, <code>dcurves</code>, <code>pointblank</code>, <code>GGally</code> and <code>correlation</code> all work, because they take a prediction vector or a data frame and never touch the fit. Compute with <code>rms</code>, then hand numbers onward.</li>
 </ul>
+<p>The reference analysis is a labelled corrected successor, not an exact reproduction of a legacy method (<a href="inst/decisions.html">DEC-001</a>).</p>
 </div>
 </div>
 <div class="section level2">

@@ -12,9 +12,11 @@ that are easy to skip and expensive to skip.
 
 Early, and deliberately so. The [implementation
 specification](https://mufflyt.github.io/mysterymodel/inst/implementation-spec.md)
-is the contract of record; its section 14 requires a capability spike
-before any production module, and that spike is done: [**easystats
-capability matrix for `rms`
+is the contract of record, kept as received; settled questions are
+amended in the [decision
+log](https://mufflyt.github.io/mysterymodel/inst/decisions.md). Section
+14 requires a capability spike before any production module, and that
+spike is done: [**capability matrix for `rms`
 objects**](https://mufflyt.github.io/mysterymodel/inst/capability-matrix.md).
 
 [`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md)
@@ -160,6 +162,18 @@ general performance measures for the default model. It cannot. On an
 - `rms::vif()` and `performance::check_collinearity()` answer different
   questions, reporting 107.9 and 1.04 for the same spline. Both are
   correct; reporting either alone is misleading.
+- `report::report()` and `modelbased::estimate_relation()` both error,
+  for the same reason: they ask for predictions, receive nothing, and
+  fail on the empty result. No adapter fixes that short of a prediction
+  path.
+- The usable shape is the consumer layer. `probably`, `dcurves`,
+  `pointblank`, `GGally` and `correlation` all work, because they take a
+  prediction vector or a data frame and never touch the fit. Compute
+  with `rms`, then hand numbers onward.
+
+The reference analysis is a labelled corrected successor, not an exact
+reproduction of a legacy method
+([DEC-001](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
 
 ## Citation
 
