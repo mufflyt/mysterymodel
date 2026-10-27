@@ -55,7 +55,8 @@
 <div class="section level2">
 <h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
-<p>Early. <code><a href="reference/mm_spec.html">mm_spec()</a></code> is implemented and tested. Everything else on this page is the plan, written down so it can be argued with before it is built.</p>
+<p>Early, and deliberately so. The <a href="inst/implementation-spec.html">implementation specification</a> is the contract of record; its section 14 requires a capability spike before any production module, and that spike is done: <a href="inst/capability-matrix.html"><strong>easystats capability matrix for <code>rms</code> objects</strong></a>.</p>
+<p><code><a href="reference/cp_project.html">cp_project()</a></code> is implemented and tested. Everything else on this page is the plan.</p>
 </div>
 <div class="section level2">
 <h2 id="the-idea">The idea<a class="anchor" aria-label="anchor" href="#the-idea"></a>
@@ -219,62 +220,90 @@
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>A specification is written before anything is fitted, so that a reviewer can check it against the protocol rather than reconstruct it afterwards from whichever code happened to run.</p>
+<p>The analysis plan is written down and checked before anything is fitted, so a reviewer can check it against the protocol rather than reconstruct it afterwards from whichever code happened to run.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mufflyt.github.io/mysterymodel/">mysterymodel</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mm_spec.html">mm_spec</a></span><span class="op">(</span></span>
-<span>  outcome    <span class="op">=</span> <span class="st">"matched"</span>,</span>
-<span>  predictors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"step_1_score"</span>, <span class="st">"research_count"</span>, <span class="st">"sex"</span><span class="op">)</span>,</span>
-<span>  split_var  <span class="op">=</span> <span class="st">"app_year"</span>,</span>
-<span>  split_at   <span class="op">=</span> <span class="fl">2023</span></span>
+<span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_project.html">cp_project</a></span><span class="op">(</span></span>
+<span>  slug           <span class="op">=</span> <span class="st">"uds"</span>,</span>
+<span>  outcome        <span class="op">=</span> <span class="st">"event"</span>,</span>
+<span>  predictors     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"bmi"</span>, <span class="st">"sex"</span><span class="op">)</span>,</span>
+<span>  positive_class <span class="op">=</span> <span class="st">"1"</span>,</span>
+<span>  cohort         <span class="op">=</span> <span class="va">uds_cohort</span>,</span>
+<span>  split_var      <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  split_at       <span class="op">=</span> <span class="fl">2023</span>,</span>
+<span>  cluster_id     <span class="op">=</span> <span class="st">"pid"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">spec</span></span>
-<span><span class="co">#&gt; &lt;mysterymodel spec&gt;</span></span>
-<span><span class="co">#&gt;   outcome    matched</span></span>
-<span><span class="co">#&gt;   predictors 3: step_1_score, research_count, sex</span></span>
-<span><span class="co">#&gt;   split      app_year &lt; 2023 develops, the rest is held out</span></span>
+<span><span class="va">project</span></span>
+<span><span class="co">#&gt; &lt;cp_project: uds&gt;</span></span>
+<span><span class="co">#&gt;   outcome    event (event = 1)</span></span>
+<span><span class="co">#&gt;   predictors 3: age, bmi, sex</span></span>
+<span><span class="co">#&gt;   split      year &lt; 2023 develops, the rest is held out</span></span>
+<span><span class="co">#&gt;   cluster    pid</span></span>
 <span><span class="co">#&gt;   seed       1978</span></span></code></pre></div>
-<p><code><a href="reference/mm_spec.html">mm_spec()</a></code> refuses specifications that cannot be meant, rather than letting them fail later as something harder to read. An outcome that also appears among the predictors is the clearest case: it produces perfect discrimination, which looks like success.</p>
+<p><code><a href="reference/cp_project.html">cp_project()</a></code> fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.</p>
 </div>
 <div class="section level2">
 <h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
 </h2>
-<table class="table"><tbody>
+<p>Releases and acceptance gates are defined in full in the <a href="inst/implementation-spec.html">specification</a>, section 12.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th>release</th>
+<th>deliverable</th>
+<th>state</th>
+</tr></thead>
+<tbody>
 <tr>
-<td><code><a href="reference/mm_spec.html">mm_spec()</a></code></td>
-<td>done</td>
+<td>spike</td>
+<td>easystats/<code>rms</code> capability matrix</td>
+<td><a href="inst/capability-matrix.html">done</a></td>
 </tr>
 <tr>
-<td>data staging, rare levels, held-out level alignment</td>
+<td>v0.1</td>
+<td>cohort contract, cleaning, profile, EDA, collinearity</td>
+<td>
+<code><a href="reference/cp_project.html">cp_project()</a></code> done</td>
+</tr>
+<tr>
+<td>v0.2</td>
+<td>
+<code>rms</code> modelling, nonlinearity, interaction, selection</td>
 <td>planned</td>
 </tr>
 <tr>
-<td>imputation inside resampling</td>
+<td>v0.3</td>
+<td>full-process validation, calibration, nomograms</td>
 <td>planned</td>
 </tr>
 <tr>
-<td>penalty selection and fitting</td>
+<td>v0.4</td>
+<td>Quarto, scalable modes, provenance</td>
 <td>planned</td>
 </tr>
-<tr>
-<td>bootstrap optimism, full-process variant</td>
-<td>planned</td>
-</tr>
-<tr>
-<td>calibration and recalibration</td>
-<td>planned</td>
-</tr>
-<tr>
-<td>nomogram, with agreement assertion against the fit</td>
-<td>planned</td>
-</tr>
-<tr>
-<td>Quarto report and provenance record</td>
-<td>planned</td>
-</tr>
-</tbody></table>
+</tbody>
+</table>
+<div class="section level3">
+<h3 id="what-the-spike-settled">What the spike settled<a class="anchor" aria-label="anchor" href="#what-the-spike-settled"></a>
+</h3>
+<p>The architecture assumed <code>performance::model_performance()</code> could supply general performance measures for the default model. It cannot. On an <code>rms::lrm()</code> fit:</p>
+<ul>
+<li>
+<code>insight::get_predicted()</code> returns <code>NULL</code>. easystats has no prediction path for <code>lrm</code>, so every prediction-dependent helper inherits that, and <code>cp_predict()</code> must call <code>rms</code> directly.</li>
+<li>
+<code>performance::model_performance()</code> returns only AIC, BIC, R2 and an RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those come from <code>rms</code>, <code>pROC</code> and <code>yardstick</code>.</li>
+<li>
+<code>parameters::model_parameters()</code> agrees with <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> exactly, to <code>0.00e+00</code> across all terms, and is safe to use.</li>
+<li>
+<code>rms::vif()</code> and <code>performance::check_collinearity()</code> answer different questions, reporting 107.9 and 1.04 for the same spline. Both are correct; reporting either alone is misleading.</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
