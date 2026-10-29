@@ -8,6 +8,16 @@ Written down and checked before anything is fitted.
 - [`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md)
   : Create a validated analysis configuration
 
+## Prepare
+
+Eligibility with a ledger that reconciles, and a description that
+carries its denominators.
+
+- [`cp_clean()`](https://mufflyt.github.io/mysterymodel/reference/cp_clean.md)
+  : Apply eligibility rules and account for every row that leaves
+- [`cp_eda()`](https://mufflyt.github.io/mysterymodel/reference/cp_eda.md)
+  : Describe the cohort, with denominators and missingness
+
 ## Fit and predict
 
 The model, and risks from exactly that model.

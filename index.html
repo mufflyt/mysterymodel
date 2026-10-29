@@ -243,8 +243,26 @@
 <span><span class="co">#&gt;   cluster    pid</span></span>
 <span><span class="co">#&gt;   seed       1978</span></span></code></pre></div>
 <p><code><a href="reference/cp_project.html">cp_project()</a></code> fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.</p>
-<p>Then fit, validate and draw:</p>
+<p>Eligibility is applied by named rule, and every row that leaves is attributed to the rule that excluded it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_clean.html">cp_clean</a></span><span class="op">(</span><span class="va">raw</span>, rules <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"aged 40 or over"</span> <span class="op">=</span> <span class="op">~</span> <span class="va">age</span> <span class="op">&gt;=</span> <span class="fl">40</span>,</span>
+<span>  <span class="st">"plausible BMI"</span>   <span class="op">=</span> <span class="op">~</span> <span class="va">bmi</span> <span class="op">&gt;=</span> <span class="fl">16</span> <span class="op">&amp;</span> <span class="va">bmi</span> <span class="op">&lt;=</span> <span class="fl">55</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">clean</span></span>
+<span><span class="co">#&gt; &lt;cp_cohort&gt;  300 in, 282 out, 18 excluded</span></span>
+<span><span class="co">#&gt;      300  rows as supplied</span></span>
+<span><span class="co">#&gt;      -10  aged 40 or over (did not meet the criterion)</span></span>
+<span><span class="co">#&gt;      290  remaining</span></span>
+<span><span class="co">#&gt;       -6  plausible BMI (did not meet the criterion)</span></span>
+<span><span class="co">#&gt;      284  remaining</span></span>
+<span><span class="co">#&gt;       -2  plausible BMI (criterion could not be determined for these rows)</span></span>
+<span><span class="co">#&gt;      282  remaining</span></span></code></pre></div>
+<p>Rows in must equal rows out plus every exclusion, and <code><a href="reference/cp_clean.html">cp_clean()</a></code> errors rather than returning a cohort it cannot reconcile. A rule that evaluates to <code>NA</code> is not a pass: those rows are excluded under their own heading, because treating unknown eligibility as eligible and as ineligible are different studies and the difference belongs in the flow diagram.</p>
+<p><code><a href="reference/cp_eda.html">cp_eda()</a></code> then describes the cohort with the denominator each percentage is taken over and the missing count beside it, since a percentage whose denominator quietly excludes missing rows reads as a fact about the cohort when it is a fact about the rows that happened to be complete.</p>
+<p>Then fit, validate and draw:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_model.html">cp_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>                  interactions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prior_uti"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: the development sample may be too small for this model: 338 rows</span></span>
@@ -302,7 +320,7 @@
 <td>v0.1</td>
 <td>cohort contract, cleaning, profile, EDA, collinearity</td>
 <td>
-<code><a href="reference/cp_project.html">cp_project()</a></code> and the sample-size gate done; <code>cp_clean()</code>, <code>cp_eda()</code>, <code>cp_collinearity()</code> to come</td>
+<code><a href="reference/cp_project.html">cp_project()</a></code>, the sample-size gate, <code><a href="reference/cp_clean.html">cp_clean()</a></code> and <code><a href="reference/cp_eda.html">cp_eda()</a></code> done; <code>cp_collinearity()</code> and <code>cp_univariate()</code> to come</td>
 </tr>
 <tr>
 <td>v0.2</td>
@@ -349,7 +367,7 @@
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>See <a href="CITATION.cff"><code>CITATION.cff</code></a>, or in R:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"mysterymodel"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
