@@ -4,8 +4,11 @@ val_fixture <- function(n = 400, seed = 1978) {
                         c("age", "bmi", "sex", "prior_uti"),
                         cohort = cohort, split_var = "year",
                         split_at = 2023)
+  # Small for speed; the adequacy warning is tested in
+  # test-sample-size.R, not here.
   list(cohort = cohort,
-       model = cp_model(project, cohort, nonlinear = "age"))
+       model = suppressWarnings(cp_model(project, cohort,
+                                         nonlinear = "age")))
 }
 
 test_that("every basis is reported separately and labelled", {
