@@ -148,6 +148,16 @@ Then fit, validate and draw:
 
 model <- cp_model(project, cohort, nonlinear = "age",
                   interactions = list(c("prior_uti", "sex")))
+#> Warning: the development sample may be too small for this model: 338 rows
+#> is 582 short of the 920 a model of 7 parameter(s) needs at 10.1% prevalence
+#> for 90% shrinkage.
+
+model$adequacy
+#> <cp_adequacy>  adequate: FALSE
+#>   development 338 rows, 34 events (10.1%)
+#>   parameters  7 non-intercept, 4.9 events each (description, not the criterion)
+#>   shrinkage   0.697 expected, heuristic
+#>   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)
 
 cp_validate(model, cohort, B = 200)
 #> <cp_validation>  full-process: FALSE
@@ -164,7 +174,18 @@ cp_nomogram(model, out_dir = "figures")
 #>   off-tick reading error    0.000948 in risk, midway between ticks
 ```
 
-Three things in that output are deliberate.
+Four things in that output are deliberate.
+
+**A model too large for its sample says so.** The gate is the Riley
+requirement from `pmsampsize`, not the events-per-parameter rule, which
+is reported as description and labelled as such. Note the agreement
+between the two independent routes to the same conclusion: the heuristic
+shrinkage of 0.697 and the bootstrap-estimated calibration slope of
+0.751 below. One circularity is disclosed rather than hidden, in
+[`?cp_adequacy`](https://mufflyt.github.io/mysterymodel/reference/cp_adequacy.md):
+the requirement uses the fitted R-squared, so it answers whether this
+sample was adequate for the model it produced, not how large a sample
+should have been collected.
 
 **Performance is reported per basis, never as one number.** Apparent
 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model
@@ -200,7 +221,7 @@ section 12.
 | release | deliverable | state |
 |----|----|----|
 | spike | easystats/`rms` capability matrix | [done](https://mufflyt.github.io/mysterymodel/inst/capability-matrix.md) |
-| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | [`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md) done; `cp_clean()`, `cp_eda()`, `cp_collinearity()` to come |
+| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | [`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md) and the sample-size gate done; `cp_clean()`, `cp_eda()`, `cp_collinearity()` to come |
 | v0.2 | `rms` modelling, nonlinearity, interaction, selection | [`cp_model()`](https://mufflyt.github.io/mysterymodel/reference/cp_model.md), [`cp_predict()`](https://mufflyt.github.io/mysterymodel/reference/cp_predict.md) done; selection to come |
 | v0.3 | full-process validation, calibration, nomograms | [`cp_validate()`](https://mufflyt.github.io/mysterymodel/reference/cp_validate.md) and [`cp_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/cp_nomogram.md) done for the fixed model; full-process resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |

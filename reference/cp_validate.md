@@ -61,6 +61,7 @@ project <- cp_project("uds", "event", c("age", "bmi", "sex"),
                       cohort = cohort, split_var = "year",
                       split_at = 2023)
 fit <- cp_model(project, cohort, nonlinear = "age")
+#> Warning: the development sample may be too small for this model: 190 rows is 1928 short of the 2118 a model of 5 parameter(s) needs at 8.4% prevalence for 90% shrinkage. Coefficients from a sample this size are expected to be overfitted; see the adequacy element of the returned object.
 cp_validate(fit, cohort, B = 25)
 #> <cp_validation>  full-process: FALSE
 #>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)  slope=1.0000

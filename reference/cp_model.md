@@ -64,11 +64,12 @@ project <- cp_project("uds", "event",
                       cohort = cohort)
 fit <- cp_model(project, cohort, nonlinear = "age",
                 interactions = list(c("prior_uti", "sex")))
+#> Warning: the development sample may be too small for this model: 300 rows is 1097 short of the 1397 a model of 7 parameter(s) needs at 9.3% prevalence for 90% shrinkage. Coefficients from a sample this size are expected to be overfitted; see the adequacy element of the returned object.
 fit
 #> <cp_model: uds>
 #>   formula    .cp_y ~ rms::rcs(age, 4) + bmi + sex + prior_uti + prior_uti:sex
 #>   developed  300 rows, 28 events
-#>   parameters 7 non-intercept
+#>   parameters 7 non-intercept, 1097 short of the sample they need
 #>   apparent C 0.7126
 #>   fingerprint 97af98a72772f7d7
 ```

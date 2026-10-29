@@ -55,6 +55,7 @@ cohort <- cp_synthetic_cohort(n = 300, seed = 1)
 project <- cp_project("uds", "event", c("age", "bmi", "sex"),
                       cohort = cohort)
 fit <- cp_model(project, cohort, nonlinear = "age")
+#> Warning: the development sample may be too small for this model: 300 rows is 22175 short of the 22475 a model of 5 parameter(s) needs at 9.3% prevalence for 90% shrinkage. Coefficients from a sample this size are expected to be overfitted; see the adequacy element of the returned object.
 head(cp_predict(fit, cohort[1:5, ]))
 #>        .pred .extrapolated
 #> 1 0.10013810         FALSE

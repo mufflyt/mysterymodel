@@ -247,6 +247,16 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_model.html">cp_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>                  interactions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prior_uti"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: the development sample may be too small for this model: 338 rows</span></span>
+<span><span class="co">#&gt; is 582 short of the 920 a model of 7 parameter(s) needs at 10.1% prevalence</span></span>
+<span><span class="co">#&gt; for 90% shrinkage.</span></span>
+<span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="va">adequacy</span></span>
+<span><span class="co">#&gt; &lt;cp_adequacy&gt;  adequate: FALSE</span></span>
+<span><span class="co">#&gt;   development 338 rows, 34 events (10.1%)</span></span>
+<span><span class="co">#&gt;   parameters  7 non-intercept, 4.9 events each (description, not the criterion)</span></span>
+<span><span class="co">#&gt;   shrinkage   0.697 expected, heuristic</span></span>
+<span><span class="co">#&gt;   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/cp_validate.html">cp_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;cp_validation&gt;  full-process: FALSE</span></span>
@@ -261,7 +271,8 @@
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
 <span><span class="co">#&gt;   worst gap vs cp_predict() 1.67e-16 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   off-tick reading error    0.000948 in risk, midway between ticks</span></span></code></pre></div>
-<p>Three things in that output are deliberate.</p>
+<p>Four things in that output are deliberate.</p>
+<p><strong>A model too large for its sample says so.</strong> The gate is the Riley requirement from <code>pmsampsize</code>, not the events-per-parameter rule, which is reported as description and labelled as such. Note the agreement between the two independent routes to the same conclusion: the heuristic shrinkage of 0.697 and the bootstrap-estimated calibration slope of 0.751 below. One circularity is disclosed rather than hidden, in <code><a href="reference/cp_adequacy.html">?cp_adequacy</a></code>: the requirement uses the fitted R-squared, so it answers whether this sample was adequate for the model it produced, not how large a sample should have been collected.</p>
 <p><strong>Performance is reported per basis, never as one number.</strong> Apparent 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model measured three ways, and the spread is the point. The bootstrap row says in its own note that it refits one formula and does not repeat imputation, selection or tuning, so it is not validation of a modelling strategy. Full-process validation is a later release and this must not be read as providing it.</p>
 <p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/cp_predict.html">cp_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
 <p><strong>The reading error between ticks is measured and reported.</strong> A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis’s own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.</p>
@@ -291,7 +302,7 @@
 <td>v0.1</td>
 <td>cohort contract, cleaning, profile, EDA, collinearity</td>
 <td>
-<code><a href="reference/cp_project.html">cp_project()</a></code> done; <code>cp_clean()</code>, <code>cp_eda()</code>, <code>cp_collinearity()</code> to come</td>
+<code><a href="reference/cp_project.html">cp_project()</a></code> and the sample-size gate done; <code>cp_clean()</code>, <code>cp_eda()</code>, <code>cp_collinearity()</code> to come</td>
 </tr>
 <tr>
 <td>v0.2</td>
