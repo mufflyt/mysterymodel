@@ -16,13 +16,16 @@
 #'   made rather than assumed, and this column is where it is made.
 #' * **held out**, rows the project's split reserved. Scored once.
 #'
-#' Full-process validation, which re-executes the whole data-dependent
-#' strategy inside every resample, is a later release. Until it exists this
-#' function must not be read as providing it.
+#' * **bootstrap, full process**, with `full_process = TRUE`. Refits the
+#'   whole strategy inside every resample, so the optimism corrected includes
+#'   the data-dependent choices the fixed-model bootstrap inherits. See
+#'   [cp_full_process()] for what it does and does not re-execute.
 #'
 #' @param model A [cp_model()].
 #' @param cohort The cohort, for held-out scoring and the split.
-#' @param B Bootstrap resamples for [rms::validate()].
+#' @param B Bootstrap resamples.
+#' @param full_process Also run the full-process bootstrap. Off by default
+#'   because it refits `B` times and costs accordingly.
 #'
 #' @return An object of class `cp_validation`: a data frame of metrics by
 #'   basis, plus what produced them.
@@ -35,7 +38,7 @@
 #' fit <- cp_model(project, cohort, nonlinear = "age")
 #' cp_validate(fit, cohort, B = 25)
 #' @export
-cp_validate <- function(model, cohort, B = 200L) {
+cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   if (!inherits(model, "cp_model")) {
     stop("`model` must come from cp_model().", call. = FALSE)
   }
@@ -56,14 +59,15 @@ cp_validate <- function(model, cohort, B = 200L) {
   y_dev <- cp_event_indicator(parts$dev[[project$outcome]],
                               project$positive_class)
   p_dev <- cp_predict(model, parts$dev)$.pred
-  rows[[1L]] <- cp_metrics(p_dev, y_dev, basis = "apparent",
+  rows[[length(rows) + 1L]] <- cp_metrics(p_dev, y_dev,
+                                          basis = "apparent",
                            note = "scored on the development rows")
 
   # Bootstrap, fixed model.
   set.seed(project$seed)
   val <- rms::validate(model$fit, B = B)
   c_corrected <- 0.5 + val["Dxy", "index.corrected"] / 2
-  rows[[2L]] <- data.frame(
+  rows[[length(rows) + 1L]] <- data.frame(
     basis = "bootstrap, fixed model",
     n = model$n_dev, events = model$events_dev,
     c_stat = c_corrected, c_lower = NA_real_, c_upper = NA_real_,
@@ -71,23 +75,43 @@ cp_validate <- function(model, cohort, B = 200L) {
     cal_slope = unname(val["Slope", "index.corrected"]),
     brier = NA_real_, brier_scaled = NA_real_,
     note = sprintf(paste("rms::validate, B = %d. Refits the same formula;",
-                         "does not repeat imputation, selection or tuning"),
+                         "does not re-derive knots or levels, and resamples",
+                         "rows even when a cluster is declared"),
                    B),
     stringsAsFactors = FALSE)
+
+  # Bootstrap, whole strategy.
+  fp <- NULL
+  if (isTRUE(full_process)) {
+    fp <- cp_full_process(model, cohort, B = B)
+    rows[[length(rows) + 1L]] <- data.frame(
+      basis = "bootstrap, full process",
+      n = model$n_dev, events = model$events_dev,
+      c_stat = unname(fp$corrected[["c_stat"]]),
+      c_lower = NA_real_, c_upper = NA_real_,
+      cal_intercept = unname(fp$corrected[["cal_intercept"]]),
+      cal_slope = unname(fp$corrected[["cal_slope"]]),
+      brier = unname(fp$corrected[["brier"]]),
+      brier_scaled = unname(fp$corrected[["brier_scaled"]]),
+      note = fp$note, stringsAsFactors = FALSE)
+  }
 
   # Held out.
   if (nrow(parts$held) > 0L) {
     y_held <- cp_event_indicator(parts$held[[project$outcome]],
                                  project$positive_class)
     p_held <- cp_predict(model, parts$held)$.pred
-    rows[[3L]] <- cp_metrics(p_held, y_held, basis = "held out",
+    rows[[length(rows) + 1L]] <- cp_metrics(p_held, y_held,
+                                            basis = "held out",
                              note = sprintf("%s >= %s, scored once",
                                             project$split_var,
                                             format(project$split_at)))
   }
 
   structure(list(metrics = do.call(rbind, rows), B = B,
-                 full_process = FALSE,
+                 full_process = isTRUE(full_process),
+                 clustered_by = model$project$cluster_id,
+                 full_process_detail = fp,
                  fingerprint = model$fingerprint),
             class = "cp_validation")
 }
@@ -144,6 +168,17 @@ print.cp_validation <- function(x, ...) {
     }
     cat("\n")
   }
-  cat("  Bootstrap validates the fixed model only. Not a strategy.\n")
+  if (isTRUE(x$full_process)) {
+    cat("  Full process re-derives ",
+        paste(x$full_process_detail$covers, collapse = ", "),
+        " per resample; ", x$full_process_detail$valid, " of ",
+        x$full_process_detail$B, " valid.\n", sep = "")
+    if (!isTRUE(x$full_process_detail$adequate)) {
+      cat("  INADEQUATE: too few resamples fitted to trust the ",
+          "correction.\n", sep = "")
+    }
+  } else {
+    cat("  Fixed-model bootstrap only. Not validation of a strategy.\n")
+  }
   invisible(x)
 }
