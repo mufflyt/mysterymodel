@@ -4,14 +4,17 @@
 \alias{cp_validate}
 \title{Validate the model, on a stated basis}
 \usage{
-cp_validate(model, cohort, B = 200L)
+cp_validate(model, cohort, B = 200L, full_process = FALSE)
 }
 \arguments{
 \item{model}{A \code{\link[=cp_model]{cp_model()}}.}
 
 \item{cohort}{The cohort, for held-out scoring and the split.}
 
-\item{B}{Bootstrap resamples for \code{\link[rms:validate]{rms::validate()}}.}
+\item{B}{Bootstrap resamples.}
+
+\item{full_process}{Also run the full-process bootstrap. Off by default
+because it refits \code{B} times and costs accordingly.}
 }
 \value{
 An object of class \code{cp_validation}: a data frame of metrics by
@@ -34,11 +37,11 @@ interaction screening, so it is not validation of a modelling strategy
 that includes those steps. The specification requires that distinction be
 made rather than assumed, and this column is where it is made.
 \item \strong{held out}, rows the project's split reserved. Scored once.
+\item \strong{bootstrap, full process}, with \code{full_process = TRUE}. Refits the
+whole strategy inside every resample, so the optimism corrected includes
+the data-dependent choices the fixed-model bootstrap inherits. See
+\code{\link[=cp_full_process]{cp_full_process()}} for what it does and does not re-execute.
 }
-
-Full-process validation, which re-executes the whole data-dependent
-strategy inside every resample, is a later release. Until it exists this
-function must not be read as providing it.
 }
 \examples{
 cohort <- cp_synthetic_cohort(n = 300, seed = 1)

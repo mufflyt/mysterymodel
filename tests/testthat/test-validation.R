@@ -26,7 +26,8 @@ test_that("the bootstrap does not claim to validate a strategy", {
   v <- cp_validate(f$model, f$cohort, B = 20)
   expect_false(v$full_process)
   boot <- v$metrics[v$metrics$basis == "bootstrap, fixed model", ]
-  expect_match(boot$note, "does not repeat")
+  expect_match(boot$note, "does not re-derive")
+  expect_match(boot$note, "resamples rows even when a cluster is declared")
 })
 
 test_that("apparent performance is at least as good as corrected", {

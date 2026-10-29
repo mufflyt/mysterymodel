@@ -138,12 +138,13 @@ model$adequacy
 #>   shrinkage   0.697 expected, heuristic
 #>   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)
 
-cp_validate(model, cohort, B = 200)
-#> <cp_validation>  full-process: FALSE
-#>   apparent                 n=338 events=34 C=0.7390 (0.6441-0.8338)  slope=1.0000
-#>   bootstrap, fixed model   n=338 events=34 C=0.6917                  slope=0.7508
-#>   held out                 n=162 events=18 C=0.5949 (0.4159-0.7739)  slope=0.4922
-#>   Bootstrap validates the fixed model only. Not a strategy.
+cp_validate(model, cohort, B = 200, full_process = TRUE)
+#> <cp_validation>  full-process: TRUE
+#>   apparent                 n=404 events=45 C=0.6647 (0.5749-0.7546)  slope=1.0000
+#>   bootstrap, fixed model   n=404 events=45 C=0.5990                  slope=0.6779
+#>   bootstrap, full process  n=404 events=45 C=0.6112                  slope=0.7256
+#>   held out                 n=196 events=22 C=0.7858 (0.6770-0.8946)  slope=1.7370
+#>   Full process re-derives knot placement, datadist, factor levels per resample; 200 of 200 valid.
 
 cp_nomogram(model, out_dir = "figures")
 #> <cp_nomogram>
@@ -157,7 +158,13 @@ Four things in that output are deliberate.
 
 **A model too large for its sample says so.** The gate is the Riley requirement from `pmsampsize`, not the events-per-parameter rule, which is reported as description and labelled as such. Note the agreement between the two independent routes to the same conclusion: the heuristic shrinkage of 0.697 and the bootstrap-estimated calibration slope of 0.751 below. One circularity is disclosed rather than hidden, in `?cp_adequacy`: the requirement uses the fitted R-squared, so it answers whether this sample was adequate for the model it produced, not how large a sample should have been collected.
 
-**Performance is reported per basis, never as one number.** Apparent 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model measured three ways, and the spread is the point. The bootstrap row says in its own note that it refits one formula and does not repeat imputation, selection or tuning, so it is not validation of a modelling strategy. Full-process validation is a later release and this must not be read as providing it.
+**Performance is reported per basis, never as one number.** The same model measured four ways, and the spread is the point.
+
+The two bootstrap rows answer different questions. The fixed-model one, from `rms::validate()`, corrects the optimism of estimating coefficients for one formula. The full-process one refits the whole strategy inside every resample, so each resample gets its own spline knot placement, its own `datadist` and its own factor-level handling, all three being learned from data. It also states what it does **not** re-execute, which is imputation, selection and tuning, because the package does not do them yet and a strategy containing them would not be fully validated by it either.
+
+They are different estimators with their own Monte Carlo error, so a small gap between them is not evidence of anything.
+
+Resampling is by whole patient when the project declares a cluster. Resampling rows would treat two visits by one person as two independent facts, which narrows every interval it touches.
 
 **The nomogram is checked against the model, not assumed to match it.** `cp_nomogram()` reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with `cp_predict()`. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.
 
@@ -172,7 +179,7 @@ Releases and acceptance gates are defined in full in the [specification](inst/im
 | spike | easystats/`rms` capability matrix | [done](inst/capability-matrix.md) |
 | v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()`, the sample-size gate, `cp_clean()` and `cp_eda()` done; `cp_collinearity()` and `cp_univariate()` to come |
 | v0.2 | `rms` modelling, nonlinearity, interaction, selection | `cp_model()`, `cp_predict()` done; selection to come |
-| v0.3 | full-process validation, calibration, nomograms | `cp_validate()` and `cp_nomogram()` done for the fixed model; full-process resampling and the flexible calibration curve to come |
+| v0.3 | full-process validation, calibration, nomograms | `cp_validate()` with full-process and clustered resampling, and `cp_nomogram()`, done; imputation inside resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |
 
 `rms` is now an `Imports` rather than a plan, because the package fits with it. `pROC` supplies the interval on the c-statistic and `digest` the model fingerprint.
