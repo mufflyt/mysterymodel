@@ -7,7 +7,7 @@ another is the commonest way a published model flatters itself.
 ## Usage
 
 ``` r
-cp_validate(model, cohort, B = 200L)
+cp_validate(model, cohort, B = 200L, full_process = FALSE)
 ```
 
 ## Arguments
@@ -23,8 +23,12 @@ cp_validate(model, cohort, B = 200L)
 
 - B:
 
-  Bootstrap resamples for
-  [`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html).
+  Bootstrap resamples.
+
+- full_process:
+
+  Also run the full-process bootstrap. Off by default because it refits
+  `B` times and costs accordingly.
 
 ## Value
 
@@ -49,9 +53,12 @@ The bases are:
 
 - **held out**, rows the project's split reserved. Scored once.
 
-Full-process validation, which re-executes the whole data-dependent
-strategy inside every resample, is a later release. Until it exists this
-function must not be read as providing it.
+- **bootstrap, full process**, with `full_process = TRUE`. Refits the
+  whole strategy inside every resample, so the optimism corrected
+  includes the data-dependent choices the fixed-model bootstrap
+  inherits. See
+  [`cp_full_process()`](https://mufflyt.github.io/mysterymodel/reference/cp_full_process.md)
+  for what it does and does not re-execute.
 
 ## Examples
 
@@ -67,5 +74,5 @@ cp_validate(fit, cohort, B = 25)
 #>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)  slope=1.0000
 #>   bootstrap, fixed model   n=190   events=16   C=0.5010  slope=0.3818
 #>   held out                 n=110   events=12   C=0.3844 (0.2074-0.5613)  slope=-1.1131
-#>   Bootstrap validates the fixed model only. Not a strategy.
+#>   Fixed-model bootstrap only. Not validation of a strategy.
 ```

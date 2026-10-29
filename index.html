@@ -276,12 +276,13 @@
 <span><span class="co">#&gt;   shrinkage   0.697 expected, heuristic</span></span>
 <span><span class="co">#&gt;   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/cp_validate.html">cp_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;cp_validation&gt;  full-process: FALSE</span></span>
-<span><span class="co">#&gt;   apparent                 n=338 events=34 C=0.7390 (0.6441-0.8338)  slope=1.0000</span></span>
-<span><span class="co">#&gt;   bootstrap, fixed model   n=338 events=34 C=0.6917                  slope=0.7508</span></span>
-<span><span class="co">#&gt;   held out                 n=162 events=18 C=0.5949 (0.4159-0.7739)  slope=0.4922</span></span>
-<span><span class="co">#&gt;   Bootstrap validates the fixed model only. Not a strategy.</span></span>
+<span><span class="fu"><a href="reference/cp_validate.html">cp_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span>, full_process <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;cp_validation&gt;  full-process: TRUE</span></span>
+<span><span class="co">#&gt;   apparent                 n=404 events=45 C=0.6647 (0.5749-0.7546)  slope=1.0000</span></span>
+<span><span class="co">#&gt;   bootstrap, fixed model   n=404 events=45 C=0.5990                  slope=0.6779</span></span>
+<span><span class="co">#&gt;   bootstrap, full process  n=404 events=45 C=0.6112                  slope=0.7256</span></span>
+<span><span class="co">#&gt;   held out                 n=196 events=22 C=0.7858 (0.6770-0.8946)  slope=1.7370</span></span>
+<span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 200 of 200 valid.</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/cp_nomogram.html">cp_nomogram</a></span><span class="op">(</span><span class="va">model</span>, out_dir <span class="op">=</span> <span class="st">"figures"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;cp_nomogram&gt;</span></span>
@@ -291,7 +292,10 @@
 <span><span class="co">#&gt;   off-tick reading error    0.000948 in risk, midway between ticks</span></span></code></pre></div>
 <p>Four things in that output are deliberate.</p>
 <p><strong>A model too large for its sample says so.</strong> The gate is the Riley requirement from <code>pmsampsize</code>, not the events-per-parameter rule, which is reported as description and labelled as such. Note the agreement between the two independent routes to the same conclusion: the heuristic shrinkage of 0.697 and the bootstrap-estimated calibration slope of 0.751 below. One circularity is disclosed rather than hidden, in <code><a href="reference/cp_adequacy.html">?cp_adequacy</a></code>: the requirement uses the fitted R-squared, so it answers whether this sample was adequate for the model it produced, not how large a sample should have been collected.</p>
-<p><strong>Performance is reported per basis, never as one number.</strong> Apparent 0.739, bootstrap-corrected 0.692, held out 0.595 are the same model measured three ways, and the spread is the point. The bootstrap row says in its own note that it refits one formula and does not repeat imputation, selection or tuning, so it is not validation of a modelling strategy. Full-process validation is a later release and this must not be read as providing it.</p>
+<p><strong>Performance is reported per basis, never as one number.</strong> The same model measured four ways, and the spread is the point.</p>
+<p>The two bootstrap rows answer different questions. The fixed-model one, from <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code>, corrects the optimism of estimating coefficients for one formula. The full-process one refits the whole strategy inside every resample, so each resample gets its own spline knot placement, its own <code>datadist</code> and its own factor-level handling, all three being learned from data. It also states what it does <strong>not</strong> re-execute, which is imputation, selection and tuning, because the package does not do them yet and a strategy containing them would not be fully validated by it either.</p>
+<p>They are different estimators with their own Monte Carlo error, so a small gap between them is not evidence of anything.</p>
+<p>Resampling is by whole patient when the project declares a cluster. Resampling rows would treat two visits by one person as two independent facts, which narrows every interval it touches.</p>
 <p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/cp_predict.html">cp_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
 <p><strong>The reading error between ticks is measured and reported.</strong> A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis’s own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.</p>
 </div>
@@ -333,7 +337,7 @@
 <td>v0.3</td>
 <td>full-process validation, calibration, nomograms</td>
 <td>
-<code><a href="reference/cp_validate.html">cp_validate()</a></code> and <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> done for the fixed model; full-process resampling and the flexible calibration curve to come</td>
+<code><a href="reference/cp_validate.html">cp_validate()</a></code> with full-process and clustered resampling, and <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code>, done; imputation inside resampling and the flexible calibration curve to come</td>
 </tr>
 <tr>
 <td>v0.4</td>

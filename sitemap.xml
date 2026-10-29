@@ -11,6 +11,7 @@
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_count.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_eda.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_event_indicator.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_full_process.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_mean_sd.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_median_iqr.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_metrics.html</loc></url>
@@ -24,6 +25,7 @@
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_predict.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_project.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_reading_error.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_resample.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_restore_levels.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_schema.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/cp_split.html</loc></url>

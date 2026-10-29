@@ -44,7 +44,7 @@ commonest way a published model flatters itself.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cp_validate</span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cp_validate</span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200L</span>, full_process <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,7 +60,12 @@ commonest way a published model flatters itself.</p>
 
 
 <dt id="arg-b">B<a class="anchor" aria-label="anchor" href="#arg-b"></a></dt>
-<dd><p>Bootstrap resamples for <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code>.</p></dd>
+<dd><p>Bootstrap resamples.</p></dd>
+
+
+<dt id="arg-full-process">full_process<a class="anchor" aria-label="anchor" href="#arg-full-process"></a></dt>
+<dd><p>Also run the full-process bootstrap. Off by default
+because it refits <code>B</code> times and costs accordingly.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -79,10 +84,11 @@ interaction screening, so it is not validation of a modelling strategy
 that includes those steps. The specification requires that distinction be
 made rather than assumed, and this column is where it is made.</p></li>
 <li><p><strong>held out</strong>, rows the project's split reserved. Scored once.</p></li>
-</ul><p>Full-process validation, which re-executes the whole data-dependent
-strategy inside every resample, is a later release. Until it exists this
-function must not be read as providing it.</p>
-    </div>
+<li><p><strong>bootstrap, full process</strong>, with <code>full_process = TRUE</code>. Refits the
+whole strategy inside every resample, so the optimism corrected includes
+the data-dependent choices the fixed-model bootstrap inherits. See
+<code><a href="cp_full_process.html">cp_full_process()</a></code> for what it does and does not re-execute.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -97,7 +103,7 @@ function must not be read as providing it.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)  slope=1.0000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bootstrap, fixed model   n=190   events=16   C=0.5010  slope=0.3818</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   held out                 n=110   events=12   C=0.3844 (0.2074-0.5613)  slope=-1.1131</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Bootstrap validates the fixed model only. Not a strategy.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Fixed-model bootstrap only. Not validation of a strategy.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
