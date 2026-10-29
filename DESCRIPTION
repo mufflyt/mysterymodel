@@ -23,6 +23,7 @@ Imports:
     digest,
     grDevices,
     graphics,
+    pmsampsize,
     pROC,
     rms,
     stats,

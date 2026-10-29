@@ -7,8 +7,11 @@ nom_fixture <- function(..., n = 400, seed = 1978) {
   project <- cp_project("uds", "event",
                         c("age", "bmi", "sex", "prior_uti"),
                         cohort = cohort)
+  # These fixtures are small for speed, so the adequacy warning fires by
+  # design. It is tested on its own in test-sample-size.R; here it would
+  # only drown the nomogram failures this file exists to show.
   list(cohort = cohort,
-       model = cp_model(project, cohort, ...))
+       model = suppressWarnings(cp_model(project, cohort, ...)))
 }
 
 test_that("a linear nomogram reads back exactly", {

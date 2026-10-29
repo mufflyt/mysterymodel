@@ -26,14 +26,14 @@ test_that("nonlinear terms must be predictors", {
 
 test_that("the model keeps x and y, which validation needs", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort, nonlinear = "age")
+  m <- suppressWarnings(cp_model(f$project, f$cohort, nonlinear = "age"))
   expect_false(is.null(m$fit$x))
   expect_false(is.null(m$fit$y))
 })
 
 test_that("the model stores no copy of the cohort", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort, nonlinear = "age")
+  m <- suppressWarnings(cp_model(f$project, f$cohort, nonlinear = "age"))
   stored <- vapply(m, function(el) {
     is.data.frame(el) && nrow(el) > 1L
   }, logical(1))
@@ -42,8 +42,8 @@ test_that("the model stores no copy of the cohort", {
 
 test_that("cp_predict reproduces rms::predict exactly", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort, nonlinear = "age",
-                interactions = list(c("prior_uti", "sex")))
+  m <- suppressWarnings(cp_model(f$project, f$cohort, nonlinear = "age",
+                interactions = list(c("prior_uti", "sex"))))
   mine <- cp_predict(m, f$cohort)$.pred
   old <- options(datadist = m$datadist)
   on.exit(options(old), add = TRUE)
@@ -54,7 +54,7 @@ test_that("cp_predict reproduces rms::predict exactly", {
 
 test_that("a level the model never saw is refused by name", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort)
+  m <- suppressWarnings(cp_model(f$project, f$cohort))
   odd <- f$cohort[1:3, ]
   odd$sex <- "unrecorded"
   expect_error(cp_predict(m, odd), "unrecorded")
@@ -62,7 +62,7 @@ test_that("a level the model never saw is refused by name", {
 
 test_that("a missing predictor is refused, or returned as NA on request", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort)
+  m <- suppressWarnings(cp_model(f$project, f$cohort))
   gap <- f$cohort[1:4, ]
   gap$bmi[2] <- NA
   expect_error(cp_predict(m, gap), "missing predictor")
@@ -73,7 +73,7 @@ test_that("a missing predictor is refused, or returned as NA on request", {
 
 test_that("extrapolation is labelled rather than hidden", {
   f <- fixture()
-  m <- cp_model(f$project, f$cohort)
+  m <- suppressWarnings(cp_model(f$project, f$cohort))
   far <- f$cohort[1:2, ]
   far$age <- c(5, 200)
   expect_true(all(cp_predict(m, far)$.extrapolated))

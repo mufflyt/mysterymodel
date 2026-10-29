@@ -99,6 +99,21 @@ cp_model <- function(project, cohort, nonlinear = NULL,
 
   fit <- rms::lrm(form, data = dev, x = TRUE, y = TRUE)
 
+  # Section 19: the parameter budget is reported, and an overly ambitious
+  # one warns rather than passing quietly. Splines and interactions are
+  # counted, because they are the terms that get spent without being noticed.
+  adequacy <- cp_adequacy(
+    n = nrow(dev), events = sum(y),
+    parameters = length(stats::coef(fit)) - 1L,
+    nagelkerke = unname(fit$stats["R2"]),
+    likelihood_ratio = unname(fit$stats["Model L.R."]))
+  if (!isTRUE(adequacy$adequate)) {
+    warning("the development sample may be too small for this model: ",
+            adequacy$reason, ". Coefficients from a sample this size are ",
+            "expected to be overfitted; see the adequacy element of the ",
+            "returned object.", call. = FALSE)
+  }
+
   structure(
     list(project    = project,
          fit        = fit,
@@ -110,6 +125,7 @@ cp_model <- function(project, cohort, nonlinear = NULL,
          n_dev      = nrow(dev),
          events_dev = sum(y),
          n_held     = nrow(parts$held),
+         adequacy   = adequacy,
          schema     = cp_schema(project, dev),
          fingerprint = digest::digest(
            list(coef = unname(stats::coef(fit)),
@@ -128,7 +144,10 @@ print.cp_model <- function(x, ...) {
     cat("  held out   ", x$n_held, " rows\n", sep = "")
   }
   cat("  parameters ", length(stats::coef(x$fit)) - 1L,
-      " non-intercept\n", sep = "")
+      " non-intercept", if (isTRUE(x$adequacy$adequate)) "" else
+        sprintf(", %d short of the sample they need",
+                as.integer(ceiling(x$adequacy$short_by))),
+      "\n", sep = "")
   cat("  apparent C ", sprintf("%.4f", unname(x$fit$stats["C"])), "\n",
       sep = "")
   cat("  fingerprint ", substr(x$fingerprint, 1, 16), "\n", sep = "")
