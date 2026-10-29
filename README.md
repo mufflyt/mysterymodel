@@ -99,6 +99,29 @@ project
 
 `cp_project()` fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.
 
+Eligibility is applied by named rule, and every row that leaves is attributed to the rule that excluded it:
+
+```r
+clean <- cp_clean(raw, rules = list(
+  "aged 40 or over" = ~ age >= 40,
+  "plausible BMI"   = ~ bmi >= 16 & bmi <= 55
+))
+
+clean
+#> <cp_cohort>  300 in, 282 out, 18 excluded
+#>      300  rows as supplied
+#>      -10  aged 40 or over (did not meet the criterion)
+#>      290  remaining
+#>       -6  plausible BMI (did not meet the criterion)
+#>      284  remaining
+#>       -2  plausible BMI (criterion could not be determined for these rows)
+#>      282  remaining
+```
+
+Rows in must equal rows out plus every exclusion, and `cp_clean()` errors rather than returning a cohort it cannot reconcile. A rule that evaluates to `NA` is not a pass: those rows are excluded under their own heading, because treating unknown eligibility as eligible and as ineligible are different studies and the difference belongs in the flow diagram.
+
+`cp_eda()` then describes the cohort with the denominator each percentage is taken over and the missing count beside it, since a percentage whose denominator quietly excludes missing rows reads as a fact about the cohort when it is a fact about the rows that happened to be complete.
+
 Then fit, validate and draw:
 
 ```r
@@ -147,7 +170,7 @@ Releases and acceptance gates are defined in full in the [specification](inst/im
 | release | deliverable | state |
 |---|---|---|
 | spike | easystats/`rms` capability matrix | [done](inst/capability-matrix.md) |
-| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()` and the sample-size gate done; `cp_clean()`, `cp_eda()`, `cp_collinearity()` to come |
+| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | `cp_project()`, the sample-size gate, `cp_clean()` and `cp_eda()` done; `cp_collinearity()` and `cp_univariate()` to come |
 | v0.2 | `rms` modelling, nonlinearity, interaction, selection | `cp_model()`, `cp_predict()` done; selection to come |
 | v0.3 | full-process validation, calibration, nomograms | `cp_validate()` and `cp_nomogram()` done for the fixed model; full-process resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |

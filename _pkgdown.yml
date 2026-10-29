@@ -10,6 +10,13 @@ reference:
       Written down and checked before anything is fitted.
     contents:
       - cp_project
+  - title: Prepare
+    desc: >
+      Eligibility with a ledger that reconciles, and a description that
+      carries its denominators.
+    contents:
+      - cp_clean
+      - cp_eda
   - title: Fit and predict
     desc: >
       The model, and risks from exactly that model.
