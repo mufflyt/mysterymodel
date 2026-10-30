@@ -144,3 +144,22 @@ test_that("the scaled Brier reference stays the development cohort's", {
   expect_equal(held$brier_scaled, 1 - held$brier / reference)
   expect_match(held$note, "not this sample's own")
 })
+
+test_that("the resample count is checked against its own name", {
+  # The message names `B` because that is what every caller writes. It was
+  # parameterised for a second caller that never arrived.
+  expect_named(formals(mysterymodel:::mm_check_resamples), "B")
+  for (bad in list(0, -1, 2.7, NA_integer_, NaN, Inf, "20", c(10, 10),
+                   integer(0), TRUE)) {
+    expect_error(mysterymodel:::mm_check_resamples(bad), "`B`")
+  }
+  expect_identical(mysterymodel:::mm_check_resamples(200), 200L)
+  expect_identical(mysterymodel:::mm_check_resamples(200.0), 200L)
+
+  # Refused before any seed is set, so a rejected call leaves the caller's
+  # random-number state as it found it.
+  set.seed(42)
+  before <- .Random.seed
+  expect_error(mysterymodel:::mm_check_resamples(0))
+  expect_identical(.Random.seed, before)
+})

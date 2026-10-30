@@ -33,7 +33,6 @@ test_that("a missing predictor and a missing outcome are counted apart", {
   # right in its totals and wrong about which rows it names, and every other
   # assertion in this file is downstream of the mask being right.
   expect_identical(e$usable, !no_pred & !no_out)
-  expect_identical(e$predictable, !no_pred)
 
   expect_equal(e$n_total, nrow(held))
   expect_equal(e$n_scored, sum(!no_pred & !no_out))
@@ -210,4 +209,30 @@ test_that("complete data is unaffected in every reported number", {
                   "Complete case")
   expect_no_match(v$metrics$note[v$metrics$basis == "held out"],
                   "Complete case")
+})
+
+test_that("eligibility always requires the outcome, and says which rows", {
+  # There is no switch for scoring without an outcome. A prediction wants no
+  # outcome and takes mm_predict()'s own path, which selects its rows and
+  # refuses an incomplete one; relaxing the rule here would let a row with no
+  # outcome into a sample that a metric is then computed over.
+  expect_named(formals(mysterymodel:::mm_evaluable),
+               c("project", "frame", "require_cluster"))
+
+  project <- mixed_project()
+  held <- mixed_cohort()
+  held <- held[held$year >= 2023, , drop = FALSE]
+  e <- mm_evaluable(project, held)
+  expect_equal(e$n_scored, sum(stats::complete.cases(
+    held[, c(project$outcome, project$predictors)])))
+  expect_false("predictable" %in% names(e))
+
+  # And a row missing only the outcome is excluded from the scored sample
+  # while still being counted under its own heading.
+  one <- held
+  one$event[1] <- NA
+  one[1, project$predictors] <- held[1, project$predictors]
+  e2 <- mm_evaluable(project, one)
+  expect_false(e2$usable[1])
+  expect_gte(e2$missing_outcome, 1L)
 })

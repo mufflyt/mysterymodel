@@ -273,8 +273,7 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          incomplete_by = by_variable,
          lost_levels = lost,
          leakage = leakage,
-         eligibility = eligible[setdiff(names(eligible),
-                                        c("usable", "predictable"))],
+         eligibility = eligible[setdiff(names(eligible), "usable")],
          n_held     = nrow(parts$held),
          adequacy   = adequacy,
          schema     = mm_schema(project, dev),
@@ -317,7 +316,6 @@ print.mm_model <- function(x, ...) {
   invisible(x)
 }
 
-`%||%` <- function(a, b) if (is.null(a)) b else a
 
 #' Turn an outcome column into a 0/1 indicator
 #'
@@ -384,9 +382,10 @@ mm_schema <- function(project, dev) {
 #'
 #' @param project A [mm_project()].
 #' @param frame Rows to assess.
-#' @param require_outcome Whether the outcome must be observed. `TRUE` for
-#'   fitting and for scoring that will be turned into a metric; `FALSE` when
-#'   only a prediction is wanted.
+#' The outcome must be observed. Every caller is fitting a model or scoring
+#' one into a metric, and both need it; a prediction wants no outcome and does
+#' not come through here, [mm_predict()] selects its own rows.
+#'
 #' @param require_cluster Whether a declared `cluster_id` must be observed.
 #'   `TRUE` for a development frame, because a row that cannot be assigned to a
 #'   patient cannot take part in clustered resampling, and a bootstrap run on a
@@ -394,17 +393,16 @@ mm_schema <- function(project, dev) {
 #'   different model from the one reported. `FALSE` for held-out rows, which are
 #'   scored once and never resampled, so an identifier they lack costs nothing.
 #'
-#' @return A list: `usable` and `predictable` masks, the counts
-#'   `n_total`, `n_scored`, `n_excluded`, `missing_predictor`,
-#'   `missing_outcome`, `missing_both`, and `by_variable`.
+#' @return A list: the `usable` mask, the counts `n_total`, `n_scored`,
+#'   `n_excluded`, `missing_predictor`, `missing_outcome`, `missing_both`,
+#'   and `by_variable`.
 #' @keywords internal
-mm_evaluable <- function(project, frame, require_outcome = TRUE,
-                         require_cluster = FALSE) {
+mm_evaluable <- function(project, frame, require_cluster = FALSE) {
   if (!is.data.frame(frame)) {
     stop("`frame` must be a data frame.", call. = FALSE)
   }
   needs_cluster <- isTRUE(require_cluster) && !is.null(project$cluster_id)
-  wanted <- c(project$predictors, if (require_outcome) project$outcome,
+  wanted <- c(project$predictors, project$outcome,
               if (needs_cluster) project$cluster_id)
   absent <- setdiff(wanted, names(frame))
   if (length(absent)) {
@@ -419,15 +417,13 @@ mm_evaluable <- function(project, frame, require_outcome = TRUE,
   }
   no_predictor <- blank(c(project$predictors,
                           if (needs_cluster) project$cluster_id))
-  no_outcome <- if (require_outcome) blank(project$outcome) else
-    rep(FALSE, n)
+  no_outcome <- blank(project$outcome)
 
   by_variable <- vapply(wanted, function(v) sum(is.na(frame[[v]])),
                         integer(1))
 
   usable <- !no_predictor & !no_outcome
   list(usable              = usable,
-       predictable         = !no_predictor,
        n_total             = n,
        n_scored            = sum(usable),
        n_excluded          = sum(!usable),

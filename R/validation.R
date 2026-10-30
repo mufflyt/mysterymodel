@@ -49,35 +49,34 @@ mm_no_information <- function(rate) rate * (1 - rate)
 #' refused call leaves the random-number state exactly as it found it.
 #'
 #' @param B The count to check.
-#' @param what The argument's name, for the message.
 #'
 #' @return `B` as a whole number, invisibly.
 #' @keywords internal
-mm_check_resamples <- function(B, what = "B") {
+mm_check_resamples <- function(B) {
   if (!is.numeric(B)) {
-    stop("`", what, "` must be a single whole number of resamples, and is ",
+    stop("`B` must be a single whole number of resamples, and is ",
          if (!length(B)) "empty" else paste0("of class ", class(B)[1]),
          ".", call. = FALSE)
   }
   if (length(B) != 1L) {
-    stop("`", what, "` must be a single whole number of resamples, and has ",
+    stop("`B` must be a single whole number of resamples, and has ",
          "length ", length(B), ".", call. = FALSE)
   }
   if (is.na(B)) {
-    stop("`", what, "` is ", if (is.nan(B)) "NaN" else "NA",
+    stop("`B` is ", if (is.nan(B)) "NaN" else "NA",
          ", which is not a number of resamples.", call. = FALSE)
   }
   if (!is.finite(B)) {
-    stop("`", what, "` is ", format(B), ". A bootstrap cannot be run an ",
+    stop("`B` is ", format(B), ". A bootstrap cannot be run an ",
          "infinite number of times.", call. = FALSE)
   }
   if (B != trunc(B)) {
-    stop("`", what, "` is ", format(B), ", which is not a whole number of ",
+    stop("`B` is ", format(B), ", which is not a whole number of ",
          "resamples. Truncating it to ", trunc(B), " would answer a question ",
          "that was not asked.", call. = FALSE)
   }
   if (B < 1) {
-    stop("`", what, "` is ", format(B), ". At least one resample is needed ",
+    stop("`B` is ", format(B), ". At least one resample is needed ",
          "to estimate optimism.", call. = FALSE)
   }
   invisible(as.integer(B))
@@ -323,7 +322,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                  eligibility = lapply(
                    list(development = dev_eligible, held_out = held_eligible),
                    function(e) if (is.null(e)) NULL else
-                     e[setdiff(names(e), c("usable", "predictable"))]),
+                     e[setdiff(names(e), "usable")]),
                  fingerprint = model$fingerprint),
             class = "mm_validation")
 }

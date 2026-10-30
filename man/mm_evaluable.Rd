@@ -4,16 +4,15 @@
 \alias{mm_evaluable}
 \title{Which rows a complete-data model can be fitted to, or scored and counted on}
 \usage{
-mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
+mm_evaluable(project, frame, require_cluster = FALSE)
 }
 \arguments{
 \item{project}{A \code{\link[=mm_project]{mm_project()}}.}
 
-\item{frame}{Rows to assess.}
-
-\item{require_outcome}{Whether the outcome must be observed. \code{TRUE} for
-fitting and for scoring that will be turned into a metric; \code{FALSE} when
-only a prediction is wanted.}
+\item{frame}{Rows to assess.
+The outcome must be observed. Every caller is fitting a model or scoring
+one into a metric, and both need it; a prediction wants no outcome and does
+not come through here, \code{\link[=mm_predict]{mm_predict()}} selects its own rows.}
 
 \item{require_cluster}{Whether a declared \code{cluster_id} must be observed.
 \code{TRUE} for a development frame, because a row that cannot be assigned to a
@@ -23,9 +22,9 @@ different model from the one reported. \code{FALSE} for held-out rows, which are
 scored once and never resampled, so an identifier they lack costs nothing.}
 }
 \value{
-A list: \code{usable} and \code{predictable} masks, the counts
-\code{n_total}, \code{n_scored}, \code{n_excluded}, \code{missing_predictor},
-\code{missing_outcome}, \code{missing_both}, and \code{by_variable}.
+A list: the \code{usable} mask, the counts \code{n_total}, \code{n_scored},
+\code{n_excluded}, \code{missing_predictor}, \code{missing_outcome}, \code{missing_both},
+and \code{by_variable}.
 }
 \description{
 One rule, read by fitting and by both kinds of validation, so that the

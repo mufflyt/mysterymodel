@@ -121,8 +121,7 @@ mm_full_process <- function(model, cohort, B = 200L,
 
   list(optimism = optimism, corrected = corrected, apparent = apparent,
        no_information_brier = no_information,
-       eligibility = eligible[setdiff(names(eligible),
-                                      c("usable", "predictable"))],
+       eligibility = eligible[setdiff(names(eligible), "usable")],
        valid = valid, B = B, adequate = adequate, note = note,
        covers = c("knot placement", "datadist", "factor levels"),
        failures = unique(failures))
