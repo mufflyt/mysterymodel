@@ -103,3 +103,44 @@ test_that("B must be a whole number of at least one resample", {
   expect_error(mm_validate(f$model, f$cohort, B = 0),
                "At least one resample")
 })
+
+test_that("both bootstraps read one four-fifths threshold", {
+  expect_equal(mysterymodel:::mm_min_resamples(100), 80)
+  expect_equal(mysterymodel:::mm_min_resamples(25), 20)
+  # Not a round multiple: the threshold rounds up, so 0.8 is a floor and not
+  # an invitation to report 79 of 99 as adequate.
+  expect_equal(mysterymodel:::mm_min_resamples(99), 80)
+
+  f <- val_fixture()
+  v <- suppressWarnings(mm_validate(f$model, f$cohort, B = 10,
+                                    full_process = TRUE))
+  expect_equal(v$full_process_detail$B, 10L)
+  expect_true(v$fixed_model$adequate)
+  expect_true(v$full_process_detail$adequate)
+})
+
+test_that("the scaled Brier reference stays the development cohort's", {
+  expect_equal(mysterymodel:::mm_no_information(0.2), 0.16)
+  expect_equal(mysterymodel:::mm_no_information(0), 0)
+  expect_equal(mysterymodel:::mm_no_information(1), 0)
+
+  # Computed here from the fitted rows, not read back off the object, so this
+  # fails if any basis is ever scaled by its own prevalence instead.
+  f <- val_fixture()
+  v <- suppressWarnings(mm_validate(f$model, f$cohort, B = 10,
+                                    full_process = TRUE))
+  dev <- f$cohort[f$cohort$year < 2023, , drop = FALSE]
+  rate <- mean(mysterymodel:::mm_event_indicator(dev$event, NULL))
+  reference <- rate * (1 - rate)
+
+  scored <- v$metrics[!is.na(v$metrics$brier_ref), ]
+  expect_gt(nrow(scored), 1L)
+  expect_true(all(scored$brier_ref == reference))
+  expect_equal(v$full_process_detail$no_information_brier, reference)
+
+  # The held-out rows have a prevalence of their own, and it is not the one
+  # the column is scaled by, which is the condition the note describes.
+  held <- v$metrics[v$metrics$basis == "held out", ]
+  expect_equal(held$brier_scaled, 1 - held$brier / reference)
+  expect_match(held$note, "not this sample's own")
+})

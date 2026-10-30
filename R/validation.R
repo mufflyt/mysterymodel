@@ -1,3 +1,31 @@
+#' The fewest resamples a bootstrap correction may be averaged over
+#'
+#' Four fifths of the resamples requested. Both bootstraps apply it: `rms`
+#' keeps only the resamples that fitted and the full-process loop counts its
+#' own failures, and an optimism averaged over the survivors of a selection
+#' nobody reported is not the quantity it claims to be. The threshold is a
+#' methodological judgement, so it is written once rather than in each place
+#' that reaches for it, where the two could drift apart and the notes would
+#' still both say "four fifths".
+#'
+#' @param B Resamples requested.
+#' @return The fewest that must have fitted.
+#' @keywords internal
+mm_min_resamples <- function(B) ceiling(0.8 * B)
+
+#' The Brier score of predicting one constant risk for everyone
+#'
+#' The denominator a scaled Brier, or skill score, is taken against. Written
+#' once because the choice of *which* rate goes in is the whole question: a
+#' column of scaled Briers each scaled by its own sample's prevalence is a set
+#' of scores against different references, and a reader compares down the
+#' column. The rate stays the caller's to supply for that reason.
+#'
+#' @param rate An event rate.
+#' @return The no-information Brier.
+#' @keywords internal
+mm_no_information <- function(rate) rate * (1 - rate)
+
 #' Check a resample count before anything is drawn
 #'
 #' One contract, read by every entry point that resamples, so a public
@@ -167,7 +195,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   # own prevalence would be the conventional within-sample skill score, but a
   # column of those is a set of scores against different references, and a
   # reader compares down a column.
-  dev_reference <- mean(y_dev) * (1 - mean(y_dev))
+  dev_reference <- mm_no_information(mean(y_dev))
 
   rows[[length(rows) + 1L]] <- mm_withhold_identity_calibration(
     mm_metrics(
@@ -206,7 +234,8 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   fitted_resamples <- if ("n" %in% colnames(val)) {
     unname(val["Dxy", "n"])
   } else NA_integer_
-  enough <- is.na(fitted_resamples) || fitted_resamples >= ceiling(0.8 * B)
+  enough <- is.na(fitted_resamples) ||
+    fitted_resamples >= mm_min_resamples(B)
   if (!enough) {
     warning("rms fitted only ", fitted_resamples, " of ", B,
             " bootstrap resamples, so the fixed-model correction is averaged ",
@@ -434,7 +463,8 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
   # B: the denominator a skill score is taken against. Left to itself each
   # sample uses its own prevalence, which makes a column of scaled Briers
   # a set of scores against different references.
-  no_information <- if (is.null(reference)) rate * (1 - rate) else reference
+  no_information <- if (is.null(reference)) mm_no_information(rate) else
+    reference
 
   aside <- character(0)
   if (is.na(ci[1]) && !is.na(as.numeric(roc$auc))) {
@@ -450,14 +480,14 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
                               paste(withheld, collapse = " and ")))
   }
   if (!is.null(reference) &&
-      !isTRUE(all.equal(reference, rate * (1 - rate)))) {
+      !isTRUE(all.equal(reference, mm_no_information(rate)))) {
     aside <- c(aside, sprintf(paste("the scaled Brier is taken against the",
                                     "reference %.5f, not this sample's own",
                                     "%.5f, so the column compares like with",
                                     "like; against its own it would read",
                                     "%.4f"),
-                              no_information, rate * (1 - rate),
-                              1 - brier / (rate * (1 - rate))))
+                              no_information, mm_no_information(rate),
+                              1 - brier / mm_no_information(rate)))
   }
 
   data.frame(basis = basis, n = length(y), events = sum(y),
