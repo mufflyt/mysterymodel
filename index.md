@@ -21,17 +21,34 @@ objects**](https://mufflyt.github.io/mysterymodel/inst/capability-matrix.md).
 
 The statistical spine of the §15 starting milestone now runs on
 synthetic data:
-[`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md)
+[`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md)
 →
-[`cp_model()`](https://mufflyt.github.io/mysterymodel/reference/cp_model.md)
+[`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
 →
-[`cp_predict()`](https://mufflyt.github.io/mysterymodel/reference/cp_predict.md)
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
 →
-[`cp_validate()`](https://mufflyt.github.io/mysterymodel/reference/cp_validate.md)
+[`mm_validate()`](https://mufflyt.github.io/mysterymodel/reference/mm_validate.md)
 →
-[`cp_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/cp_nomogram.md),
-65 tests, `R CMD check` clean. The data-preparation and reporting ends
+[`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md),
+193 tests, `R CMD check` clean. The data-preparation and reporting ends
 of that chain are not built yet; the roadmap below says which.
+
+## Articles
+
+Three, each on synthetic data, each showing its own numbers rather than
+describing them:
+
+- [**From a raw export to a checked
+  nomogram**](https://mufflyt.github.io/mysterymodel/articles/mysterymodel.html).
+  The whole pipeline in the order it has to run.
+- [**Which number are you
+  reporting?**](https://mufflyt.github.io/mysterymodel/articles/validation.html).
+  Four c-statistics from one fit, what separates them, and the one
+  caution about comparing two of them to each other.
+- [**Reading the nomogram
+  back**](https://mufflyt.github.io/mysterymodel/articles/nomogram.html).
+  The agreement check done by hand, including the clamped-interpolation
+  error that reported 1.1% for a patient whose risk was 0.6%.
 
 ## The idea
 
@@ -113,7 +130,7 @@ it afterwards from whichever code happened to run.
 
 library(mysterymodel)
 
-project <- cp_project(
+project <- mm_project(
   slug           = "uds",
   outcome        = "event",
   predictors     = c("age", "bmi", "sex"),
@@ -125,7 +142,7 @@ project <- cp_project(
 )
 
 project
-#> <cp_project: uds>
+#> <mm_project: uds>
 #>   outcome    event (event = 1)
 #>   predictors 3: age, bmi, sex
 #>   split      year < 2023 develops, the rest is held out
@@ -133,7 +150,7 @@ project
 #>   seed       1978
 ```
 
-[`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md)
+[`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md)
 fails closed on configurations that cannot be meant, rather than letting
 them fail later as something harder to read. It implements the
 conditions the specification names: an outcome that is also a predictor
@@ -147,13 +164,13 @@ attributed to the rule that excluded it:
 
 ``` r
 
-clean <- cp_clean(raw, rules = list(
+clean <- mm_clean(raw, rules = list(
   "aged 40 or over" = ~ age >= 40,
   "plausible BMI"   = ~ bmi >= 16 & bmi <= 55
 ))
 
 clean
-#> <cp_cohort>  300 in, 282 out, 18 excluded
+#> <mm_cohort>  300 in, 282 out, 18 excluded
 #>      300  rows as supplied
 #>      -10  aged 40 or over (did not meet the criterion)
 #>      290  remaining
@@ -164,14 +181,14 @@ clean
 ```
 
 Rows in must equal rows out plus every exclusion, and
-[`cp_clean()`](https://mufflyt.github.io/mysterymodel/reference/cp_clean.md)
+[`mm_clean()`](https://mufflyt.github.io/mysterymodel/reference/mm_clean.md)
 errors rather than returning a cohort it cannot reconcile. A rule that
 evaluates to `NA` is not a pass: those rows are excluded under their own
 heading, because treating unknown eligibility as eligible and as
 ineligible are different studies and the difference belongs in the flow
 diagram.
 
-[`cp_eda()`](https://mufflyt.github.io/mysterymodel/reference/cp_eda.md)
+[`mm_eda()`](https://mufflyt.github.io/mysterymodel/reference/mm_eda.md)
 then describes the cohort with the denominator each percentage is taken
 over and the missing count beside it, since a percentage whose
 denominator quietly excludes missing rows reads as a fact about the
@@ -181,32 +198,32 @@ Then fit, validate and draw:
 
 ``` r
 
-model <- cp_model(project, cohort, nonlinear = "age",
+model <- mm_model(project, cohort, nonlinear = "age",
                   interactions = list(c("prior_uti", "sex")))
 #> Warning: the development sample may be too small for this model: 338 rows
 #> is 582 short of the 920 a model of 7 parameter(s) needs at 10.1% prevalence
 #> for 90% shrinkage.
 
 model$adequacy
-#> <cp_adequacy>  adequate: FALSE
+#> <mm_adequacy>  adequate: FALSE
 #>   development 338 rows, 34 events (10.1%)
 #>   parameters  7 non-intercept, 4.9 events each (description, not the criterion)
 #>   shrinkage   0.697 expected, heuristic
 #>   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)
 
-cp_validate(model, cohort, B = 200, full_process = TRUE)
-#> <cp_validation>  full-process: TRUE
+mm_validate(model, cohort, B = 200, full_process = TRUE)
+#> <mm_validation>  full-process: TRUE
 #>   apparent                 n=404 events=45 C=0.6647 (0.5749-0.7546)  slope=1.0000
 #>   bootstrap, fixed model   n=404 events=45 C=0.5990                  slope=0.6779
 #>   bootstrap, full process  n=404 events=45 C=0.6112                  slope=0.7256
 #>   held out                 n=196 events=22 C=0.7858 (0.6770-0.8946)  slope=1.7370
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 200 of 200 valid.
 
-cp_nomogram(model, out_dir = "figures")
-#> <cp_nomogram>
+mm_nomogram(model, out_dir = "figures")
+#> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs cp_predict() 1.67e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 1.67e-16 (tolerance 1e-06)
 #>   off-tick reading error    0.000948 in risk, midway between ticks
 ```
 
@@ -218,7 +235,7 @@ is reported as description and labelled as such. Note the agreement
 between the two independent routes to the same conclusion: the heuristic
 shrinkage of 0.697 and the bootstrap-estimated calibration slope of
 0.751 below. One circularity is disclosed rather than hidden, in
-[`?cp_adequacy`](https://mufflyt.github.io/mysterymodel/reference/cp_adequacy.md):
+[`?mm_adequacy`](https://mufflyt.github.io/mysterymodel/reference/mm_adequacy.md):
 the requirement uses the fitted R-squared, so it answers whether this
 sample was adequate for the model it produced, not how large a sample
 should have been collected.
@@ -244,11 +261,11 @@ Resampling rows would treat two visits by one person as two independent
 facts, which narrows every interval it touches.
 
 **The nomogram is checked against the model, not assumed to match it.**
-[`cp_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/cp_nomogram.md)
+[`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md)
 reads the drawn nomogram back the way a clinician does, summing points
 and interpolating the printed axis without consulting the fit, then
 refuses to return if the result disagrees with
-[`cp_predict()`](https://mufflyt.github.io/mysterymodel/reference/cp_predict.md).
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md).
 Agreement holds to machine precision at tabulated ticks across linear,
 spline and interaction models.
 
@@ -269,9 +286,9 @@ section 12.
 | release | deliverable | state |
 |----|----|----|
 | spike | easystats/`rms` capability matrix | [done](https://mufflyt.github.io/mysterymodel/inst/capability-matrix.md) |
-| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | [`cp_project()`](https://mufflyt.github.io/mysterymodel/reference/cp_project.md), the sample-size gate, [`cp_clean()`](https://mufflyt.github.io/mysterymodel/reference/cp_clean.md) and [`cp_eda()`](https://mufflyt.github.io/mysterymodel/reference/cp_eda.md) done; `cp_collinearity()` and `cp_univariate()` to come |
-| v0.2 | `rms` modelling, nonlinearity, interaction, selection | [`cp_model()`](https://mufflyt.github.io/mysterymodel/reference/cp_model.md), [`cp_predict()`](https://mufflyt.github.io/mysterymodel/reference/cp_predict.md) done; selection to come |
-| v0.3 | full-process validation, calibration, nomograms | [`cp_validate()`](https://mufflyt.github.io/mysterymodel/reference/cp_validate.md) with full-process and clustered resampling, and [`cp_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/cp_nomogram.md), done; imputation inside resampling and the flexible calibration curve to come |
+| v0.1 | cohort contract, cleaning, profile, EDA, collinearity | [`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md), the sample-size gate, [`mm_clean()`](https://mufflyt.github.io/mysterymodel/reference/mm_clean.md) and [`mm_eda()`](https://mufflyt.github.io/mysterymodel/reference/mm_eda.md) done; `mm_collinearity()` and `mm_univariate()` to come |
+| v0.2 | `rms` modelling, nonlinearity, interaction, selection | [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md), [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md) done; selection to come |
+| v0.3 | full-process validation, calibration, nomograms | [`mm_validate()`](https://mufflyt.github.io/mysterymodel/reference/mm_validate.md) with full-process and clustered resampling, and [`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md), done; imputation inside resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |
 
 `rms` is now an `Imports` rather than a plan, because the package fits
@@ -287,7 +304,7 @@ general performance measures for the default model. It cannot. On an
 - `insight::get_predicted()` returns `NULL`. easystats has no prediction
   path for `lrm`, so every prediction-dependent helper inherits that,
   and
-  [`cp_predict()`](https://mufflyt.github.io/mysterymodel/reference/cp_predict.md)
+  [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
   must call `rms` directly.
 - `performance::model_performance()` returns only AIC, BIC, R2 and an
   RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those
@@ -311,6 +328,9 @@ general performance measures for the default model. It cannot. On an
 The reference analysis is a labelled corrected successor, not an exact
 reproduction of a legacy method
 ([DEC-001](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
+Every function takes the `mm_` prefix, after the package name, in place
+of the provisional `cp_` the specification carried
+([DEC-002](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
 
 ## Citation
 

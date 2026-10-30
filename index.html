@@ -31,7 +31,15 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/mysterymodel.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/nomogram.html">Reading the nomogram back</a></li>
+    <li><a class="dropdown-item" href="articles/validation.html">Which number are you reporting?</a></li>
+  </ul>
+</li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -56,7 +64,20 @@
 <h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
 <p>Early, and deliberately so. The <a href="inst/implementation-spec.html">implementation specification</a> is the contract of record, kept as received; settled questions are amended in the <a href="inst/decisions.html">decision log</a>. Section 14 requires a capability spike before any production module, and that spike is done: <a href="inst/capability-matrix.html"><strong>capability matrix for <code>rms</code> objects</strong></a>.</p>
-<p>The statistical spine of the §15 starting milestone now runs on synthetic data: <code><a href="reference/cp_project.html">cp_project()</a></code> → <code><a href="reference/cp_model.html">cp_model()</a></code> → <code><a href="reference/cp_predict.html">cp_predict()</a></code> → <code><a href="reference/cp_validate.html">cp_validate()</a></code> → <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code>, 65 tests, <code>R CMD check</code> clean. The data-preparation and reporting ends of that chain are not built yet; the roadmap below says which.</p>
+<p>The statistical spine of the §15 starting milestone now runs on synthetic data: <code><a href="reference/mm_project.html">mm_project()</a></code> → <code><a href="reference/mm_model.html">mm_model()</a></code> → <code><a href="reference/mm_predict.html">mm_predict()</a></code> → <code><a href="reference/mm_validate.html">mm_validate()</a></code> → <code><a href="reference/mm_nomogram.html">mm_nomogram()</a></code>, 193 tests, <code>R CMD check</code> clean. The data-preparation and reporting ends of that chain are not built yet; the roadmap below says which.</p>
+</div>
+<div class="section level2">
+<h2 id="articles">Articles<a class="anchor" aria-label="anchor" href="#articles"></a>
+</h2>
+<p>Three, each on synthetic data, each showing its own numbers rather than describing them:</p>
+<ul>
+<li>
+<a href="https://mufflyt.github.io/mysterymodel/articles/mysterymodel.html"><strong>From a raw export to a checked nomogram</strong></a>. The whole pipeline in the order it has to run.</li>
+<li>
+<a href="https://mufflyt.github.io/mysterymodel/articles/validation.html"><strong>Which number are you reporting?</strong></a>. Four c-statistics from one fit, what separates them, and the one caution about comparing two of them to each other.</li>
+<li>
+<a href="https://mufflyt.github.io/mysterymodel/articles/nomogram.html"><strong>Reading the nomogram back</strong></a>. The agreement check done by hand, including the clamped-interpolation error that reported 1.1% for a patient whose risk was 0.6%.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="the-idea">The idea<a class="anchor" aria-label="anchor" href="#the-idea"></a>
@@ -224,7 +245,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mufflyt.github.io/mysterymodel/">mysterymodel</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_project.html">cp_project</a></span><span class="op">(</span></span>
+<span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mm_project.html">mm_project</a></span><span class="op">(</span></span>
 <span>  slug           <span class="op">=</span> <span class="st">"uds"</span>,</span>
 <span>  outcome        <span class="op">=</span> <span class="st">"event"</span>,</span>
 <span>  predictors     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"bmi"</span>, <span class="st">"sex"</span><span class="op">)</span>,</span>
@@ -236,22 +257,22 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">project</span></span>
-<span><span class="co">#&gt; &lt;cp_project: uds&gt;</span></span>
+<span><span class="co">#&gt; &lt;mm_project: uds&gt;</span></span>
 <span><span class="co">#&gt;   outcome    event (event = 1)</span></span>
 <span><span class="co">#&gt;   predictors 3: age, bmi, sex</span></span>
 <span><span class="co">#&gt;   split      year &lt; 2023 develops, the rest is held out</span></span>
 <span><span class="co">#&gt;   cluster    pid</span></span>
 <span><span class="co">#&gt;   seed       1978</span></span></code></pre></div>
-<p><code><a href="reference/cp_project.html">cp_project()</a></code> fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.</p>
+<p><code><a href="reference/mm_project.html">mm_project()</a></code> fails closed on configurations that cannot be meant, rather than letting them fail later as something harder to read. It implements the conditions the specification names: an outcome that is also a predictor (which reports perfect discrimination, and so reads as success), a repeated predictor, temporal validation without a time field, a clustered design without an ID column, an outcome that does not vary, a positive class that is not an observed value, and a non-whole seed.</p>
 <p>Eligibility is applied by named rule, and every row that leaves is attributed to the rule that excluded it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_clean.html">cp_clean</a></span><span class="op">(</span><span class="va">raw</span>, rules <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mm_clean.html">mm_clean</a></span><span class="op">(</span><span class="va">raw</span>, rules <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="st">"aged 40 or over"</span> <span class="op">=</span> <span class="op">~</span> <span class="va">age</span> <span class="op">&gt;=</span> <span class="fl">40</span>,</span>
 <span>  <span class="st">"plausible BMI"</span>   <span class="op">=</span> <span class="op">~</span> <span class="va">bmi</span> <span class="op">&gt;=</span> <span class="fl">16</span> <span class="op">&amp;</span> <span class="va">bmi</span> <span class="op">&lt;=</span> <span class="fl">55</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">clean</span></span>
-<span><span class="co">#&gt; &lt;cp_cohort&gt;  300 in, 282 out, 18 excluded</span></span>
+<span><span class="co">#&gt; &lt;mm_cohort&gt;  300 in, 282 out, 18 excluded</span></span>
 <span><span class="co">#&gt;      300  rows as supplied</span></span>
 <span><span class="co">#&gt;      -10  aged 40 or over (did not meet the criterion)</span></span>
 <span><span class="co">#&gt;      290  remaining</span></span>
@@ -259,44 +280,44 @@
 <span><span class="co">#&gt;      284  remaining</span></span>
 <span><span class="co">#&gt;       -2  plausible BMI (criterion could not be determined for these rows)</span></span>
 <span><span class="co">#&gt;      282  remaining</span></span></code></pre></div>
-<p>Rows in must equal rows out plus every exclusion, and <code><a href="reference/cp_clean.html">cp_clean()</a></code> errors rather than returning a cohort it cannot reconcile. A rule that evaluates to <code>NA</code> is not a pass: those rows are excluded under their own heading, because treating unknown eligibility as eligible and as ineligible are different studies and the difference belongs in the flow diagram.</p>
-<p><code><a href="reference/cp_eda.html">cp_eda()</a></code> then describes the cohort with the denominator each percentage is taken over and the missing count beside it, since a percentage whose denominator quietly excludes missing rows reads as a fact about the cohort when it is a fact about the rows that happened to be complete.</p>
+<p>Rows in must equal rows out plus every exclusion, and <code><a href="reference/mm_clean.html">mm_clean()</a></code> errors rather than returning a cohort it cannot reconcile. A rule that evaluates to <code>NA</code> is not a pass: those rows are excluded under their own heading, because treating unknown eligibility as eligible and as ineligible are different studies and the difference belongs in the flow diagram.</p>
+<p><code><a href="reference/mm_eda.html">mm_eda()</a></code> then describes the cohort with the denominator each percentage is taken over and the missing count beside it, since a percentage whose denominator quietly excludes missing rows reads as a fact about the cohort when it is a fact about the rows that happened to be complete.</p>
 <p>Then fit, validate and draw:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cp_model.html">cp_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/mm_model.html">mm_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>                  interactions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prior_uti"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: the development sample may be too small for this model: 338 rows</span></span>
 <span><span class="co">#&gt; is 582 short of the 920 a model of 7 parameter(s) needs at 10.1% prevalence</span></span>
 <span><span class="co">#&gt; for 90% shrinkage.</span></span>
 <span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="va">adequacy</span></span>
-<span><span class="co">#&gt; &lt;cp_adequacy&gt;  adequate: FALSE</span></span>
+<span><span class="co">#&gt; &lt;mm_adequacy&gt;  adequate: FALSE</span></span>
 <span><span class="co">#&gt;   development 338 rows, 34 events (10.1%)</span></span>
 <span><span class="co">#&gt;   parameters  7 non-intercept, 4.9 events each (description, not the criterion)</span></span>
 <span><span class="co">#&gt;   shrinkage   0.697 expected, heuristic</span></span>
 <span><span class="co">#&gt;   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/cp_validate.html">cp_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span>, full_process <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;cp_validation&gt;  full-process: TRUE</span></span>
+<span><span class="fu"><a href="reference/mm_validate.html">mm_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">200</span>, full_process <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
 <span><span class="co">#&gt;   apparent                 n=404 events=45 C=0.6647 (0.5749-0.7546)  slope=1.0000</span></span>
 <span><span class="co">#&gt;   bootstrap, fixed model   n=404 events=45 C=0.5990                  slope=0.6779</span></span>
 <span><span class="co">#&gt;   bootstrap, full process  n=404 events=45 C=0.6112                  slope=0.7256</span></span>
 <span><span class="co">#&gt;   held out                 n=196 events=22 C=0.7858 (0.6770-0.8946)  slope=1.7370</span></span>
 <span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 200 of 200 valid.</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/cp_nomogram.html">cp_nomogram</a></span><span class="op">(</span><span class="va">model</span>, out_dir <span class="op">=</span> <span class="st">"figures"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;cp_nomogram&gt;</span></span>
+<span><span class="fu"><a href="reference/mm_nomogram.html">mm_nomogram</a></span><span class="op">(</span><span class="va">model</span>, out_dir <span class="op">=</span> <span class="st">"figures"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
-<span><span class="co">#&gt;   worst gap vs cp_predict() 1.67e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   worst gap vs mm_predict() 1.67e-16 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   off-tick reading error    0.000948 in risk, midway between ticks</span></span></code></pre></div>
 <p>Four things in that output are deliberate.</p>
-<p><strong>A model too large for its sample says so.</strong> The gate is the Riley requirement from <code>pmsampsize</code>, not the events-per-parameter rule, which is reported as description and labelled as such. Note the agreement between the two independent routes to the same conclusion: the heuristic shrinkage of 0.697 and the bootstrap-estimated calibration slope of 0.751 below. One circularity is disclosed rather than hidden, in <code><a href="reference/cp_adequacy.html">?cp_adequacy</a></code>: the requirement uses the fitted R-squared, so it answers whether this sample was adequate for the model it produced, not how large a sample should have been collected.</p>
+<p><strong>A model too large for its sample says so.</strong> The gate is the Riley requirement from <code>pmsampsize</code>, not the events-per-parameter rule, which is reported as description and labelled as such. Note the agreement between the two independent routes to the same conclusion: the heuristic shrinkage of 0.697 and the bootstrap-estimated calibration slope of 0.751 below. One circularity is disclosed rather than hidden, in <code><a href="reference/mm_adequacy.html">?mm_adequacy</a></code>: the requirement uses the fitted R-squared, so it answers whether this sample was adequate for the model it produced, not how large a sample should have been collected.</p>
 <p><strong>Performance is reported per basis, never as one number.</strong> The same model measured four ways, and the spread is the point.</p>
 <p>The two bootstrap rows answer different questions. The fixed-model one, from <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code>, corrects the optimism of estimating coefficients for one formula. The full-process one refits the whole strategy inside every resample, so each resample gets its own spline knot placement, its own <code>datadist</code> and its own factor-level handling, all three being learned from data. It also states what it does <strong>not</strong> re-execute, which is imputation, selection and tuning, because the package does not do them yet and a strategy containing them would not be fully validated by it either.</p>
 <p>They are different estimators with their own Monte Carlo error, so a small gap between them is not evidence of anything.</p>
 <p>Resampling is by whole patient when the project declares a cluster. Resampling rows would treat two visits by one person as two independent facts, which narrows every interval it touches.</p>
-<p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/cp_predict.html">cp_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
+<p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/mm_predict.html">mm_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
 <p><strong>The reading error between ticks is measured and reported.</strong> A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis’s own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.</p>
 </div>
 <div class="section level2">
@@ -324,20 +345,20 @@
 <td>v0.1</td>
 <td>cohort contract, cleaning, profile, EDA, collinearity</td>
 <td>
-<code><a href="reference/cp_project.html">cp_project()</a></code>, the sample-size gate, <code><a href="reference/cp_clean.html">cp_clean()</a></code> and <code><a href="reference/cp_eda.html">cp_eda()</a></code> done; <code>cp_collinearity()</code> and <code>cp_univariate()</code> to come</td>
+<code><a href="reference/mm_project.html">mm_project()</a></code>, the sample-size gate, <code><a href="reference/mm_clean.html">mm_clean()</a></code> and <code><a href="reference/mm_eda.html">mm_eda()</a></code> done; <code>mm_collinearity()</code> and <code>mm_univariate()</code> to come</td>
 </tr>
 <tr>
 <td>v0.2</td>
 <td>
 <code>rms</code> modelling, nonlinearity, interaction, selection</td>
 <td>
-<code><a href="reference/cp_model.html">cp_model()</a></code>, <code><a href="reference/cp_predict.html">cp_predict()</a></code> done; selection to come</td>
+<code><a href="reference/mm_model.html">mm_model()</a></code>, <code><a href="reference/mm_predict.html">mm_predict()</a></code> done; selection to come</td>
 </tr>
 <tr>
 <td>v0.3</td>
 <td>full-process validation, calibration, nomograms</td>
 <td>
-<code><a href="reference/cp_validate.html">cp_validate()</a></code> with full-process and clustered resampling, and <code><a href="reference/cp_nomogram.html">cp_nomogram()</a></code>, done; imputation inside resampling and the flexible calibration curve to come</td>
+<code><a href="reference/mm_validate.html">mm_validate()</a></code> with full-process and clustered resampling, and <code><a href="reference/mm_nomogram.html">mm_nomogram()</a></code>, done; imputation inside resampling and the flexible calibration curve to come</td>
 </tr>
 <tr>
 <td>v0.4</td>
@@ -353,7 +374,7 @@
 <p>The architecture assumed <code>performance::model_performance()</code> could supply general performance measures for the default model. It cannot. On an <code><a href="https://rdrr.io/pkg/rms/man/lrm.html" class="external-link">rms::lrm()</a></code> fit:</p>
 <ul>
 <li>
-<code>insight::get_predicted()</code> returns <code>NULL</code>. easystats has no prediction path for <code>lrm</code>, so every prediction-dependent helper inherits that, and <code><a href="reference/cp_predict.html">cp_predict()</a></code> must call <code>rms</code> directly.</li>
+<code>insight::get_predicted()</code> returns <code>NULL</code>. easystats has no prediction path for <code>lrm</code>, so every prediction-dependent helper inherits that, and <code><a href="reference/mm_predict.html">mm_predict()</a></code> must call <code>rms</code> directly.</li>
 <li>
 <code>performance::model_performance()</code> returns only AIC, BIC, R2 and an RMSE it declares unreliable. No AUC, no Brier, no log-loss, so those come from <code>rms</code>, <code>pROC</code> and <code>yardstick</code>.</li>
 <li>
@@ -364,7 +385,7 @@
 <code>report::report()</code> and <code>modelbased::estimate_relation()</code> both error, for the same reason: they ask for predictions, receive nothing, and fail on the empty result. No adapter fixes that short of a prediction path.</li>
 <li>The usable shape is the consumer layer. <code>probably</code>, <code>dcurves</code>, <code>pointblank</code>, <code>GGally</code> and <code>correlation</code> all work, because they take a prediction vector or a data frame and never touch the fit. Compute with <code>rms</code>, then hand numbers onward.</li>
 </ul>
-<p>The reference analysis is a labelled corrected successor, not an exact reproduction of a legacy method (<a href="inst/decisions.html">DEC-001</a>).</p>
+<p>The reference analysis is a labelled corrected successor, not an exact reproduction of a legacy method (<a href="inst/decisions.html">DEC-001</a>). Every function takes the <code>mm_</code> prefix, after the package name, in place of the provisional <code>cp_</code> the specification carried (<a href="inst/decisions.html">DEC-002</a>).</p>
 </div>
 </div>
 <div class="section level2">

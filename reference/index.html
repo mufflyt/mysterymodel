@@ -15,7 +15,13 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/mysterymodel.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/nomogram.html">Reading the nomogram back</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Which number are you reporting?</a></li>
+  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/mufflyt/mysterymodel/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -42,7 +48,7 @@
 
       <dl><dt>
 
-          <code><a href="cp_project.html">cp_project()</a></code>
+          <code><a href="mm_project.html">mm_project()</a></code>
 
         </dt>
         <dd>Create a validated analysis configuration</dd>
@@ -58,14 +64,14 @@
 
       <dl><dt>
 
-          <code><a href="cp_clean.html">cp_clean()</a></code>
+          <code><a href="mm_clean.html">mm_clean()</a></code>
 
         </dt>
         <dd>Apply eligibility rules and account for every row that leaves</dd>
 
         <dt>
 
-          <code><a href="cp_eda.html">cp_eda()</a></code>
+          <code><a href="mm_eda.html">mm_eda()</a></code>
 
         </dt>
         <dd>Describe the cohort, with denominators and missingness</dd>
@@ -81,14 +87,14 @@
 
       <dl><dt>
 
-          <code><a href="cp_model.html">cp_model()</a></code>
+          <code><a href="mm_model.html">mm_model()</a></code>
 
         </dt>
         <dd>Fit the declared model with rms</dd>
 
         <dt>
 
-          <code><a href="cp_predict.html">cp_predict()</a></code>
+          <code><a href="mm_predict.html">mm_predict()</a></code>
 
         </dt>
         <dd>Predict risk from exactly the fitted model</dd>
@@ -104,7 +110,7 @@
 
       <dl><dt>
 
-          <code><a href="cp_validate.html">cp_validate()</a></code>
+          <code><a href="mm_validate.html">mm_validate()</a></code>
 
         </dt>
         <dd>Validate the model, on a stated basis</dd>
@@ -120,7 +126,7 @@
 
       <dl><dt>
 
-          <code><a href="cp_nomogram.html">cp_nomogram()</a></code>
+          <code><a href="mm_nomogram.html">mm_nomogram()</a></code>
 
         </dt>
         <dd>Draw the nomogram, and prove it agrees with the model</dd>
@@ -136,7 +142,7 @@
 
       <dl><dt>
 
-          <code><a href="cp_synthetic_cohort.html">cp_synthetic_cohort()</a></code>
+          <code><a href="mm_synthetic_cohort.html">mm_synthetic_cohort()</a></code>
 
         </dt>
         <dd>Generate a synthetic cohort resembling a urodynamics study</dd>
