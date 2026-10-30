@@ -2,11 +2,10 @@
 
 One predictor moves at a time while the others sit at their first
 tabulated value, so every value `pick` selects is exercised without
-taking the product of them all. Both callers want that shape and differ
-only in which values they visit, so the construction is here and the
-choice is theirs: a profile built one way for the on-tick agreement
-check and another for the between- tick reading error would be two
-shapes, and the comparison between those two numbers assumes one.
+taking the product of them all. Both callers build this shape and differ
+only in which values they visit, which is why the construction is here:
+the on-tick agreement and the between-tick reading error are compared
+with each other, and that comparison assumes one shape.
 
 ## Usage
 

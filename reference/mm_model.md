@@ -136,5 +136,5 @@ fit
 #>   developed  300 rows, 28 events
 #>   parameters 7 non-intercept, 1097 short of the sample they need
 #>   apparent C 0.7126
-#>   fingerprint 44e69196a06c13b7
+#>   fingerprint fba075b46006604c
 ```

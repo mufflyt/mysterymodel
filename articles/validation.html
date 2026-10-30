@@ -146,7 +146,7 @@ that:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, offset <span class="op">=</span> <span class="va">lp</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>  slope     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">lp</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    intercept        slope </span></span>
-<span><span class="co">#&gt; 8.172466e-17 1.000000e+00</span></span></code></pre></div>
+<span><span class="co">#&gt; 4.971539e-16 1.000000e+00</span></span></code></pre></div>
 <p>The package detects the identity rather than assuming it, so a
 fitting method that does not force it, a penalized fit for instance,
 would have its apparent calibration reported as the estimate it would
@@ -495,7 +495,7 @@ so a table cannot drift from its model without the pairing changing:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "92df44fff5c5dae3"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "0c5c1900a0dbb975"</span></span></code></pre></div>
 <p>Report the held-out row when a split exists, the full-process row
 when it does not, the apparent row beside either so the optimism is
 visible, and the <code>note</code> column verbatim in the
