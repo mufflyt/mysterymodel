@@ -19,7 +19,8 @@ mm_validate(model, cohort, B = 200L, full_process = FALSE)
 
 - cohort:
 
-  The cohort, for held-out scoring and the split.
+  The cohort, for held-out scoring and the split. Its development rows
+  must be the ones the model was fitted on.
 
 - B:
 
@@ -59,6 +60,35 @@ The bases are:
   inherits. See
   [`mm_full_process()`](https://mufflyt.github.io/mysterymodel/reference/mm_full_process.md)
   for what it does and does not re-execute.
+
+## Incomplete rows
+
+Every basis is judged on the rows that can be judged, and the exclusions
+are reported rather than absorbed.
+[`mm_evaluable()`](https://mufflyt.github.io/mysterymodel/reference/mm_evaluable.md)
+is the one rule, the same one
+[`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+fitted under, so the sample a model is measured against is the sample it
+was estimated on; validating against a cohort whose development rows do
+not match the fit is an error rather than a quietly different number.
+The bootstraps resample the fitted cohort, never the supplied frame.
+
+A missing predictor and a missing outcome are counted apart, with the
+overlap separately, because they are different exclusions and because
+taking a missing outcome for a non-event leaves the event count
+unchanged while inflating the denominator.
+
+Rows are selected first and
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+is then called at its own default of `on_missing = "stop"`, so the
+complete-case path is explicit here and prediction keeps refusing to put
+a number on an incomplete record.
+
+This is complete-case analysis. It is a computational strategy and not a
+guarantee: the estimates assume the exclusions are uninformative, which
+is an assumption rather than a finding, and the `note` column says so
+whenever any row was excluded. Multiple imputation is not in this
+package yet.
 
 ## Examples
 

@@ -62,7 +62,8 @@ commonest way a published model flatters itself.</p>
 
 
 <dt id="arg-cohort">cohort<a class="anchor" aria-label="anchor" href="#arg-cohort"></a></dt>
-<dd><p>The cohort, for held-out scoring and the split.</p></dd>
+<dd><p>The cohort, for held-out scoring and the split. Its
+development rows must be the ones the model was fitted on.</p></dd>
 
 
 <dt id="arg-b">B<a class="anchor" aria-label="anchor" href="#arg-b"></a></dt>
@@ -95,6 +96,29 @@ whole strategy inside every resample, so the optimism corrected includes
 the data-dependent choices the fixed-model bootstrap inherits. See
 <code><a href="mm_full_process.html">mm_full_process()</a></code> for what it does and does not re-execute.</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="incomplete-rows">Incomplete rows<a class="anchor" aria-label="anchor" href="#incomplete-rows"></a></h2>
+
+
+
+<p>Every basis is judged on the rows that can be judged, and the exclusions are
+reported rather than absorbed. <code><a href="mm_evaluable.html">mm_evaluable()</a></code> is the one rule, the same one
+<code><a href="mm_model.html">mm_model()</a></code> fitted under, so the sample a model is measured against is the
+sample it was estimated on; validating against a cohort whose development
+rows do not match the fit is an error rather than a quietly different
+number. The bootstraps resample the fitted cohort, never the supplied frame.</p>
+<p>A missing predictor and a missing outcome are counted apart, with the
+overlap separately, because they are different exclusions and because taking
+a missing outcome for a non-event leaves the event count unchanged while
+inflating the denominator.</p>
+<p>Rows are selected first and <code><a href="mm_predict.html">mm_predict()</a></code> is then called at its own default
+of <code>on_missing = "stop"</code>, so the complete-case path is explicit here and
+prediction keeps refusing to put a number on an incomplete record.</p>
+<p>This is complete-case analysis. It is a computational strategy and not a
+guarantee: the estimates assume the exclusions are uninformative, which is an
+assumption rather than a finding, and the <code>note</code> column says so whenever any
+row was excluded. Multiple imputation is not in this package yet.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

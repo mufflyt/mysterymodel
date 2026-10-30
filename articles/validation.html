@@ -276,15 +276,99 @@ interval columns are in the full return value for exactly that
 reason.</p>
 </div>
 <div class="section level2">
+<h2 id="rows-that-cannot-be-judged">Rows that cannot be judged<a class="anchor" aria-label="anchor" href="#rows-that-cannot-be-judged"></a>
+</h2>
+<p>The cohort above is complete. A real external cohort is not, and the
+two ways it is incomplete are not the same thing.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">holey</span> <span class="op">&lt;-</span> <span class="va">cohort</span></span>
+<span><span class="va">held_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span><span class="op">)</span></span>
+<span><span class="va">holey</span><span class="op">$</span><span class="va">bmi</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">25</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>                      <span class="co"># development, a missing predictor</span></span>
+<span><span class="va">holey</span><span class="op">$</span><span class="va">bmi</span><span class="op">[</span><span class="va">held_rows</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>            <span class="co"># external, a missing predictor</span></span>
+<span><span class="va">holey</span><span class="op">$</span><span class="va">event</span><span class="op">[</span><span class="va">held_rows</span><span class="op">[</span><span class="fl">20</span><span class="op">:</span><span class="fl">27</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>        <span class="co"># external, a missing outcome</span></span>
+<span><span class="va">holey</span><span class="op">$</span><span class="va">bmi</span><span class="op">[</span><span class="va">held_rows</span><span class="op">[</span><span class="fl">26</span><span class="op">:</span><span class="fl">30</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>          <span class="co"># and the overlap of the two</span></span>
+<span></span>
+<span><span class="va">holey_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/mm_model.html">mm_model</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">holey</span>, nonlinear <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>           interactions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prior_uti"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">holey_validation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/mm_validate.html">mm_validate</a></span><span class="op">(</span><span class="va">holey_model</span>, <span class="va">holey</span>, B <span class="op">=</span> <span class="fl">50</span>, full_process <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">holey_validation</span></span>
+<span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
+<span><span class="co">#&gt;   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)  slope=1.0000</span></span>
+<span><span class="co">#&gt;   bootstrap, fixed model   n=389   events=43   C=0.5986  slope=0.6775</span></span>
+<span><span class="co">#&gt;   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921</span></span>
+<span><span class="co">#&gt;   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426</span></span>
+<span><span class="co">#&gt;   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both</span></span>
+<span><span class="co">#&gt;   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both</span></span>
+<span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">eligibility</span><span class="op">$</span><span class="va">held_out</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 7</span></span>
+<span><span class="co">#&gt;  $ n_total          : int 196</span></span>
+<span><span class="co">#&gt;  $ n_scored         : int 175</span></span>
+<span><span class="co">#&gt;  $ n_excluded       : int 21</span></span>
+<span><span class="co">#&gt;  $ missing_predictor: int 13</span></span>
+<span><span class="co">#&gt;  $ missing_outcome  : int 6</span></span>
+<span><span class="co">#&gt;  $ missing_both     : int 2</span></span>
+<span><span class="co">#&gt;  $ by_variable      : Named int [1:2] 15 8</span></span>
+<span><span class="co">#&gt;   ..- attr(*, "names")= chr [1:2] "bmi" "event"</span></span></code></pre></div>
+<p>A patient missing a predictor cannot be scored. A patient missing the
+outcome can be scored but contributes nothing to a performance estimate.
+They are counted apart, with the overlap separately, because collapsing
+them hides which and because the specific error worth preventing is
+quietly taking a missing outcome for a non-event: that leaves the event
+count unchanged while inflating the denominator, so every reported risk
+comes out low and nothing in the table looks wrong.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="va">holey</span><span class="op">[</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span>, <span class="op">]</span></span>
+<span><span class="va">row</span> <span class="op">&lt;-</span> <span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span> <span class="st">"held out"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rows_in_the_held_out_period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">held</span><span class="op">)</span>,</span>
+<span>  rows_scored                 <span class="op">=</span> <span class="va">row</span><span class="op">$</span><span class="va">n</span>,</span>
+<span>  events_among_them           <span class="op">=</span> <span class="va">row</span><span class="op">$</span><span class="va">events</span><span class="op">)</span></span>
+<span><span class="co">#&gt; rows_in_the_held_out_period                 rows_scored </span></span>
+<span><span class="co">#&gt;                         196                         175 </span></span>
+<span><span class="co">#&gt;           events_among_them </span></span>
+<span><span class="co">#&gt;                          19</span></span></code></pre></div>
+<p>The bootstraps resample the fitted cohort and not the frame it was
+handed, so a resample’s composition does not depend on how much of it
+was missing:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>supplied <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_supplied</span>,</span>
+<span>  fitted   <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_dev</span>,</span>
+<span>  resampled_by_the_full_process <span class="op">=</span></span>
+<span>    <span class="va">holey_validation</span><span class="op">$</span><span class="va">full_process_detail</span><span class="op">$</span><span class="va">eligibility</span><span class="op">$</span><span class="va">n_scored</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                      supplied                        fitted </span></span>
+<span><span class="co">#&gt;                           404                           389 </span></span>
+<span><span class="co">#&gt; resampled_by_the_full_process </span></span>
+<span><span class="co">#&gt;                           389</span></span></code></pre></div>
+<p>And the caveat travels with the number rather than living in a
+methods section:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">note</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; year &gt;= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13</span></span>
+<span><span class="co">#&gt; for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,</span></span>
+<span><span class="co">#&gt; event 8). Complete case, so these estimates assume the exclusions are</span></span>
+<span><span class="co">#&gt; uninformative, which is an assumption and not a finding</span></span></code></pre></div>
+<p>That last sentence is the point. Complete-case analysis is a
+computational strategy, not a guarantee. Missingness can be informative,
+the more so in a cohort this size, so the exclusions are disclosed
+everywhere they apply instead of being summarised away. Multiple
+imputation is the answer and is not in this package yet;
+<code><a href="../reference/mm_predict.html">mm_predict()</a></code> keeps refusing to put a number on an
+incomplete record in the meantime.</p>
+</div>
+<div class="section level2">
 <h2 id="the-honest-summary">The honest summary<a class="anchor" aria-label="anchor" href="#the-honest-summary"></a>
 </h2>
 <p>A fingerprint ties a validation result to the fit that produced it,
 so a table cannot drift from its model without the pairing changing:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "92df44fff5c5dae3"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "0c5c1900a0dbb975"</span></span></code></pre></div>
 <p>Report the held-out row when a split exists, the full-process row
 when it does not, the apparent row beside either so the optimism is
 visible, and the <code>note</code> column verbatim in the

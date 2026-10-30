@@ -27,7 +27,11 @@ mm_predict(model, newdata, on_missing = c("stop", "na"))
 
   One of `"stop"` or `"na"`. Rows with a missing predictor cannot be
   scored by a complete-data model; `"stop"` refuses them and `"na"`
-  returns `NA` for those rows.
+  returns `NA` for those rows. The default stands:
+  [`mm_validate()`](https://mufflyt.github.io/mysterymodel/reference/mm_validate.md)
+  selects its eligible rows first and then calls this function normally,
+  rather than relaxing the refusal that a clinician holding an
+  incomplete record most needs.
 
 ## Value
 

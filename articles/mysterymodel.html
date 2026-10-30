@@ -322,7 +322,7 @@ wrong.</p>
 <span><span class="co">#&gt;   held out   153 rows</span></span>
 <span><span class="co">#&gt;   parameters 9 non-intercept, 663 short of the sample they need</span></span>
 <span><span class="co">#&gt;   apparent C 0.7553</span></span>
-<span><span class="co">#&gt;   fingerprint 7855ae820d29b8c6</span></span></code></pre></div>
+<span><span class="co">#&gt;   fingerprint 7d79bc4fadb8d51f</span></span></code></pre></div>
 <p>The warning is the sample-size gate, and it is the honest answer for
 a cohort this size. The gate is the Riley requirement from
 <code>pmsampsize</code>, not the events-per-parameter rule, which is
@@ -365,7 +365,7 @@ receive:</p>
 <span><span class="co">#&gt; $range</span></span>
 <span><span class="co">#&gt; [1] 40.2 95.0</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span></span>
-<span><span class="co">#&gt; [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="predict">Predict<a class="anchor" aria-label="anchor" href="#predict"></a>
@@ -462,7 +462,7 @@ it:</p>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
-<span><span class="co">#&gt;   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   off-tick reading error    0.00233 in risk, midway between ticks</span></span></code></pre></div>
 <p><code><a href="../reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a
 clinician reads it, summing points across axes and interpolating the

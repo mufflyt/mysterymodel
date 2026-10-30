@@ -250,6 +250,108 @@ Read those with the event counts beside them. A c-statistic from a few
 dozen events is compatible with a wide range of truths, and the interval
 columns are in the full return value for exactly that reason.
 
+## Rows that cannot be judged
+
+The cohort above is complete. A real external cohort is not, and the two
+ways it is incomplete are not the same thing.
+
+``` r
+
+holey <- cohort
+held_rows <- which(holey$year >= 2023)
+holey$bmi[1:25] <- NA                      # development, a missing predictor
+holey$bmi[held_rows[1:9]] <- NA            # external, a missing predictor
+holey$event[held_rows[20:27]] <- NA        # external, a missing outcome
+holey$bmi[held_rows[26:30]] <- NA          # and the overlap of the two
+
+holey_model <- suppressWarnings(
+  mm_model(project, holey, nonlinear = "age",
+           interactions = list(c("prior_uti", "sex"))))
+holey_validation <- suppressWarnings(
+  mm_validate(holey_model, holey, B = 50, full_process = TRUE))
+
+holey_validation
+#> <mm_validation>  full-process: TRUE
+#>   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)  slope=1.0000
+#>   bootstrap, fixed model   n=389   events=43   C=0.5986  slope=0.6775
+#>   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921
+#>   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426
+#>   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both
+#>   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both
+#>   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.
+```
+
+``` r
+
+str(holey_validation$eligibility$held_out)
+#> List of 7
+#>  $ n_total          : int 196
+#>  $ n_scored         : int 175
+#>  $ n_excluded       : int 21
+#>  $ missing_predictor: int 13
+#>  $ missing_outcome  : int 6
+#>  $ missing_both     : int 2
+#>  $ by_variable      : Named int [1:2] 15 8
+#>   ..- attr(*, "names")= chr [1:2] "bmi" "event"
+```
+
+A patient missing a predictor cannot be scored. A patient missing the
+outcome can be scored but contributes nothing to a performance estimate.
+They are counted apart, with the overlap separately, because collapsing
+them hides which and because the specific error worth preventing is
+quietly taking a missing outcome for a non-event: that leaves the event
+count unchanged while inflating the denominator, so every reported risk
+comes out low and nothing in the table looks wrong.
+
+``` r
+
+held <- holey[holey$year >= 2023, ]
+row <- holey_validation$metrics[holey_validation$metrics$basis == "held out", ]
+c(rows_in_the_held_out_period = nrow(held),
+  rows_scored                 = row$n,
+  events_among_them           = row$events)
+#> rows_in_the_held_out_period                 rows_scored 
+#>                         196                         175 
+#>           events_among_them 
+#>                          19
+```
+
+The bootstraps resample the fitted cohort and not the frame it was
+handed, so a resample’s composition does not depend on how much of it
+was missing:
+
+``` r
+
+c(supplied = holey_model$n_supplied,
+  fitted   = holey_model$n_dev,
+  resampled_by_the_full_process =
+    holey_validation$full_process_detail$eligibility$n_scored)
+#>                      supplied                        fitted 
+#>                           404                           389 
+#> resampled_by_the_full_process 
+#>                           389
+```
+
+And the caveat travels with the number rather than living in a methods
+section:
+
+``` r
+
+cat(strwrap(row$note, 72), sep = "\n")
+#> year >= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13
+#> for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,
+#> event 8). Complete case, so these estimates assume the exclusions are
+#> uninformative, which is an assumption and not a finding
+```
+
+That last sentence is the point. Complete-case analysis is a
+computational strategy, not a guarantee. Missingness can be informative,
+the more so in a cohort this size, so the exclusions are disclosed
+everywhere they apply instead of being summarised away. Multiple
+imputation is the answer and is not in this package yet;
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+keeps refusing to put a number on an incomplete record in the meantime.
+
 ## The honest summary
 
 A fingerprint ties a validation result to the fit that produced it, so a
@@ -260,7 +362,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "92df44fff5c5dae3"
+#> [1] "0c5c1900a0dbb975"
 ```
 
 Report the held-out row when a split exists, the full-process row when

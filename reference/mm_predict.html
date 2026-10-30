@@ -68,7 +68,10 @@ data the caller actually has.</p></dd>
 <dt id="arg-on-missing">on_missing<a class="anchor" aria-label="anchor" href="#arg-on-missing"></a></dt>
 <dd><p>One of <code>"stop"</code> or <code>"na"</code>. Rows with a missing predictor
 cannot be scored by a complete-data model; <code>"stop"</code> refuses them and
-<code>"na"</code> returns <code>NA</code> for those rows.</p></dd>
+<code>"na"</code> returns <code>NA</code> for those rows. The default stands: <code><a href="mm_validate.html">mm_validate()</a></code>
+selects its eligible rows first and then calls this function normally,
+rather than relaxing the refusal that a clinician holding an incomplete
+record most needs.</p></dd>
 
 </dl></div>
     <div class="section level2">
