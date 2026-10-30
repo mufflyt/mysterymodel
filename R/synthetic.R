@@ -48,75 +48,70 @@ mm_synthetic_cohort <- function(n = 500, prevalence = 0.11,
   }
   n <- as.integer(n)
 
-  withr_seed <- function(code) {
-    old <- if (exists(".Random.seed", envir = globalenv())) {
-      get(".Random.seed", envir = globalenv())
-    } else NULL
-    set.seed(as.integer(seed))
-    on.exit({
-      if (is.null(old)) {
-        suppressWarnings(rm(".Random.seed", envir = globalenv()))
-      } else {
-        assign(".Random.seed", old, envir = globalenv())
-      }
-    }, add = TRUE)
-    code
-  }
+  # The caller's random-number state is restored on the way out, including
+  # the case where there was none: a function that generates a fixture must
+  # not reach into the stream a caller is drawing from. on.exit runs on an
+  # error too, so a failed generation leaves the state as it found it.
+  old <- globalenv()$.Random.seed
+  on.exit(if (is.null(old)) {
+    suppressWarnings(rm(".Random.seed", envir = globalenv()))
+  } else {
+    assign(".Random.seed", old, envir = globalenv())
+  }, add = TRUE)
+  set.seed(as.integer(seed))
 
-  withr_seed({
-    cohort <- data.frame(
-      age       = round(stats::rnorm(n, 62, 13), 1),
-      bmi       = round(stats::rnorm(n, 29, 6), 1),
-      sex       = factor(sample(c("female", "male"), n, TRUE,
-                                prob = c(0.72, 0.28))),
-      prior_uti = factor(sample(c("no", "yes"), n, TRUE,
-                                prob = c(0.68, 0.32)),
-                         levels = c("no", "yes")),
-      indication = factor(sample(c("incontinence", "retention",
-                                   "prolapse"), n, TRUE,
-                                 prob = c(0.5, 0.3, 0.2))),
-      year      = sample(years, n, TRUE),
-      stringsAsFactors = FALSE
-    )
-    cohort$age <- pmin(pmax(cohort$age, 18), 95)
-    cohort$bmi <- pmin(pmax(cohort$bmi, 15), 60)
+  cohort <- data.frame(
+    age       = round(stats::rnorm(n, 62, 13), 1),
+    bmi       = round(stats::rnorm(n, 29, 6), 1),
+    sex       = factor(sample(c("female", "male"), n, TRUE,
+                              prob = c(0.72, 0.28))),
+    prior_uti = factor(sample(c("no", "yes"), n, TRUE,
+                              prob = c(0.68, 0.32)),
+                       levels = c("no", "yes")),
+    indication = factor(sample(c("incontinence", "retention",
+                                 "prolapse"), n, TRUE,
+                               prob = c(0.5, 0.3, 0.2))),
+    year      = sample(years, n, TRUE),
+    stringsAsFactors = FALSE
+  )
+  cohort$age <- pmin(pmax(cohort$age, 18), 95)
+  cohort$bmi <- pmin(pmax(cohort$bmi, 15), 60)
 
-    # Patient identifiers, with a minority of repeat visits.
-    n_rep <- max(0L, as.integer(round(repeat_frac * n)))
-    pid <- sprintf("p%04d", seq_len(n - n_rep))
-    if (n_rep > 0L) pid <- c(pid, sample(pid, n_rep, replace = FALSE))
-    cohort$pid <- sample(pid)
+  # Patient identifiers, with a minority of repeat visits.
+  n_rep <- max(0L, as.integer(round(repeat_frac * n)))
+  pid <- sprintf("p%04d", seq_len(n - n_rep))
+  if (n_rep > 0L) pid <- c(pid, sample(pid, n_rep, replace = FALSE))
+  cohort$pid <- sample(pid)
 
-    # Truth. The age term is quadratic about 62 and the interaction is
-    # prior_uti by sex, both prespecified in the fixture rather than
-    # discovered from it.
-    b <- c(age_sq        = 0.0011,
-           bmi           = 0.045,
-           sex_male      = 0.35,
-           prior_uti_yes = 0.80,
-           uti_by_male   = 0.60)
+  # Truth. The age term is quadratic about 62 and the interaction is
+  # prior_uti by sex, both prespecified in the fixture rather than
+  # discovered from it.
+  b <- c(age_sq        = 0.0011,
+         bmi           = 0.045,
+         sex_male      = 0.35,
+         prior_uti_yes = 0.80,
+         uti_by_male   = 0.60)
 
-    structural <- b[["age_sq"]] * (cohort$age - 62)^2 +
-      b[["bmi"]] * (cohort$bmi - 29) +
-      b[["sex_male"]] * (cohort$sex == "male") +
-      b[["prior_uti_yes"]] * (cohort$prior_uti == "yes") +
-      b[["uti_by_male"]] * (cohort$prior_uti == "yes") *
-        (cohort$sex == "male")
+  structural <- b[["age_sq"]] * (cohort$age - 62)^2 +
+    b[["bmi"]] * (cohort$bmi - 29) +
+    b[["sex_male"]] * (cohort$sex == "male") +
+    b[["prior_uti_yes"]] * (cohort$prior_uti == "yes") +
+    b[["uti_by_male"]] * (cohort$prior_uti == "yes") *
+      (cohort$sex == "male")
 
-    # Solve the intercept so realised prevalence meets the target.
-    gap <- function(a) mean(stats::plogis(a + structural)) - prevalence
-    intercept <- stats::uniroot(gap, interval = c(-30, 30))$root
+  # Solve the intercept so realised prevalence meets the target.
+  gap <- function(a) mean(stats::plogis(a + structural)) - prevalence
+  intercept <- stats::uniroot(gap, interval = c(-30, 30))$root
 
-    cohort$event <- stats::rbinom(n, 1L,
-                                  stats::plogis(intercept + structural))
+  cohort$event <- stats::rbinom(n, 1L,
+                                stats::plogis(intercept + structural))
 
-    attr(cohort, "truth") <- list(
-      coefficients = c(intercept = intercept, b),
-      formula = paste("event ~ 0.0011*(age-62)^2 + 0.045*(bmi-29) +",
-                      "0.35*male + 0.80*prior_uti +",
-                      "0.60*prior_uti:male"),
-      prevalence_target = prevalence
-    )
-    cohort
-  })
+  attr(cohort, "truth") <- list(
+    coefficients = c(intercept = intercept, b),
+    formula = paste("event ~ 0.0011*(age-62)^2 + 0.045*(bmi-29) +",
+                    "0.35*male + 0.80*prior_uti +",
+                    "0.60*prior_uti:male"),
+    prevalence_target = prevalence
+  )
+  cohort
 }
