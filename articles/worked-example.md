@@ -694,7 +694,7 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.pdf, /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.svg, /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
@@ -864,7 +864,7 @@ c(between_ticks = mysterymodel:::mm_reading_error(nom$nomogram, fits$D),
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.pdf, /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.svg, /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"

@@ -692,7 +692,7 @@ is a check on the rows and not on their number:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">figures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"worked-example"</span><span class="op">)</span></span>
 <span><span class="va">nom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_nomogram.html">mm_nomogram</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, out_dir <span class="op">=</span> <span class="va">figures</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.pdf, /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.svg, /tmp/RtmpOI5Wsu/worked-example/uds-d_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.png</span></span>
 <span><span class="va">nom</span></span>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
@@ -823,7 +823,7 @@ fixing is the claim, not the nomogram.</p>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exported</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_export.html">mm_nomogram_export</a></span><span class="op">(</span></span>
 <span>  <span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">figures</span>, <span class="st">"worked-example"</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.pdf, /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.svg, /tmp/RtmpOI5Wsu/worked-example/worked-example_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.png</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">exported</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"</span></span>
 <span><span class="co">#&gt; [3] "worked-example_nomogram.png"</span></span>
