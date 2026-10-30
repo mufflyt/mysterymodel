@@ -134,19 +134,41 @@ mm_axis_names <- function(nom) {
 #' @return A data frame of profiles.
 #' @keywords internal
 mm_tick_profiles <- function(nom, model) {
-  vals <- mm_axis_values(nom, model$project$predictors)
+  mm_profiles(mm_axis_values(nom, model$project$predictors), identity,
+              model$schema)
+}
+
+#' One profile per selected value of every predictor
+#'
+#' One predictor moves at a time while the others sit at their first tabulated
+#' value, so every value `pick` selects is exercised without taking the product
+#' of them all. Both callers want that shape and differ only in which values
+#' they visit, so the construction is here and the choice is theirs: a profile
+#' built one way for the on-tick agreement check and another for the between-
+#' tick reading error would be two shapes, and the comparison between those
+#' two numbers assumes one.
+#'
+#' @param vals Tabulated values per predictor, from [mm_axis_values()].
+#' @param pick Given one predictor's values, the values to visit. Length zero
+#'   skips that predictor.
+#' @param schema The model's prediction schema, whose factor levels the
+#'   profiles are given back before they are returned.
+#' @return A data frame of profiles, or `NULL` when `pick` selected nothing.
+#' @keywords internal
+mm_profiles <- function(vals, pick, schema) {
   base <- lapply(vals, function(v) v[1])
   rows <- list()
   for (p in names(vals)) {
-    for (tk in vals[[p]]) {
+    for (at in pick(vals[[p]])) {
       row <- base
-      row[[p]] <- tk
+      row[[p]] <- at
       rows[[length(rows) + 1L]] <- row
     }
   }
-  frame <- do.call(rbind, lapply(rows, function(r)
-    as.data.frame(r, stringsAsFactors = FALSE)))
-  mm_restore_levels(frame, model$schema)
+  if (!length(rows)) return(NULL)
+  mm_restore_levels(
+    do.call(rbind, lapply(rows, function(r)
+      as.data.frame(r, stringsAsFactors = FALSE))), schema)
 }
 
 #' Give profile columns the factor levels the model was fitted with
@@ -276,23 +298,17 @@ mm_nomogram_points <- function(nom, profile) {
 #' @return Largest absolute risk difference found between ticks.
 #' @keywords internal
 mm_reading_error <- function(nom, model) {
-  vals <- mm_axis_values(nom, model$project$predictors)
-  base <- lapply(vals, function(v) v[1])
-  rows <- list()
-  for (p in names(vals)) {
-    v <- vals[[p]]
-    if (!is.numeric(v) || length(v) < 2L) next
-    mids <- (utils::head(v, -1) + utils::tail(v, -1)) / 2
-    for (md in mids) {
-      row <- base
-      row[[p]] <- md
-      rows[[length(rows) + 1L]] <- row
-    }
-  }
-  if (!length(rows)) return(NA_real_)
-  frame <- mm_restore_levels(
-    do.call(rbind, lapply(rows, function(r)
-      as.data.frame(r, stringsAsFactors = FALSE))), model$schema)
+  # Midway between neighbouring ticks, and only where there are two ticks to
+  # be between. A categorical axis has no midpoint, so `pick` selects nothing
+  # for one and it contributes no profile.
+  frame <- mm_profiles(
+    mm_axis_values(nom, model$project$predictors),
+    function(v) {
+      if (!is.numeric(v) || length(v) < 2L) return(numeric(0))
+      (utils::head(v, -1) + utils::tail(v, -1)) / 2
+    },
+    model$schema)
+  if (is.null(frame)) return(NA_real_)
   read <- vapply(seq_len(nrow(frame)),
                  function(i) mm_nomogram_risk(nom, frame[i, , drop = FALSE]),
                  numeric(1))

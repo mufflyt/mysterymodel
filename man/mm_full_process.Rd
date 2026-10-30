@@ -4,7 +4,7 @@
 \alias{mm_full_process}
 \title{Optimism of the whole modelling strategy, not just of the coefficients}
 \usage{
-mm_full_process(model, cohort, B = 200L, min_valid = ceiling(0.8 * B))
+mm_full_process(model, cohort, B = 200L, min_valid = mm_min_resamples(B))
 }
 \arguments{
 \item{model}{A \code{\link[=mm_model]{mm_model()}}.}

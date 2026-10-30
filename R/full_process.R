@@ -34,7 +34,7 @@
 #'   valid resamples.
 #' @keywords internal
 mm_full_process <- function(model, cohort, B = 200L,
-                            min_valid = ceiling(0.8 * B)) {
+                            min_valid = mm_min_resamples(B)) {
   B <- mm_check_resamples(B)
   project <- model$project
   # The rows the model was fitted on, not the rows it was handed. Resampling
@@ -57,8 +57,11 @@ mm_full_process <- function(model, cohort, B = 200L,
   # fixed denominator, which is the no-information Brier the skill score is
   # defined against.
   wanted <- c("c_stat", "cal_intercept", "cal_slope", "brier")
-  rate_dev <- mean(y_dev)
-  no_information <- rate_dev * (1 - rate_dev)
+  # The development cohort's own rate, which is the reference every basis in
+  # mm_validate() is scaled against. The helper takes the rate as an argument
+  # so that a resample's or a held-out sample's prevalence cannot arrive here
+  # by being nearer to hand.
+  no_information <- mm_no_information(mean(y_dev))
   apparent <- mm_metrics(mm_predict(model, dev)$.pred, y_dev,
                          basis = "apparent", reference = no_information)
 

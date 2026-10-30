@@ -135,7 +135,6 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # ranges and levels from rows the model never saw, so a value no fitted row
   # carried came back labelled as interpolation and the drawn nomogram
   # reached axis values the model was never estimated on.
-  model_vars <- c(project$outcome, project$predictors, project$cluster_id)
   eligible <- mm_evaluable(project, supplied, require_cluster = TRUE)
   dev <- supplied[eligible$usable, , drop = FALSE]
   y <- y_supplied[eligible$usable]
@@ -236,7 +235,8 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   if (length(fit$y) != nrow(dev)) {
     stop("rms dropped a further ", nrow(dev) - length(fit$y),
          " row(s) from a frame that is complete on ",
-         paste(model_vars, collapse = ", "),
+         paste(c(project$outcome, project$predictors, project$cluster_id),
+               collapse = ", "),
          ". The reported sample would no longer be the fitted one.",
          call. = FALSE)
   }
