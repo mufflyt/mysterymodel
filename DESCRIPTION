@@ -18,7 +18,7 @@ URL: https://mufflyt.github.io/mysterymodel/,
     https://github.com/mufflyt/mysterymodel
 BugReports: https://github.com/mufflyt/mysterymodel/issues
 Depends:
-    R (>= 4.1)
+    R (>= 4.5)
 Imports:
     digest,
     grDevices,
