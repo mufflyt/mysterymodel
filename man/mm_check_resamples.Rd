@@ -4,12 +4,10 @@
 \alias{mm_check_resamples}
 \title{Check a resample count before anything is drawn}
 \usage{
-mm_check_resamples(B, what = "B")
+mm_check_resamples(B)
 }
 \arguments{
 \item{B}{The count to check.}
-
-\item{what}{The argument's name, for the message.}
 }
 \value{
 \code{B} as a whole number, invisibly.
