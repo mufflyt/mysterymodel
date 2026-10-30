@@ -286,6 +286,61 @@ Read those with the event counts beside them. A c-statistic from a few dozen
 events is compatible with a wide range of truths, and the interval columns are
 in the full return value for exactly that reason.
 
+## What the interval is, and the three rows that do not have one
+
+The interval on a c-statistic is DeLong's, from `pROC`, and it describes the
+c-statistic of **one model scored once on one sample**. Two of the four rows
+in the table above are not that.
+
+```{r interval-status}
+validation$metrics[, c("basis", "n", "events", "non_events",
+                       "c_stat", "c_lower", "c_upper")]
+```
+
+The bootstrap rows carry no interval, and the reason is in their notes rather
+than left as a pair of blanks:
+
+```{r no-corrected-interval}
+cat(strwrap(validation$metrics$note[
+  validation$metrics$basis == "bootstrap, fixed model"], 72), sep = "\n")
+```
+
+A corrected index is an apparent one minus an average optimism. Neither
+`rms::validate()` nor the full-process loop returns the distribution of that
+difference, so there is nothing to put an interval around; the recognised
+answer is a nested bootstrap, which costs `B` times the correction and is not
+implemented here. What must not happen is the apparent row's interval being
+read down the column as though it applied to the corrected estimate, which is
+why the blanks are annotated.
+
+Two more cases are reported rather than hidden. DeLong needs at least two of
+each outcome, so a cohort with one event gets its c-statistic and no interval:
+
+```{r one-event}
+one_event <- mysterymodel:::mm_metrics(
+  c(0.9, seq(0.1, 0.5, length.out = 40)), c(1, rep(0, 40)),
+  basis = "one event")
+one_event[, c("n", "events", "non_events", "c_stat", "c_lower")]
+cat(strwrap(one_event$note, 72), sep = "\n")
+```
+
+And where the classes separate completely, DeLong's standard error is zero, so
+the interval it returns has zero width. That is the estimator running out of
+information, not a precise answer, and the note says so rather than leaving
+`1.000 to 1.000` on the page:
+
+```{r zero-width}
+separated <- mysterymodel:::mm_metrics(
+  c(seq(0, 0.4, length.out = 30), seq(0.6, 1, length.out = 30)),
+  rep(0:1, each = 30), basis = "separated")
+cat(strwrap(separated$note, 72), sep = "\n")
+```
+
+No threshold on the event count is applied anywhere in this. There is no
+evidence in this package for a universal minimum, so instead every row states
+the method and the two counts its standard error is computed from, and a
+reader judges the three-event interval for themselves.
+
 ## Rows that cannot be judged
 
 The cohort above is complete. A real external cohort is not, and the two ways

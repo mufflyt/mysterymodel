@@ -288,3 +288,46 @@ EPP. The internal `%||%` went, base R having shipped it since 4.4.0. The
 single-use closure guarding the random-number state was inlined, and the guard
 is now tested against an existing state, an absent one, and an error raised
 after seeding.
+
+## DEC-006: an interval is reported with what it rests on, or not at all
+
+**Settles:** how the c-statistic's uncertainty is disclosed, after the audit
+of interval reporting that followed DEC-005's decision to keep `pROC`.
+**Date:** 2026-10-30.
+
+Keeping DeLong settled which method computes the interval. It did not settle
+when the interval it returns is evidence. Four cases were found where the
+table reported a figure that looked better than what produced it, and all four
+are now annotated on the row rather than left to the reader to notice.
+
+| case | what was printed | what is printed now |
+|---|---|---|
+| classes separate completely | `1.0000 (1.0000-1.0000)` | the same, plus zero width, estimator has no information left |
+| every prediction ties | `0.5000 (0.5000-0.5000)` | the same, plus the same reason |
+| a limit past 0 or 1 | silently truncated by `pROC` | the same, named as a bound and not an estimate |
+| a corrected c-statistic | two blanks | the blanks, plus why no interval exists for one |
+
+Nothing numerical moved. Every coefficient, metric, nomogram reading, ledger
+and random-number draw is identical at tolerance zero; what changed is the
+`note` column, a new `non_events` column, and the printed table.
+
+### Why no minimum event count
+
+The obvious guard is a threshold: warn below ten events, or below twenty. The
+package has no evidence for any particular number, and a threshold invented
+here would be quoted back as though it did. DeLong's standard error is
+governed by the counts in the two classes, so each row states the method and
+both counts instead, and the reader judges a three-event interval themselves.
+A rule that fires on the structure of the answer, a width of zero or a limit
+at the edge of the parameter space, needs no threshold and cannot be wrong.
+
+### Why the corrected rows say more than nothing
+
+DeLong describes an apparent c-statistic computed once on one sample. A
+corrected index is an apparent one minus an average optimism, and neither
+`rms::validate()` nor [mm_full_process()] returns the distribution of that
+difference. A nested bootstrap, resampling the cohort and running the whole
+correction inside each draw, is the recognised interval for it and costs `B`
+times the correction; it is not implemented. Two blank columns beside a row
+that does carry an interval invite the reader to carry it across, so the
+blanks are annotated with the reason and the method that would fill them.

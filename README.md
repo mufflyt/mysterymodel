@@ -65,7 +65,7 @@ These are the decisions that make the package opinionated. They are defaults, no
 - **`rms::lrm()` is the default binary-outcome model**, with `glmnet` and `glinternet` as alternatives.
 - **Interactions are prespecified** and tested by likelihood ratio. Data-driven interaction discovery is reported as exploratory, and labelled that way.
 - **Selection and imputation happen inside resampling**, never once beforehand. Doing it once leaks, and the leak flatters every number downstream.
-- **Validation reports discrimination, calibration intercept and slope, Brier score, bootstrap optimism, and intervals.** Not discrimination alone.
+- **Validation reports discrimination, calibration intercept and slope, Brier score, bootstrap optimism, and intervals.** Not discrimination alone. Each row names the method behind its interval and the event and non-event counts the interval rests on, and a row that cannot have one says why rather than leaving a blank.
 - **Nomograms use the native `rms` machinery**, with readable labels, configurable axes, and pagination when a model outgrows one page.
 - **No model-selection decision is made for you, and none is hidden.**
 
@@ -192,7 +192,7 @@ Releases and acceptance gates are defined in full in the [specification](inst/im
 | v0.3 | full-process validation, calibration, nomograms | `mm_validate()` with full-process and clustered resampling, and `mm_nomogram()`, done; imputation inside resampling and the flexible calibration curve to come |
 | v0.4 | Quarto, scalable modes, provenance | planned |
 
-`rms` is now an `Imports` rather than a plan, because the package fits with it. `pROC` supplies the interval on the c-statistic and `digest` the model fingerprint.
+`rms` is now an `Imports` rather than a plan, because the package fits with it. `pROC` supplies the DeLong interval on the c-statistic and `digest` the model fingerprint. `Hmisc::rcorr.cens()` arrives free with `rms` and agrees with `pROC` on the estimate to 1e-14, but its normal-approximation interval returns a figure where DeLong correctly reports that none is estimable, so the dependency stays.
 
 ### What the spike settled
 
