@@ -157,20 +157,30 @@ twice brings four, a patient not drawn brings none. No single visit is ever
 separated from its sibling, which is what makes the resample a draw of patients
 rather than a draw of rows wearing patient labels.
 
-The project declares `cluster_id = "pid"`, so the full-process bootstrap drew
-patients:
+The project declares `cluster_id = "pid"`, so both bootstraps draw patients:
 
 ```{r clustered-by}
 validation$clustered_by
+validation$fixed_model$clustered_by
 ```
 
-`rms::validate()` does not take that declaration, which is why the fixed-model
-row says so in its own note rather than leaving a reader to assume otherwise.
+That second one was this package's own omission for a while, and the note used
+to blame `rms` for it. `rms::validate()` passes its extra arguments through to
+`rms::predab.resample()`, which takes a `cluster` and draws whole units when it
+is given one, so nothing but the missing argument was stopping it.
 
 ```{r fixed-note}
-cat(validation$metrics$note[validation$metrics$basis ==
-                            "bootstrap, fixed model"], "\n")
+cat(strwrap(validation$metrics$note[validation$metrics$basis ==
+                                    "bootstrap, fixed model"], 72), sep = "\n")
 ```
+
+The resample count in that note is the number `rms` actually fitted, not the
+number asked for. `predab.resample()` keeps only the resamples that converged
+and mentions the shortfall only when `pr = TRUE`, which `validate.lrm` leaves
+off, so a corrected index can be an average over the resamples that happened
+to work with nothing on the object to say so. The count comes back as the `n`
+column, and falling below four fifths of `B` is reported as inadequate, the
+same threshold the full-process row uses.
 
 ## Scoring any set of predictions
 
