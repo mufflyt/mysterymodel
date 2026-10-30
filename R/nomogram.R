@@ -142,11 +142,10 @@ mm_tick_profiles <- function(nom, model) {
 #'
 #' One predictor moves at a time while the others sit at their first tabulated
 #' value, so every value `pick` selects is exercised without taking the product
-#' of them all. Both callers want that shape and differ only in which values
-#' they visit, so the construction is here and the choice is theirs: a profile
-#' built one way for the on-tick agreement check and another for the between-
-#' tick reading error would be two shapes, and the comparison between those
-#' two numbers assumes one.
+#' of them all. Both callers build this shape and differ only in which values
+#' they visit, which is why the construction is here: the on-tick agreement
+#' and the between-tick reading error are compared with each other, and that
+#' comparison assumes one shape.
 #'
 #' @param vals Tabulated values per predictor, from [mm_axis_values()].
 #' @param pick Given one predictor's values, the values to visit. Length zero
@@ -298,9 +297,8 @@ mm_nomogram_points <- function(nom, profile) {
 #' @return Largest absolute risk difference found between ticks.
 #' @keywords internal
 mm_reading_error <- function(nom, model) {
-  # Midway between neighbouring ticks, and only where there are two ticks to
-  # be between. A categorical axis has no midpoint, so `pick` selects nothing
-  # for one and it contributes no profile.
+  # A categorical axis has no midpoint, so `pick` selects nothing for one and
+  # it contributes no profile.
   frame <- mm_profiles(
     mm_axis_values(nom, model$project$predictors),
     function(v) {

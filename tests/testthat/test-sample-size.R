@@ -169,3 +169,21 @@ test_that("a likelihood ratio rms never computed is reported, not raised", {
     expect_true(is.na(a$heuristic_shrinkage))
   }
 })
+
+test_that("the adequacy object records the assumption behind its requirement", {
+  # `shrinkage` is the caller's to set, so the requirement is only meaningful
+  # beside the target it was computed under. A stricter target asks for more.
+  loose <- mm_adequacy(n = 500, events = 60, parameters = 8,
+                       nagelkerke = 0.15, likelihood_ratio = 40,
+                       shrinkage = 0.9)
+  tight <- mm_adequacy(n = 500, events = 60, parameters = 8,
+                       nagelkerke = 0.15, likelihood_ratio = 40,
+                       shrinkage = 0.95)
+  expect_equal(loose$target_shrinkage, 0.9)
+  expect_equal(tight$target_shrinkage, 0.95)
+  expect_gt(tight$required_n, loose$required_n)
+
+  # The reported events per parameter is the observed one, computed here and
+  # not taken from pmsampsize's required EPP, which is a different quantity.
+  expect_equal(loose$events_per_parameter, 60 / 8)
+})

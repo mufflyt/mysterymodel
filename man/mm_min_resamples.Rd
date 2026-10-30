@@ -16,9 +16,6 @@ The fewest that must have fitted.
 Four fifths of the resamples requested. Both bootstraps apply it: \code{rms}
 keeps only the resamples that fitted and the full-process loop counts its
 own failures, and an optimism averaged over the survivors of a selection
-nobody reported is not the quantity it claims to be. The threshold is a
-methodological judgement, so it is written once rather than in each place
-that reaches for it, where the two could drift apart and the notes would
-still both say "four fifths".
+nobody reported is not the quantity it claims to be.
 }
 \keyword{internal}

@@ -52,9 +52,8 @@ mm_adequacy <- function(n, events, parameters, nagelkerke,
       res <- pmsampsize::pmsampsize(
         type = "b", nagrsquared = nagelkerke, parameters = parameters,
         shrinkage = shrinkage, prevalence = prevalence))
-    list(n = res$sample_size, events = res$events, epp = res$EPP)
-  }, error = function(e) list(n = NA_real_, events = NA_real_,
-                              epp = NA_real_))
+    list(n = res$sample_size, events = res$events)
+  }, error = function(e) list(n = NA_real_, events = NA_real_))
 
   short_by <- if (is.na(required$n)) NA_real_ else required$n - n
   adequate <- !is.na(short_by) && short_by <= 0
@@ -83,6 +82,11 @@ mm_adequacy <- function(n, events, parameters, nagelkerke,
                  required_n = required$n,
                  required_events = required$events,
                  short_by = short_by,
+                 # Which target produced `required_n`. Read by nothing in the
+                 # package, and kept because `shrinkage` is the caller's to
+                 # set: the requirement means nothing without the assumption
+                 # it was computed under, and `reason` names it only when the
+                 # sample falls short.
                  target_shrinkage = shrinkage,
                  adequate = adequate, reason = reason),
             class = "mm_adequacy")

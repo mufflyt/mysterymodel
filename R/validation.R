@@ -3,10 +3,7 @@
 #' Four fifths of the resamples requested. Both bootstraps apply it: `rms`
 #' keeps only the resamples that fitted and the full-process loop counts its
 #' own failures, and an optimism averaged over the survivors of a selection
-#' nobody reported is not the quantity it claims to be. The threshold is a
-#' methodological judgement, so it is written once rather than in each place
-#' that reaches for it, where the two could drift apart and the notes would
-#' still both say "four fifths".
+#' nobody reported is not the quantity it claims to be.
 #'
 #' @param B Resamples requested.
 #' @return The fewest that must have fitted.
@@ -15,11 +12,11 @@ mm_min_resamples <- function(B) ceiling(0.8 * B)
 
 #' The Brier score of predicting one constant risk for everyone
 #'
-#' The denominator a scaled Brier, or skill score, is taken against. Written
-#' once because the choice of *which* rate goes in is the whole question: a
+#' The denominator a scaled Brier, or skill score, is taken against. Which
+#' rate goes in is the whole question, so it stays the caller's to supply: a
 #' column of scaled Briers each scaled by its own sample's prevalence is a set
 #' of scores against different references, and a reader compares down the
-#' column. The rate stays the caller's to supply for that reason.
+#' column.
 #'
 #' @param rate An event rate.
 #' @return The no-information Brier.

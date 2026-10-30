@@ -45,3 +45,33 @@ test_that("the generator does not disturb the ambient random stream", {
   invisible(mm_synthetic_cohort(n = 50, seed = 7))
   expect_identical(stats::runif(1), before)
 })
+
+test_that("the caller's random-number state survives generation", {
+  # A fixture generator must not reach into the stream a caller is drawing
+  # from, whether it succeeds or fails, and whether or not the caller had
+  # drawn anything yet.
+  set.seed(4321)
+  before <- .Random.seed
+  invisible(mm_synthetic_cohort(n = 100, seed = 7))
+  expect_identical(.Random.seed, before)
+  expect_identical(stats::runif(1), {
+    set.seed(4321); stats::runif(1)
+  })
+
+  # No pre-existing state: the absence is restored, not replaced by a seed.
+  rm(".Random.seed", envir = globalenv())
+  invisible(mm_synthetic_cohort(n = 100, seed = 7))
+  expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+
+  # And on an error raised after the seed is set.
+  set.seed(4321)
+  before <- .Random.seed
+  expect_error(mm_synthetic_cohort(n = 100, prevalence = 2, seed = 7))
+  expect_identical(.Random.seed, before)
+
+  # Deterministic for a given seed, and different for a different one.
+  expect_identical(mm_synthetic_cohort(n = 120, seed = 11),
+                   mm_synthetic_cohort(n = 120, seed = 11))
+  expect_false(identical(mm_synthetic_cohort(n = 120, seed = 11),
+                         mm_synthetic_cohort(n = 120, seed = 12)))
+})
