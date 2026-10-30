@@ -1,0 +1,649 @@
+---
+title: "A complicated worked example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A complicated worked example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(width = 84)
+```
+
+```{r attach}
+library(mysterymodel)
+```
+
+The other three articles each take one idea and follow it. This one does the
+opposite: it runs a whole study, on a cohort built to be awkward in every way
+the package has an opinion about, and compares four competing specifications
+against each other the way a supplement would. Every function in the package
+appears at least once, and the last section proves it rather than claiming it.
+
+Read it as a worked example, not as a tutorial. If you want the pipeline in
+order, start with *From a raw export to a checked nomogram*.
+
+## 1. An export built to be awkward
+
+```{r raw}
+raw <- mm_synthetic_cohort(n = 900, prevalence = 0.12, years = 2018:2024,
+                           repeat_frac = 0.12, seed = 1978)
+
+set.seed(20261030)
+n <- nrow(raw)
+
+# Missingness, in two variables, overlapping on purpose.
+raw$bmi[sample(n, 48)] <- NA
+raw$indication[sample(n, 22)] <- NA
+
+# A column that is the outcome under another name, which is the one mistake
+# that makes its own output look better.
+raw$triage_flag <- raw$event
+
+# A marker that separates the classes completely without being a copy.
+raw$marker <- ifelse(raw$event == 1L, runif(n, 8, 14), runif(n, 0, 6))
+
+# A category that appears only after the temporal split.
+raw$indication <- as.character(raw$indication)
+late <- which(raw$year >= 2023)
+raw$indication[sample(late, 14)] <- "urgency"
+raw$indication <- factor(raw$indication)
+
+# Rows no protocol would admit, and a handful with no patient identifier.
+raw$age[sample(n, 30)] <- runif(30, 19, 38)
+raw$bmi[sample(n, 12)] <- runif(12, 61, 74)
+raw$pid[sample(n, 5)] <- NA
+
+str(raw, give.attr = FALSE, vec.len = 2)
+```
+
+The truth behind the generated part is known, which is what makes a
+specification comparison meaningful at all:
+
+```{r truth}
+attr(raw, "truth")$formula
+round(attr(raw, "truth")$coefficients, 4)
+```
+
+## 2. What is in the export, before any decision
+
+```{r eda}
+described <- mm_eda(raw, by = "event",
+                    vars = c("age", "bmi", "sex", "prior_uti",
+                             "indication", "marker"))
+described
+```
+
+That print method is `print.mm_eda`. The object underneath carries the table,
+the missingness ordered worst first, and the duplicate count:
+
+```{r eda-parts}
+described$missing
+c(rows = described$n, duplicated_rows = described$duplicates,
+  stratified_by = described$by)
+```
+
+Every cell in that table is built by one of four formatters, so a table cannot
+be internally inconsistent about how it rounds:
+
+```{r formatters}
+c(count       = mysterymodel:::mm_count(nrow(raw)),
+  n_pct       = mysterymodel:::mm_n_pct(sum(raw$event), nrow(raw)),
+  mean_sd     = mysterymodel:::mm_mean_sd(raw$age, digits = 1),
+  median_iqr  = mysterymodel:::mm_median_iqr(raw$marker, digits = 2))
+```
+
+## 3. Eligibility, with a ledger that reconciles
+
+Five rules. One of them cannot be evaluated for rows with no BMI, so those
+rows leave under their own heading rather than passing.
+
+```{r clean}
+eligible <- mm_clean(raw, rules = list(
+  "aged 40 or over"      = ~ age >= 40,
+  "plausible BMI"        = ~ bmi >= 16 & bmi <= 60,
+  "indication recorded"  = ~ !is.na(indication),
+  "patient identified"   = ~ !is.na(pid),
+  "indication in scope"  = ~ indication != "urgency"
+), label = "urodynamics studies as exported")
+
+eligible
+```
+
+```{r ledger}
+eligible$ledger[, c("step", "rule", "n_excluded", "n_after", "reason")]
+with(eligible, c(in_ = n_in, out = n_out, excluded = n_excluded,
+                 reconciles = n_in - n_excluded == n_out))
+```
+
+Dropping `urgency` here is a decision, not a technicality. Left in, it would
+reach the held-out rows and `mm_predict()` would refuse to score them, because
+the development rows never saw that level. Making it an eligibility rule puts
+the exclusion in the flow diagram where a reader can argue with it.
+
+```{r cohort}
+cohort <- eligible$data
+nrow(cohort)
+```
+
+## 4. Four plans, written down before anything is fitted
+
+Four specifications, differing one step at a time, so that each contrast is
+attributable to one decision.
+
+```{r plans}
+predictors <- c("age", "bmi", "sex", "prior_uti", "indication")
+
+plan <- list(
+  A = mm_project("uds-a", "event", predictors, positive_class = 1,
+                 cohort = cohort, seed = 1978),
+  B = mm_project("uds-b", "event", predictors, positive_class = 1,
+                 cohort = cohort, seed = 1978),
+  C = mm_project("uds-c", "event", predictors, positive_class = 1,
+                 cohort = cohort, cluster_id = "pid", seed = 1978),
+  D = mm_project("uds-d", "event", predictors, positive_class = 1,
+                 cohort = cohort, split_var = "year", split_at = 2023,
+                 cluster_id = "pid", seed = 1978))
+
+plan$D
+```
+
+| analysis | shape | split | resampling unit |
+|---|---|---|---|
+| A | additive | none | row |
+| B | spline on age | none | row |
+| C | spline, plus `prior_uti` by `sex` | none | whole patient |
+| D | as C | develop before 2023 | whole patient |
+
+## 5. The leakage scan, before any of them is fitted
+
+The two planted problems are different findings and the package treats them
+differently. Taking the development frame of plan D by hand:
+
+```{r leak-frame}
+parts <- mysterymodel:::mm_split(plan$D, cohort)
+c(development = nrow(parts$dev), held_out = nrow(parts$held))
+
+y_dev <- mysterymodel:::mm_event_indicator(parts$dev$event, 1)
+c(events = sum(y_dev), prevalence = round(mean(y_dev), 4))
+```
+
+```{r leak-scan}
+probe <- mm_project("probe", "event",
+                    c(predictors, "triage_flag", "marker"),
+                    positive_class = 1, seed = 1978)
+found <- mysterymodel:::mm_leakage(probe, parts$dev, y = y_dev)
+
+do.call(rbind, lapply(found, function(f) data.frame(
+  tier = f$tier, predictor = f$predictor, kind = f$kind,
+  n_compared = f$n_compared, n_missing = f$n_missing)))
+```
+
+```{r leak-detail}
+for (f in found) cat(sprintf("tier %d, %s:\n", f$tier, f$predictor),
+                     strwrap(f$detail, 76, prefix = "  "), sep = "\n")
+```
+
+Raising those findings blocks on the first and warns on the second:
+
+```{r leak-report}
+blocked <- tryCatch(
+  mysterymodel:::mm_report_leakage(found, "event"),
+  error = function(e) conditionMessage(e))
+cat(strwrap(blocked, 78), sep = "\n")
+```
+
+The detection reads values, never names. A column becomes a candidate copy
+only where reading it as 0/1 involves no guessing:
+
+```{r binary-forms}
+str(mysterymodel:::mm_binary_forms(cohort$triage_flag))
+length(mysterymodel:::mm_binary_forms(cohort$indication))
+length(mysterymodel:::mm_binary_forms(cohort$marker))
+```
+
+Neither `triage_flag` nor `marker` is in the four plans, which is why they fit
+at all. Asking for the leaked one is refused:
+
+```{r leak-refused, error = TRUE}
+mm_model(probe, cohort)
+```
+
+## 6. The eligibility arithmetic, by hand
+
+The rule that decides which rows are modelled is the same one validation
+reads, and it is available on its own:
+
+```{r evaluable}
+dev_eligible <- mysterymodel:::mm_evaluable(plan$D, parts$dev,
+                                            require_cluster = TRUE)
+held_eligible <- mysterymodel:::mm_evaluable(plan$D, parts$held,
+                                             require_cluster = FALSE)
+
+rbind(development = unlist(dev_eligible[c("n_total", "n_scored", "n_excluded",
+                                          "missing_predictor",
+                                          "missing_outcome", "missing_both")]),
+      held_out = unlist(held_eligible[c("n_total", "n_scored", "n_excluded",
+                                        "missing_predictor",
+                                        "missing_outcome", "missing_both")]))
+```
+
+Nothing is excluded here, because section 3 made completeness an eligibility
+rule. On a cohort where something was, the sentence that reaches the `note`
+column reads like this:
+
+```{r eligibility-note}
+pretend <- parts$held
+pretend$bmi[1:7] <- NA
+pretend$event[8:11] <- NA
+cat(strwrap(mysterymodel:::mm_eligibility_note(
+  mysterymodel:::mm_evaluable(plan$D, pretend)), 76), sep = "\n")
+```
+
+A fingerprint of the rows themselves, which is how validation later refuses a
+cohort that is not the one a model was fitted on:
+
+```{r digest}
+substr(mysterymodel:::mm_sample_digest(plan$D, parts$dev), 1, 24)
+```
+
+## 7. Fitting all four
+
+```{r fit}
+shape <- list(
+  A = list(nonlinear = NULL,  interactions = NULL),
+  B = list(nonlinear = "age", interactions = NULL),
+  C = list(nonlinear = "age", interactions = list(c("prior_uti", "sex"))),
+  D = list(nonlinear = "age", interactions = list(c("prior_uti", "sex"))))
+
+fits <- lapply(names(plan), function(k) suppressWarnings(
+  mm_model(plan[[k]], cohort, nonlinear = shape[[k]]$nonlinear,
+           interactions = shape[[k]]$interactions, knots = 4)))
+names(fits) <- names(plan)
+
+fits$D
+```
+
+```{r fit-table}
+do.call(rbind, lapply(names(fits), function(k) {
+  m <- fits[[k]]
+  data.frame(analysis = k, n_supplied = m$n_supplied, n_dev = m$n_dev,
+             events = m$events_dev, n_held = m$n_held,
+             parameters = m$adequacy$parameters,
+             apparent_C = round(unname(m$fit$stats["C"]), 4),
+             fingerprint = substr(m$fingerprint, 1, 10))
+}))
+```
+
+The sample-size gate is reported per analysis, and it is the honest answer for
+a cohort this size once the parameter count rises:
+
+```{r adequacy}
+fits$C$adequacy
+```
+
+That gate can also be asked a counterfactual question, which is the one it
+cannot answer from the fit alone: what would this model have needed if its
+explanatory performance were the 0.25 a previous study reported?
+
+```{r adequacy-counterfactual}
+mysterymodel:::mm_adequacy(
+  n = fits$C$n_dev, events = fits$C$events_dev,
+  parameters = fits$C$adequacy$parameters, nagelkerke = 0.25,
+  likelihood_ratio = unname(fits$C$fit$stats[["Model L.R."]]))
+```
+
+What a deployed prediction is allowed to receive, recorded at fit time and
+reconstructible on demand:
+
+```{r schema}
+schema <- mysterymodel:::mm_schema(plan$D, parts$dev)
+str(schema$predictors[c("age", "indication")])
+identical(schema$predictors, fits$D$schema$predictors)
+```
+
+## 8. Validating all four
+
+```{r validate}
+checked <- lapply(names(fits), function(k) suppressWarnings(
+  mm_validate(fits[[k]], cohort, B = 60,
+              full_process = k %in% c("C", "D"))))
+names(checked) <- names(fits)
+
+checked$D
+```
+
+```{r validate-table}
+basis_c <- function(v, basis) {
+  value <- v$metrics$c_stat[v$metrics$basis == basis]
+  if (!length(value)) NA_real_ else round(value, 4)
+}
+do.call(rbind, lapply(names(checked), function(k) data.frame(
+  analysis  = k,
+  apparent  = basis_c(checked[[k]], "apparent"),
+  fixed     = basis_c(checked[[k]], "bootstrap, fixed model"),
+  process   = basis_c(checked[[k]], "bootstrap, full process"),
+  held_out  = basis_c(checked[[k]], "held out"),
+  unit      = if (is.null(checked[[k]]$fixed_model$clustered_by)) "row" else
+    checked[[k]]$fixed_model$clustered_by)))
+```
+
+Analysis D is the one to read, and it is sobering. Apparent discrimination of
+0.71 corrects to 0.66, and the rows the split reserved give this:
+
+```{r held-out-interval}
+held_row <- checked$D$metrics[checked$D$metrics$basis == "held out", ]
+c(n = held_row$n, events = held_row$events,
+  C = round(held_row$c_stat, 4),
+  lower = round(held_row$c_lower, 4), upper = round(held_row$c_upper, 4))
+```
+
+Twenty-odd events support an interval running from well below chance to well
+above it, so the point estimate is not evidence of anything much. That is what
+a held-out sample this size can tell you, and it is the number a reader will
+quote.
+
+### Contrasts, each attributable to one decision
+
+```{r contrasts}
+corrected <- vapply(checked, basis_c, numeric(1),
+                    basis = "bootstrap, fixed model")
+data.frame(
+  contrast = c("B less A", "C less B", "D less C"),
+  decision = c("a spline on age", "an interaction, and clustered resampling",
+               "a temporal split"),
+  difference = round(c(corrected[["B"]] - corrected[["A"]],
+                       corrected[["C"]] - corrected[["B"]],
+                       corrected[["D"]] - corrected[["C"]]), 4))
+```
+
+Read those with the caution the validation article gives: the two bootstrap
+columns are different estimators, and D's development sample is smaller than
+C's because the split reserved rows, so "D less C" mixes two changes. A
+supplement would say so in the same sentence as the number.
+
+### The pieces a validation row is made of
+
+```{r metrics-direct}
+p_held <- mm_predict(fits$D, parts$held)$.pred
+y_held <- mysterymodel:::mm_event_indicator(parts$held$event, 1)
+reference <- mean(y_dev) * (1 - mean(y_dev))
+
+by_hand <- mysterymodel:::mm_metrics(p_held, y_held, basis = "held out",
+                                     note = "assembled here",
+                                     reference = reference)
+by_hand[, c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
+            "cal_intercept", "cal_slope", "brier", "brier_ref",
+            "brier_scaled")]
+```
+
+The apparent row is the one place those calibration terms are an identity
+rather than an estimate, and the function that withholds them can be shown
+doing both:
+
+```{r withhold}
+apparent <- mysterymodel:::mm_metrics(
+  mm_predict(fits$D, parts$dev)$.pred, y_dev, basis = "apparent")
+withheld <- mysterymodel:::mm_withhold_identity_calibration(apparent)
+
+rbind(computed = c(intercept = apparent$cal_intercept,
+                   slope = apparent$cal_slope),
+      reported = c(withheld$cal_intercept, withheld$cal_slope))
+```
+
+### The full-process bootstrap, on its own
+
+```{r full-process}
+process <- suppressWarnings(
+  mysterymodel:::mm_full_process(fits$D, cohort, B = 60, min_valid = 48))
+
+c(valid = process$valid, of = process$B, adequate = process$adequate,
+  reference = round(process$no_information_brier, 5))
+process$covers
+round(rbind(optimism = process$optimism, corrected = process$corrected), 5)
+```
+
+It refuses a frame that is not the one the model was fitted on, which is a
+check on the rows and not on their number:
+
+```{r same-development}
+altered <- parts$dev
+altered$age <- rev(altered$age)
+tryCatch(mysterymodel:::mm_same_development(fits$D, altered, "this contrast"),
+         error = function(e) cat(strwrap(conditionMessage(e), 78), sep = "\n"))
+```
+
+### Resampling the patient rather than the row
+
+```{r resample}
+dev_rows <- parts$dev
+set.seed(4)
+by_row     <- mysterymodel:::mm_resample(dev_rows, cluster_id = NULL)
+by_patient <- mysterymodel:::mm_resample(dev_rows, cluster_id = "pid")
+
+twins <- names(which(table(dev_rows$pid) == 2L))
+rows_drawn <- table(factor(dev_rows$pid[by_patient], levels = twins))
+
+c(rows = nrow(dev_rows),
+  row_draw = length(by_row), patient_draw = length(by_patient),
+  patients_with_two_visits = length(twins),
+  all_even = all(rows_drawn %% 2L == 0L))
+```
+
+And a resample count is a count:
+
+```{r check-resamples, error = TRUE}
+mysterymodel:::mm_check_resamples(60.0)
+mysterymodel:::mm_check_resamples(2.7)
+```
+
+## 9. The nomogram, read back by hand
+
+```{r nomogram}
+figures <- file.path(tempdir(), "worked-example")
+nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
+nom
+```
+
+```{r nomogram-plot, fig.width = 9, fig.height = 6.5}
+plot(nom$nomogram)
+```
+
+The interaction makes `rms` emit mutually exclusive axes, so a predictor's
+ticks have to be gathered across axes rather than read off one:
+
+```{r axes}
+mysterymodel:::mm_axis_names(nom$nomogram)
+str(mysterymodel:::mm_axis_values(nom$nomogram, plan$D$predictors))
+```
+
+Every tick of every axis, exercised:
+
+```{r profiles}
+profiles <- mysterymodel:::mm_tick_profiles(nom$nomogram, fits$D)
+c(profiles = nrow(profiles), checked = nom$profiles_checked)
+head(profiles, 3)
+```
+
+```{r restore-levels}
+flattened <- profiles
+flattened$indication <- as.character(flattened$indication)
+restored <- mysterymodel:::mm_restore_levels(flattened, fits$D$schema)
+identical(levels(restored$indication),
+          fits$D$schema$predictors$indication$levels)
+```
+
+At a tabulated tick, summing the points by hand and converting on the printed
+axis reproduces the model exactly. This is the agreement `mm_nomogram()`
+asserts, done one profile at a time:
+
+```{r read-tick}
+on_tick <- profiles[6, , drop = FALSE]
+total <- unname(mysterymodel:::mm_nomogram_points(nom$nomogram, on_tick))
+lp <- mysterymodel:::mm_total_to_lp(nom$nomogram, total)
+
+c(points = total, linear_predictor = lp, risk_from_axis = plogis(lp),
+  risk_read_back = unname(
+    mysterymodel:::mm_nomogram_risk(nom$nomogram, on_tick)),
+  risk_from_model = mm_predict(fits$D, on_tick)$.pred)
+```
+
+A real patient does not land on a tick. Between ticks the spline curves and
+the straight line between printed values does not, so the reading carries the
+axis's own resolution error:
+
+```{r read-one}
+patient <- data.frame(
+  age = 71, bmi = 33.5,
+  sex = factor("male", levels = fits$D$schema$predictors$sex$levels),
+  prior_uti = factor("yes",
+                     levels = fits$D$schema$predictors$prior_uti$levels),
+  indication = factor("retention",
+                      levels = fits$D$schema$predictors$indication$levels))
+
+read_off <- unname(mysterymodel:::mm_nomogram_risk(nom$nomogram, patient))
+from_model <- mm_predict(fits$D, patient)$.pred
+
+c(read_off = read_off, from_model = from_model,
+  gap = abs(read_off - from_model),
+  worst_between_ticks = nom$reading_error)
+```
+
+That gap is larger than the figure `mm_nomogram()` reported, and the
+difference is instructive. `mm_reading_error()` varies one predictor at a time
+and leaves every other at its first tick, so it probes a line through the
+space rather than the space. This patient is off-tick in age and BMI at once,
+from a different corner.
+
+```{r reading-error-bound}
+ticks <- mysterymodel:::mm_axis_values(nom$nomogram, plan$D$predictors)
+set.seed(8)
+anywhere <- data.frame(
+  age = runif(300, min(ticks$age), max(ticks$age)),
+  bmi = runif(300, min(ticks$bmi), max(ticks$bmi)),
+  sex = factor(sample(fits$D$schema$predictors$sex$levels, 300, TRUE),
+               levels = fits$D$schema$predictors$sex$levels),
+  prior_uti = factor(sample(fits$D$schema$predictors$prior_uti$levels,
+                            300, TRUE),
+                     levels = fits$D$schema$predictors$prior_uti$levels),
+  indication = factor(sample(fits$D$schema$predictors$indication$levels,
+                             300, TRUE),
+                      levels = fits$D$schema$predictors$indication$levels))
+
+anywhere_read <- vapply(seq_len(nrow(anywhere)), function(i) unname(
+  mysterymodel:::mm_nomogram_risk(nom$nomogram,
+                                  anywhere[i, , drop = FALSE])), numeric(1))
+c(reported_one_at_a_time = nom$reading_error,
+  worst_over_300_joint_profiles =
+    max(abs(anywhere_read - mm_predict(fits$D, anywhere)$.pred)))
+```
+
+So the reported figure is a probe and not an upper bound, and the package's own
+wording for it ("the worst case for linear interpolation across a curve")
+overstates what it measures. The gap belongs to every printed nomogram and to
+every clinician reading one; what is worth fixing is the claim, not the
+nomogram.
+
+```{r off-axis}
+totals <- vapply(seq_len(nrow(profiles)), function(i) unname(
+  mysterymodel:::mm_nomogram_points(nom$nomogram,
+                                    profiles[i, , drop = FALSE])), numeric(1))
+c(lowest_profile = min(totals), axis_starts = min(nom$nomogram$lp$x),
+  off_scale_profiles = sum(mysterymodel:::mm_off_axis(nom$nomogram, totals)),
+  reported = nom$off_axis)
+```
+
+```{r reading-error}
+c(between_ticks = mysterymodel:::mm_reading_error(nom$nomogram, fits$D),
+  reported = nom$reading_error,
+  at_ticks = nom$worst_disagreement)
+```
+
+```{r export}
+exported <- mysterymodel:::mm_nomogram_export(
+  nom$nomogram, figures, "worked-example", width = 13, height = 9)
+basename(exported)
+basename(nom$files)
+```
+
+## 10. One patient at a time
+
+```{r predict}
+ward <- data.frame(
+  age        = c(58, 71, 104),
+  bmi        = c(24.0, 33.5, 28.0),
+  sex        = factor(c("female", "male", "female"),
+                      levels = fits$D$schema$predictors$sex$levels),
+  prior_uti  = factor(c("no", "yes", "no"),
+                      levels = fits$D$schema$predictors$prior_uti$levels),
+  indication = factor(c("incontinence", "retention", "prolapse"),
+                      levels = fits$D$schema$predictors$indication$levels))
+
+mm_predict(fits$D, ward)
+```
+
+```{r predict-refusals, error = TRUE}
+unseen <- ward[1, ]
+unseen$indication <- factor(
+  "urgency", levels = c(levels(ward$indication), "urgency"))
+mm_predict(fits$D, unseen)
+
+incomplete <- ward[1, ]
+incomplete$bmi <- NA
+mm_predict(fits$D, incomplete)
+```
+
+```{r predict-na}
+mm_predict(fits$D, incomplete, on_missing = "na")
+```
+
+## 11. Provenance
+
+```{r provenance}
+do.call(rbind, lapply(names(fits), function(k) data.frame(
+  analysis = k,
+  coefficients = substr(fits[[k]]$fingerprint, 1, 12),
+  development = substr(fits[[k]]$development, 1, 12),
+  validation_matches = identical(checked[[k]]$fingerprint,
+                                 fits[[k]]$fingerprint))))
+```
+
+A and B share a development sample and differ in shape, so their coefficient
+fingerprints differ and their development fingerprints agree. D reserved rows,
+so both of its fingerprints stand alone.
+
+## 12. Coverage, proved rather than claimed
+
+```{r coverage}
+exported_fns <- getNamespaceExports("mysterymodel")
+everything <- ls(asNamespace("mysterymodel"))
+everything <- everything[grepl("^mm_", everything)]
+
+source_text <- tryCatch(
+  readLines(knitr::current_input()), error = function(e) character(0))
+used <- vapply(everything, function(fn)
+  any(grepl(paste0("\\b", fn, "\\b"), source_text)), logical(1))
+
+c(functions = length(everything),
+  exported = length(intersect(everything, exported_fns)),
+  used_here = sum(used))
+sort(everything[!used])
+```
+
+```{r coverage-print}
+methods_used <- c("print.mm_project", "print.mm_cohort", "print.mm_eda",
+                  "print.mm_model", "print.mm_adequacy",
+                  "print.mm_validation", "print.mm_nomogram")
+vapply(methods_used, function(m) any(grepl(
+  sub("^print\\.", "", m), vapply(list(plan$D, eligible, described, fits$D,
+                                       fits$C$adequacy, checked$D, nom),
+                                  function(x) class(x)[1], character(1)))),
+  logical(1))
+```
+
+Everything above ran on synthetic data. The package carries none of its own,
+and the one number worth distrusting in the whole article is the held-out
+column: one temporal split of one cohort, scored once, which says nothing
+about a different hospital in a different year.
