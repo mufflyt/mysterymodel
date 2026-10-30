@@ -31,7 +31,7 @@ validation <- mm_validate(model, cohort, B = 100, full_process = TRUE)
 validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope",
                        "brier")]
 #>                     basis   n events    c_stat cal_slope      brier
-#> 1                apparent 404     45 0.6647478 1.0000000 0.09391697
+#> 1                apparent 404     45 0.6647478        NA 0.09391697
 #> 2  bootstrap, fixed model 404     45 0.6067696 0.7126282         NA
 #> 3 bootstrap, full process 404     45 0.6065333 0.7074585 0.09828239
 #> 4                held out 196     22 0.7857889 1.7369817 0.08482979
@@ -55,11 +55,36 @@ learned from the resample rather than inherited from the original fit.
 
 **Held out** is the rows the project’s split reserved, scored once.
 
-The `brier` cell is empty on the fixed-model row because
+Two cells are empty, for two different reasons, and both are the right
+answer.
+
+The `brier` cell on the fixed-model row is empty because
 [`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html) returns
-Somers’ Dxy and the calibration slope, not a Brier score. An empty cell
-is the right answer there. Carrying the apparent Brier across into that
-row would make it look corrected when nothing corrected it.
+Somers’ Dxy and the calibration slope, not a Brier score. Carrying the
+apparent Brier across into that row would make it look corrected when
+nothing corrected it.
+
+The `cal_slope` cell on the **apparent** row is empty because that
+number is an identity rather than an estimate. Scoring an unpenalized
+maximum-likelihood fit on the very rows that produced it forces the
+calibration intercept to zero and the slope to one: they are the fit’s
+own score equations rearranged. Printed beside a held-out slope they
+read as the model being perfectly calibrated, which is the one thing
+they cannot show. You can watch them be exactly that:
+
+``` r
+
+y <- as.integer(model$fit$y)
+lp <- as.numeric(model$fit$linear.predictors)
+c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
+  slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
+#>    intercept        slope 
+#> 8.172466e-17 1.000000e+00
+```
+
+The package detects the identity rather than assuming it, so a fitting
+method that does not force it, a penalized fit for instance, would have
+its apparent calibration reported as the estimate it would then be.
 
 ``` r
 
@@ -107,9 +132,39 @@ round(rbind(apparent  = unlist(detail$apparent[names(detail$optimism)]),
             corrected = detail$corrected), 4)
 #>           c_stat cal_intercept cal_slope   brier brier_scaled
 #> apparent  0.6647             0    1.0000  0.0939       0.0511
-#> optimism  0.0582             0    0.2925 -0.0044       0.0501
-#> corrected 0.6065             0    0.7075  0.0983       0.0011
+#> optimism  0.0582             0    0.2925 -0.0044       0.0441
+#> corrected 0.6065             0    0.7075  0.0983       0.0070
 ```
+
+Those two calibration numbers in the `apparent` row are the identity
+again, and here they are load bearing rather than misleading: an
+in-sample slope that is exactly one in every resample is what makes the
+optimism of the slope equal to the mean out-of-sample shortfall, which
+is the quantity the corrected row reports.
+
+The scaled Brier in that table is derived, not differenced. It divides
+by `rate * (1 - rate)` of whichever rows were scored, so an in-sample
+value and an out-of-sample value are scaled by different constants and
+their difference would carry that drift as well as the optimism. The
+Brier itself is on one scale throughout, so it is corrected and the
+scaled version is then computed from the corrected value against one
+fixed denominator, the development cohort’s own no-information Brier:
+
+``` r
+
+c(no_information_brier = detail$no_information_brier,
+  corrected_brier      = unname(detail$corrected[["brier"]]),
+  derived_scaled       = unname(detail$corrected[["brier_scaled"]]),
+  check = 1 - unname(detail$corrected[["brier"]]) /
+    detail$no_information_brier)
+#> no_information_brier      corrected_brier       derived_scaled 
+#>          0.098979267          0.098282387          0.007040662 
+#>                check 
+#>          0.007040662
+```
+
+On a cohort of 150 that correction moved the reported number from -0.024
+to -0.040, so it is not a rounding matter.
 
 Resamples that cannot be fitted are counted, not dropped quietly:
 
@@ -288,7 +343,7 @@ holey_validation <- suppressWarnings(
 
 holey_validation
 #> <mm_validation>  full-process: TRUE
-#>   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)  slope=1.0000
+#>   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)
 #>   bootstrap, fixed model   n=389   events=43   C=0.5894  slope=0.6522
 #>   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921
 #>   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426
@@ -378,7 +433,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "0c5c1900a0dbb975"
+#> [1] "92df44fff5c5dae3"
 ```
 
 Report the held-out row when a split exists, the full-process row when

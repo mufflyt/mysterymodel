@@ -53,7 +53,7 @@ rather than a side effect, because the exclusions belong in the report.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mm_evaluable</span><span class="op">(</span><span class="va">project</span>, <span class="va">frame</span>, require_outcome <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mm_evaluable</span><span class="op">(</span><span class="va">project</span>, <span class="va">frame</span>, require_outcome <span class="op">=</span> <span class="cn">TRUE</span>, require_cluster <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,6 +72,15 @@ rather than a side effect, because the exclusions belong in the report.</p>
 <dd><p>Whether the outcome must be observed. <code>TRUE</code> for
 fitting and for scoring that will be turned into a metric; <code>FALSE</code> when
 only a prediction is wanted.</p></dd>
+
+
+<dt id="arg-require-cluster">require_cluster<a class="anchor" aria-label="anchor" href="#arg-require-cluster"></a></dt>
+<dd><p>Whether a declared <code>cluster_id</code> must be observed.
+<code>TRUE</code> for a development frame, because a row that cannot be assigned to a
+patient cannot take part in clustered resampling, and a bootstrap run on a
+subset of the rows the model was fitted to corrects the optimism of a
+different model from the one reported. <code>FALSE</code> for held-out rows, which are
+scored once and never resampled, so an identifier they lack costs nothing.</p></dd>
 
 </dl></div>
     <div class="section level2">

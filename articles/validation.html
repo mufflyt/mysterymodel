@@ -92,7 +92,7 @@ nobody noticed.</p>
 <span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basis"</span>, <span class="st">"n"</span>, <span class="st">"events"</span>, <span class="st">"c_stat"</span>, <span class="st">"cal_slope"</span>,</span>
 <span>                       <span class="st">"brier"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                     basis   n events    c_stat cal_slope      brier</span></span>
-<span><span class="co">#&gt; 1                apparent 404     45 0.6647478 1.0000000 0.09391697</span></span>
+<span><span class="co">#&gt; 1                apparent 404     45 0.6647478        NA 0.09391697</span></span>
 <span><span class="co">#&gt; 2  bootstrap, fixed model 404     45 0.6067696 0.7126282         NA</span></span>
 <span><span class="co">#&gt; 3 bootstrap, full process 404     45 0.6065333 0.7074585 0.09828239</span></span>
 <span><span class="co">#&gt; 4                held out 196     22 0.7857889 1.7369817 0.08482979</span></span></code></pre></div>
@@ -112,12 +112,32 @@ factor-level handling are all learned from the resample rather than
 inherited from the original fit.</p>
 <p><strong>Held out</strong> is the rows the project’s split reserved,
 scored once.</p>
-<p>The <code>brier</code> cell is empty on the fixed-model row because
+<p>Two cells are empty, for two different reasons, and both are the
+right answer.</p>
+<p>The <code>brier</code> cell on the fixed-model row is empty because
 <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code> returns Somers’ Dxy and the calibration
-slope, not a Brier score. An empty cell is the right answer there.
-Carrying the apparent Brier across into that row would make it look
-corrected when nothing corrected it.</p>
+slope, not a Brier score. Carrying the apparent Brier across into that
+row would make it look corrected when nothing corrected it.</p>
+<p>The <code>cal_slope</code> cell on the <strong>apparent</strong> row
+is empty because that number is an identity rather than an estimate.
+Scoring an unpenalized maximum-likelihood fit on the very rows that
+produced it forces the calibration intercept to zero and the slope to
+one: they are the fit’s own score equations rearranged. Printed beside a
+held-out slope they read as the model being perfectly calibrated, which
+is the one thing they cannot show. You can watch them be exactly
+that:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">fit</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="va">lp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">fit</span><span class="op">$</span><span class="va">linear.predictors</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, offset <span class="op">=</span> <span class="va">lp</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  slope     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">lp</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    intercept        slope </span></span>
+<span><span class="co">#&gt; 8.172466e-17 1.000000e+00</span></span></code></pre></div>
+<p>The package detects the identity rather than assuming it, so a
+fitting method that does not force it, a penalized fit for instance,
+would have its apparent calibration reported as the estimate it would
+then be.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">parts</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_split.html">mm_split</a></span><span class="op">(</span><span class="va">project</span>, <span class="va">cohort</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>development <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">parts</span><span class="op">$</span><span class="va">dev</span><span class="op">)</span>, held_out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">parts</span><span class="op">$</span><span class="va">held</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; development    held_out </span></span>
@@ -136,7 +156,7 @@ than a silent drop.</p>
 </h2>
 <p>This is the distinction the package will not let a caller skip. The
 detail object names what was actually repeated:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">detail</span> <span class="op">&lt;-</span> <span class="va">validation</span><span class="op">$</span><span class="va">full_process_detail</span></span>
 <span><span class="va">detail</span><span class="op">$</span><span class="va">covers</span></span>
 <span><span class="co">#&gt; [1] "knot placement" "datadist"       "factor levels"</span></span>
@@ -149,16 +169,41 @@ fully validated by this function either, and saying so in the returned
 object is what keeps the claim honest as the pipeline grows.</p>
 <p>The optimism and the correction are both available, rather than only
 their difference:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>apparent  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">apparent</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">optimism</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>            optimism  <span class="op">=</span> <span class="va">detail</span><span class="op">$</span><span class="va">optimism</span>,</span>
 <span>            corrected <span class="op">=</span> <span class="va">detail</span><span class="op">$</span><span class="va">corrected</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           c_stat cal_intercept cal_slope   brier brier_scaled</span></span>
 <span><span class="co">#&gt; apparent  0.6647             0    1.0000  0.0939       0.0511</span></span>
-<span><span class="co">#&gt; optimism  0.0582             0    0.2925 -0.0044       0.0501</span></span>
-<span><span class="co">#&gt; corrected 0.6065             0    0.7075  0.0983       0.0011</span></span></code></pre></div>
+<span><span class="co">#&gt; optimism  0.0582             0    0.2925 -0.0044       0.0441</span></span>
+<span><span class="co">#&gt; corrected 0.6065             0    0.7075  0.0983       0.0070</span></span></code></pre></div>
+<p>Those two calibration numbers in the <code>apparent</code> row are
+the identity again, and here they are load bearing rather than
+misleading: an in-sample slope that is exactly one in every resample is
+what makes the optimism of the slope equal to the mean out-of-sample
+shortfall, which is the quantity the corrected row reports.</p>
+<p>The scaled Brier in that table is derived, not differenced. It
+divides by <code>rate * (1 - rate)</code> of whichever rows were scored,
+so an in-sample value and an out-of-sample value are scaled by different
+constants and their difference would carry that drift as well as the
+optimism. The Brier itself is on one scale throughout, so it is
+corrected and the scaled version is then computed from the corrected
+value against one fixed denominator, the development cohort’s own
+no-information Brier:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>no_information_brier <span class="op">=</span> <span class="va">detail</span><span class="op">$</span><span class="va">no_information_brier</span>,</span>
+<span>  corrected_brier      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">corrected</span><span class="op">[[</span><span class="st">"brier"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  derived_scaled       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">corrected</span><span class="op">[[</span><span class="st">"brier_scaled"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  check <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">corrected</span><span class="op">[[</span><span class="st">"brier"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span></span>
+<span>    <span class="va">detail</span><span class="op">$</span><span class="va">no_information_brier</span><span class="op">)</span></span>
+<span><span class="co">#&gt; no_information_brier      corrected_brier       derived_scaled </span></span>
+<span><span class="co">#&gt;          0.098979267          0.098282387          0.007040662 </span></span>
+<span><span class="co">#&gt;                check </span></span>
+<span><span class="co">#&gt;          0.007040662</span></span></code></pre></div>
+<p>On a cohort of 150 that correction moved the reported number from
+-0.024 to -0.040, so it is not a rounding matter.</p>
 <p>Resamples that cannot be fitted are counted, not dropped quietly:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>valid <span class="op">=</span> <span class="va">detail</span><span class="op">$</span><span class="va">valid</span>, of <span class="op">=</span> <span class="va">detail</span><span class="op">$</span><span class="va">B</span><span class="op">)</span></span>
 <span><span class="co">#&gt; valid    of </span></span>
 <span><span class="co">#&gt;   100   100</span></span>
@@ -190,7 +235,7 @@ comparison each was built to support.</p>
 <p>The cohort has repeat visits. Resampling rows treats two visits by
 one person as two independent facts, and that narrows every interval it
 touches.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dev</span> <span class="op">&lt;-</span> <span class="va">parts</span><span class="op">$</span><span class="va">dev</span></span>
 <span><span class="va">by_row</span>     <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_resample.html">mm_resample</a></span><span class="op">(</span><span class="va">dev</span>, cluster_id <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="va">by_patient</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_resample.html">mm_resample</a></span><span class="op">(</span><span class="va">dev</span>, cluster_id <span class="op">=</span> <span class="st">"pid"</span><span class="op">)</span></span>
@@ -207,7 +252,7 @@ or neither.</p>
 <p>Here is the property that matters, stated as a check rather than as a
 claim. Take the patients with exactly two visits, and count how many
 rows each of them contributes to the draw:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">drawn</span> <span class="op">&lt;-</span> <span class="va">dev</span><span class="op">[</span><span class="va">by_patient</span>, <span class="op">]</span></span>
 <span><span class="va">twins</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">dev</span><span class="op">$</span><span class="va">pid</span><span class="op">)</span> <span class="op">==</span> <span class="fl">2L</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">rows_drawn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">drawn</span><span class="op">$</span><span class="va">pid</span>, levels <span class="op">=</span> <span class="va">twins</span><span class="op">)</span><span class="op">)</span></span>
@@ -225,7 +270,7 @@ resample a draw of patients rather than a draw of rows wearing patient
 labels.</p>
 <p>The project declares <code>cluster_id = "pid"</code>, so both
 bootstraps draw patients:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">validation</span><span class="op">$</span><span class="va">clustered_by</span></span>
 <span><span class="co">#&gt; [1] "pid"</span></span>
 <span><span class="va">validation</span><span class="op">$</span><span class="va">fixed_model</span><span class="op">$</span><span class="va">clustered_by</span></span>
@@ -236,7 +281,7 @@ passes its extra arguments through to
 <code><a href="https://rdrr.io/pkg/rms/man/predab.resample.html" class="external-link">rms::predab.resample()</a></code>, which takes a <code>cluster</code>
 and draws whole units when it is given one, so nothing but the missing
 argument was stopping it.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">note</span><span class="op">[</span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span></span>
 <span>                                    <span class="st">"bootstrap, fixed model"</span><span class="op">]</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;</span></span>
@@ -257,7 +302,7 @@ the same threshold the full-process row uses.</p>
 <p>The metric helper that produces each row is usable on its own, which
 is how a calibration or subgroup table gets the same arithmetic as the
 main table instead of a second implementation of it:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_event_indicator.html">mm_event_indicator</a></span><span class="op">(</span><span class="va">parts</span><span class="op">$</span><span class="va">held</span><span class="op">$</span><span class="va">event</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_predict.html">mm_predict</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">parts</span><span class="op">$</span><span class="va">held</span><span class="op">)</span><span class="op">$</span><span class="va">.pred</span></span>
 <span></span>
@@ -274,7 +319,7 @@ because it is the same function.</p>
 <div class="section level2">
 <h2 id="by-subgroup">By subgroup<a class="anchor" aria-label="anchor" href="#by-subgroup"></a>
 </h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="va">parts</span><span class="op">$</span><span class="va">held</span></span>
 <span><span class="va">held</span><span class="op">$</span><span class="va">.p</span> <span class="op">&lt;-</span> <span class="va">p</span></span>
 <span><span class="va">held</span><span class="op">$</span><span class="va">.y</span> <span class="op">&lt;-</span> <span class="va">y</span></span>
@@ -295,7 +340,7 @@ reason.</p>
 </h2>
 <p>The cohort above is complete. A real external cohort is not, and the
 two ways it is incomplete are not the same thing.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">holey</span> <span class="op">&lt;-</span> <span class="va">cohort</span></span>
 <span><span class="va">held_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span><span class="op">)</span></span>
 <span><span class="va">holey</span><span class="op">$</span><span class="va">bmi</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">25</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>                      <span class="co"># development, a missing predictor</span></span>
@@ -311,14 +356,14 @@ two ways it is incomplete are not the same thing.</p>
 <span></span>
 <span><span class="va">holey_validation</span></span>
 <span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
-<span><span class="co">#&gt;   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)  slope=1.0000</span></span>
+<span><span class="co">#&gt;   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)</span></span>
 <span><span class="co">#&gt;   bootstrap, fixed model   n=389   events=43   C=0.5894  slope=0.6522</span></span>
 <span><span class="co">#&gt;   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921</span></span>
 <span><span class="co">#&gt;   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426</span></span>
 <span><span class="co">#&gt;   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both</span></span>
 <span><span class="co">#&gt;   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both</span></span>
 <span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">eligibility</span><span class="op">$</span><span class="va">held_out</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 7</span></span>
 <span><span class="co">#&gt;  $ n_total          : int 196</span></span>
@@ -336,7 +381,7 @@ them hides which and because the specific error worth preventing is
 quietly taking a missing outcome for a non-event: that leaves the event
 count unchanged while inflating the denominator, so every reported risk
 comes out low and nothing in the table looks wrong.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="va">holey</span><span class="op">[</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span>, <span class="op">]</span></span>
 <span><span class="va">row</span> <span class="op">&lt;-</span> <span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span> <span class="st">"held out"</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rows_in_the_held_out_period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">held</span><span class="op">)</span>,</span>
@@ -349,7 +394,7 @@ comes out low and nothing in the table looks wrong.</p>
 <p>The bootstraps resample the fitted cohort and not the frame it was
 handed, so a resample’s composition does not depend on how much of it
 was missing:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>supplied <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_supplied</span>,</span>
 <span>  fitted   <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_dev</span>,</span>
 <span>  resampled_by_the_full_process <span class="op">=</span></span>
@@ -360,7 +405,7 @@ was missing:</p>
 <span><span class="co">#&gt;                           389</span></span></code></pre></div>
 <p>And the caveat travels with the number rather than living in a
 methods section:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">note</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; year &gt;= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13</span></span>
 <span><span class="co">#&gt; for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,</span></span>
@@ -379,11 +424,11 @@ incomplete record in the meantime.</p>
 </h2>
 <p>A fingerprint ties a validation result to the fit that produced it,
 so a table cannot drift from its model without the pairing changing:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "0c5c1900a0dbb975"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "92df44fff5c5dae3"</span></span></code></pre></div>
 <p>Report the held-out row when a split exists, the full-process row
 when it does not, the apparent row beside either so the optimism is
 visible, and the <code>note</code> column verbatim in the

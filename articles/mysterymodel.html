@@ -322,7 +322,7 @@ wrong.</p>
 <span><span class="co">#&gt;   held out   153 rows</span></span>
 <span><span class="co">#&gt;   parameters 9 non-intercept, 663 short of the sample they need</span></span>
 <span><span class="co">#&gt;   apparent C 0.7553</span></span>
-<span><span class="co">#&gt;   fingerprint 7d79bc4fadb8d51f</span></span></code></pre></div>
+<span><span class="co">#&gt;   fingerprint 7855ae820d29b8c6</span></span></code></pre></div>
 <p>The warning is the sample-size gate, and it is the honest answer for
 a cohort this size. The gate is the Riley requirement from
 <code>pmsampsize</code>, not the events-per-parameter rule, which is
@@ -365,7 +365,7 @@ receive:</p>
 <span><span class="co">#&gt; $range</span></span>
 <span><span class="co">#&gt; [1] 40.2 95.0</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span></span>
-<span><span class="co">#&gt; [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="predict">Predict<a class="anchor" aria-label="anchor" href="#predict"></a>
@@ -419,7 +419,7 @@ unless the caller says what to do with it:</p>
 <span><span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></span>
 <span><span class="va">validation</span></span>
 <span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
-<span><span class="co">#&gt;   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)  slope=1.0000</span></span>
+<span><span class="co">#&gt;   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)</span></span>
 <span><span class="co">#&gt;   bootstrap, fixed model   n=317   events=32   C=0.6908  slope=0.6302</span></span>
 <span><span class="co">#&gt;   bootstrap, full process  n=317   events=32   C=0.6913  slope=0.6511</span></span>
 <span><span class="co">#&gt;   held out                 n=153   events=18   C=0.5798 (0.4153-0.7444)  slope=0.3765</span></span>
@@ -438,16 +438,21 @@ the table so that nobody has to take the point estimate on its own.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basis"</span>, <span class="st">"n"</span>, <span class="st">"events"</span>, <span class="st">"c_stat"</span>, <span class="st">"cal_slope"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                     basis   n events    c_stat cal_slope</span></span>
-<span><span class="co">#&gt; 1                apparent 317     32 0.7552632 1.0000000</span></span>
+<span><span class="co">#&gt; 1                apparent 317     32 0.7552632        NA</span></span>
 <span><span class="co">#&gt; 2  bootstrap, fixed model 317     32 0.6908499 0.6301615</span></span>
 <span><span class="co">#&gt; 3 bootstrap, full process 317     32 0.6913094 0.6511136</span></span>
 <span><span class="co">#&gt; 4                held out 153     18 0.5798354 0.3765198</span></span></code></pre></div>
+<p>The apparent row has no calibration slope, deliberately. Scoring the
+fit on its own rows forces the intercept to zero and the slope to one,
+so those two numbers describe the estimator rather than the model, and
+the second article shows them being exactly that. The rows where
+calibration can be estimated carry it.</p>
 <p>The <code>note</code> column is where each row says what produced
 it:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"* "</span>, <span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span>, <span class="st">": "</span>,</span>
 <span>           <span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">note</span>, collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; * apparent: scored on the development rows</span></span>
+<span><span class="co">#&gt; * apparent: scored on the development rows. Calibration is withheld here rather than reported as 0 and 1: scoring the fit on its own rows forces both, so they describe the estimator and not the model. The bootstrap and held-out rows carry the calibration that can be estimated</span></span>
 <span><span class="co">#&gt; * bootstrap, fixed model: rms::validate, 100 of 100 resample(s) fitted. Refits the same formula; does not re-derive knots or levels. Resampled by whole pid</span></span>
 <span><span class="co">#&gt; * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid</span></span>
 <span><span class="co">#&gt; * held out: year &gt;= 2023, scored once</span></span></code></pre></div>
@@ -462,7 +467,7 @@ it:</p>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
-<span><span class="co">#&gt;   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   off-tick reading error    0.00233 in risk, midway between ticks</span></span></code></pre></div>
 <p><code><a href="../reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a
 clinician reads it, summing points across axes and interpolating the

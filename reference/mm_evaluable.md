@@ -9,7 +9,7 @@ the report.
 ## Usage
 
 ``` r
-mm_evaluable(project, frame, require_outcome = TRUE)
+mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
 ```
 
 ## Arguments
@@ -28,6 +28,16 @@ mm_evaluable(project, frame, require_outcome = TRUE)
   Whether the outcome must be observed. `TRUE` for fitting and for
   scoring that will be turned into a metric; `FALSE` when only a
   prediction is wanted.
+
+- require_cluster:
+
+  Whether a declared `cluster_id` must be observed. `TRUE` for a
+  development frame, because a row that cannot be assigned to a patient
+  cannot take part in clustered resampling, and a bootstrap run on a
+  subset of the rows the model was fitted to corrects the optimism of a
+  different model from the one reported. `FALSE` for held-out rows,
+  which are scored once and never resampled, so an identifier they lack
+  costs nothing.
 
 ## Value
 

@@ -301,7 +301,7 @@ model
 #>   held out   153 rows
 #>   parameters 9 non-intercept, 663 short of the sample they need
 #>   apparent C 0.7553
-#>   fingerprint 7d79bc4fadb8d51f
+#>   fingerprint 7855ae820d29b8c6
 ```
 
 The warning is the sample-size gate, and it is the honest answer for a
@@ -356,7 +356,7 @@ model$schema$predictors$age
 #> $range
 #> [1] 40.2 95.0
 model$fingerprint
-#> [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"
+#> [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"
 ```
 
 ## Predict
@@ -424,7 +424,7 @@ validation <- mm_validate(model, cohort$data, B = 100, full_process = TRUE)
 #> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 validation
 #> <mm_validation>  full-process: TRUE
-#>   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)  slope=1.0000
+#>   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)
 #>   bootstrap, fixed model   n=317   events=32   C=0.6908  slope=0.6302
 #>   bootstrap, full process  n=317   events=32   C=0.6913  slope=0.6511
 #>   held out                 n=153   events=18   C=0.5798 (0.4153-0.7444)  slope=0.3765
@@ -448,11 +448,17 @@ the table so that nobody has to take the point estimate on its own.
 
 validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope")]
 #>                     basis   n events    c_stat cal_slope
-#> 1                apparent 317     32 0.7552632 1.0000000
+#> 1                apparent 317     32 0.7552632        NA
 #> 2  bootstrap, fixed model 317     32 0.6908499 0.6301615
 #> 3 bootstrap, full process 317     32 0.6913094 0.6511136
 #> 4                held out 153     18 0.5798354 0.3765198
 ```
+
+The apparent row has no calibration slope, deliberately. Scoring the fit
+on its own rows forces the intercept to zero and the slope to one, so
+those two numbers describe the estimator rather than the model, and the
+second article shows them being exactly that. The rows where calibration
+can be estimated carry it.
 
 The `note` column is where each row says what produced it:
 
@@ -460,7 +466,7 @@ The `note` column is where each row says what produced it:
 
 cat(paste0("* ", validation$metrics$basis, ": ",
            validation$metrics$note, collapse = "\n"))
-#> * apparent: scored on the development rows
+#> * apparent: scored on the development rows. Calibration is withheld here rather than reported as 0 and 1: scoring the fit on its own rows forces both, so they describe the estimator and not the model. The bootstrap and held-out rows carry the calibration that can be estimated
 #> * bootstrap, fixed model: rms::validate, 100 of 100 resample(s) fitted. Refits the same formula; does not re-derive knots or levels. Resampled by whole pid
 #> * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid
 #> * held out: year >= 2023, scored once
@@ -477,7 +483,7 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)
 #>   off-tick reading error    0.00233 in risk, midway between ticks
 ```
 

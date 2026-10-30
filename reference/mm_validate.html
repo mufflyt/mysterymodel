@@ -83,7 +83,10 @@ basis, plus what produced them.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The bases are:</p><ul><li><p><strong>apparent</strong>, the model scored on the rows it was fitted to. Always
-optimistic, reported so that the optimism is visible.</p></li>
+optimistic, reported so that the optimism is visible. Its calibration is
+withheld rather than printed: scoring an unpenalized fit on its own rows
+forces the intercept to zero and the slope to one, so those two numbers
+describe the estimator and not the model.</p></li>
 <li><p><strong>bootstrap, fixed model</strong>, from <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code>. Each resample refits
 the <em>same formula</em>, which corrects the optimism of estimating
 coefficients. It does <strong>not</strong> repeat imputation, selection, tuning or
@@ -133,7 +136,7 @@ row was excluded. Multiple imputation is not in this package yet.</p>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>the development sample may be too small for this model: 190 rows is 1928 short of the 2118 a model of 5 parameter(s) needs at 8.4% prevalence for 90% shrinkage. Coefficients from a sample this size are expected to be overfitted; see the adequacy element of the returned object.</span>
 <span class="r-in"><span><span class="fu">mm_validate</span><span class="op">(</span><span class="va">fit</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;mm_validation&gt;  full-process: FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)  slope=1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bootstrap, fixed model   n=190   events=16   C=0.5010  slope=0.3818</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   held out                 n=110   events=12   C=0.3844 (0.2074-0.5613)  slope=-1.1131</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Fixed-model bootstrap only. Not validation of a strategy.</span>

@@ -41,7 +41,10 @@ plus what produced them.
 The bases are:
 
 - **apparent**, the model scored on the rows it was fitted to. Always
-  optimistic, reported so that the optimism is visible.
+  optimistic, reported so that the optimism is visible. Its calibration
+  is withheld rather than printed: scoring an unpenalized fit on its own
+  rows forces the intercept to zero and the slope to one, so those two
+  numbers describe the estimator and not the model.
 
 - **bootstrap, fixed model**, from
   [`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html). Each
@@ -105,7 +108,7 @@ fit <- mm_model(project, cohort, nonlinear = "age")
 #> Warning: the development sample may be too small for this model: 190 rows is 1928 short of the 2118 a model of 5 parameter(s) needs at 8.4% prevalence for 90% shrinkage. Coefficients from a sample this size are expected to be overfitted; see the adequacy element of the returned object.
 mm_validate(fit, cohort, B = 25)
 #> <mm_validation>  full-process: FALSE
-#>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)  slope=1.0000
+#>   apparent                 n=190   events=16   C=0.6257 (0.4652-0.7862)
 #>   bootstrap, fixed model   n=190   events=16   C=0.5010  slope=0.3818
 #>   held out                 n=110   events=12   C=0.3844 (0.2074-0.5613)  slope=-1.1131
 #>   Fixed-model bootstrap only. Not validation of a strategy.
