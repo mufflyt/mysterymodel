@@ -6,7 +6,7 @@ function cannot validate what a lower-level one then truncates.
 ## Usage
 
 ``` r
-mm_check_resamples(B, what = "B")
+mm_check_resamples(B)
 ```
 
 ## Arguments
@@ -14,10 +14,6 @@ mm_check_resamples(B, what = "B")
 - B:
 
   The count to check.
-
-- what:
-
-  The argument's name, for the message.
 
 ## Value
 

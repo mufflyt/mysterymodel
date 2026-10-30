@@ -9,7 +9,7 @@ the report.
 ## Usage
 
 ``` r
-mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
+mm_evaluable(project, frame, require_cluster = FALSE)
 ```
 
 ## Arguments
@@ -21,13 +21,11 @@ mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
 
 - frame:
 
-  Rows to assess.
-
-- require_outcome:
-
-  Whether the outcome must be observed. `TRUE` for fitting and for
-  scoring that will be turned into a metric; `FALSE` when only a
-  prediction is wanted.
+  Rows to assess. The outcome must be observed. Every caller is fitting
+  a model or scoring one into a metric, and both need it; a prediction
+  wants no outcome and does not come through here,
+  [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+  selects its own rows.
 
 - require_cluster:
 
@@ -41,9 +39,9 @@ mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
 
 ## Value
 
-A list: `usable` and `predictable` masks, the counts `n_total`,
-`n_scored`, `n_excluded`, `missing_predictor`, `missing_outcome`,
-`missing_both`, and `by_variable`.
+A list: the `usable` mask, the counts `n_total`, `n_scored`,
+`n_excluded`, `missing_predictor`, `missing_outcome`, `missing_both`,
+and `by_variable`.
 
 ## Details
 

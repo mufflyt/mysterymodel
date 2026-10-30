@@ -54,7 +54,7 @@ rather than a side effect, because the exclusions belong in the report.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mm_evaluable</span><span class="op">(</span><span class="va">project</span>, <span class="va">frame</span>, require_outcome <span class="op">=</span> <span class="cn">TRUE</span>, require_cluster <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mm_evaluable</span><span class="op">(</span><span class="va">project</span>, <span class="va">frame</span>, require_cluster <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,13 +66,10 @@ rather than a side effect, because the exclusions belong in the report.</p>
 
 
 <dt id="arg-frame">frame<a class="anchor" aria-label="anchor" href="#arg-frame"></a></dt>
-<dd><p>Rows to assess.</p></dd>
-
-
-<dt id="arg-require-outcome">require_outcome<a class="anchor" aria-label="anchor" href="#arg-require-outcome"></a></dt>
-<dd><p>Whether the outcome must be observed. <code>TRUE</code> for
-fitting and for scoring that will be turned into a metric; <code>FALSE</code> when
-only a prediction is wanted.</p></dd>
+<dd><p>Rows to assess.
+The outcome must be observed. Every caller is fitting a model or scoring
+one into a metric, and both need it; a prediction wants no outcome and does
+not come through here, <code><a href="mm_predict.html">mm_predict()</a></code> selects its own rows.</p></dd>
 
 
 <dt id="arg-require-cluster">require_cluster<a class="anchor" aria-label="anchor" href="#arg-require-cluster"></a></dt>
@@ -86,9 +83,9 @@ scored once and never resampled, so an identifier they lack costs nothing.</p></
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list: <code>usable</code> and <code>predictable</code> masks, the counts
-<code>n_total</code>, <code>n_scored</code>, <code>n_excluded</code>, <code>missing_predictor</code>,
-<code>missing_outcome</code>, <code>missing_both</code>, and <code>by_variable</code>.</p>
+    <p>A list: the <code>usable</code> mask, the counts <code>n_total</code>, <code>n_scored</code>,
+<code>n_excluded</code>, <code>missing_predictor</code>, <code>missing_outcome</code>, <code>missing_both</code>,
+and <code>by_variable</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
