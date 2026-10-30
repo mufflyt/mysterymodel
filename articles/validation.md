@@ -96,7 +96,7 @@ lp <- as.numeric(model$fit$linear.predictors)
 c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
   slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
 #>    intercept        slope 
-#> 4.971539e-16 1.000000e+00
+#> 8.172466e-17 1.000000e+00
 ```
 
 The package detects the identity rather than assuming it, so a fitting
@@ -283,7 +283,10 @@ nothing but the missing argument was stopping it.
 cat(strwrap(validation$metrics$note[validation$metrics$basis ==
                                     "bootstrap, fixed model"], 72), sep = "\n")
 #> rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;
-#> does not re-derive knots or levels. Resampled by whole pid
+#> does not re-derive knots or levels. Resampled by whole pid. No
+#> interval: DeLong describes an apparent c-statistic, not a corrected
+#> one, and an interval for the corrected index needs a nested bootstrap
+#> that is not implemented here
 ```
 
 The resample count in that note is the number `rms` actually fitted, not
@@ -357,6 +360,94 @@ Read those with the event counts beside them. A c-statistic from a few
 dozen events is compatible with a wide range of truths, and the interval
 columns are in the full return value for exactly that reason.
 
+## What the interval is, and the three rows that do not have one
+
+The interval on a c-statistic is DeLong’s, from `pROC`, and it describes
+the c-statistic of **one model scored once on one sample**. Two of the
+four rows in the table above are not that.
+
+``` r
+
+validation$metrics[, c("basis", "n", "events", "non_events",
+                       "c_stat", "c_lower", "c_upper")]
+#>                     basis   n events non_events    c_stat   c_lower   c_upper
+#> 1                apparent 404     45        359 0.6647478 0.5749341 0.7545614
+#> 2  bootstrap, fixed model 404     45        359 0.6067696        NA        NA
+#> 3 bootstrap, full process 404     45        359 0.6065333        NA        NA
+#> 4                held out 196     22        174 0.7857889 0.6770106 0.8945672
+```
+
+The bootstrap rows carry no interval, and the reason is in their notes
+rather than left as a pair of blanks:
+
+``` r
+
+cat(strwrap(validation$metrics$note[
+  validation$metrics$basis == "bootstrap, fixed model"], 72), sep = "\n")
+#> rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;
+#> does not re-derive knots or levels. Resampled by whole pid. No
+#> interval: DeLong describes an apparent c-statistic, not a corrected
+#> one, and an interval for the corrected index needs a nested bootstrap
+#> that is not implemented here
+```
+
+A corrected index is an apparent one minus an average optimism. Neither
+[`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html) nor the
+full-process loop returns the distribution of that difference, so there
+is nothing to put an interval around; the recognised answer is a nested
+bootstrap, which costs `B` times the correction and is not implemented
+here. What must not happen is the apparent row’s interval being read
+down the column as though it applied to the corrected estimate, which is
+why the blanks are annotated.
+
+Two more cases are reported rather than hidden. DeLong needs at least
+two of each outcome, so a cohort with one event gets its c-statistic and
+no interval:
+
+``` r
+
+one_event <- mysterymodel:::mm_metrics(
+  c(0.9, seq(0.1, 0.5, length.out = 40)), c(1, rep(0, 40)),
+  basis = "one event")
+#> Warning: glm.fit: algorithm did not converge
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+one_event[, c("n", "events", "non_events", "c_stat", "c_lower")]
+#>    n events non_events c_stat c_lower
+#> 1 41      1         40      1      NA
+cat(strwrap(one_event$note, 72), sep = "\n")
+#> the c-statistic has no interval here, which needs at least two of each
+#> outcome, and there are 1 event(s) and 40 non-event(s). the calibration
+#> slope is withheld: the fit behind it did not converge, so its
+#> coefficient marks where iteration stopped rather than an estimate
+```
+
+And where the classes separate completely, DeLong’s standard error is
+zero, so the interval it returns has zero width. That is the estimator
+running out of information, not a precise answer, and the note says so
+rather than leaving `1.000 to 1.000` on the page:
+
+``` r
+
+separated <- mysterymodel:::mm_metrics(
+  c(seq(0, 0.4, length.out = 30), seq(0.6, 1, length.out = 30)),
+  rep(0:1, each = 30), basis = "separated")
+#> Warning: glm.fit: algorithm did not converge
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+cat(strwrap(separated$note, 72), sep = "\n")
+#> 95% DeLong interval, from 30 event(s) and 30 non-event(s). that
+#> interval has zero width, which is what DeLong returns when the classes
+#> separate completely or every prediction ties: the estimator has no
+#> information left to spend on an interval, so this is not a statement of
+#> precision. the calibration slope is withheld: the fit behind it did not
+#> converge, so its coefficient marks where iteration stopped rather than
+#> an estimate
+```
+
+No threshold on the event count is applied anywhere in this. There is no
+evidence in this package for a universal minimum, so instead every row
+states the method and the two counts its standard error is computed
+from, and a reader judges the three-event interval for themselves.
+
 ## Rows that cannot be judged
 
 The cohort above is complete. A real external cohort is not, and the two
@@ -379,10 +470,11 @@ holey_validation <- suppressWarnings(
 
 holey_validation
 #> <mm_validation>  full-process: TRUE
-#>   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)
-#>   bootstrap, fixed model   n=389   events=43   C=0.5894  slope=0.6522
-#>   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921
-#>   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426
+#>   columns: n, events/non-events, c-statistic with its 95% DeLong interval where one is estimable
+#>   apparent                 n=389   43/346 C=0.6605 (0.5669-0.7541)
+#>   bootstrap, fixed model   n=389   43/346 C=0.5894 no interval, see note  slope=0.6522
+#>   bootstrap, full process  n=389   43/346 C=0.5971 no interval, see note  slope=0.6921
+#>   held out                 n=175   19/156 C=0.7702 (0.6491-0.8914)  slope=1.6426
 #>   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both
 #>   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.
@@ -448,10 +540,11 @@ cat(strwrap(row$note, 72), sep = "\n")
 #> year >= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13
 #> for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,
 #> event 8). Complete case, so these estimates assume the exclusions are
-#> uninformative, which is an assumption and not a finding. the scaled
-#> Brier is taken against the reference 0.09832, not this sample's own
-#> 0.09678, so the column compares like with like; against its own it
-#> would read 0.1370
+#> uninformative, which is an assumption and not a finding. 95% DeLong
+#> interval, from 19 event(s) and 156 non-event(s). the scaled Brier is
+#> taken against the reference 0.09832, not this sample's own 0.09678, so
+#> the column compares like with like; against its own it would read
+#> 0.1370
 ```
 
 That last sentence is the point. Complete-case analysis is a
@@ -517,7 +610,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "0c5c1900a0dbb975"
+#> [1] "92df44fff5c5dae3"
 ```
 
 Report the held-out row when a split exists, the full-process row when

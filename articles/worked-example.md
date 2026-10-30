@@ -430,7 +430,7 @@ fits$D
 #>   held out   190 rows
 #>   parameters 9 non-intercept, 710 short of the sample they need
 #>   apparent C 0.7116
-#>   fingerprint 13f51cd9f4ad63da
+#>   fingerprint 3b00d7880d0bada1
 ```
 
 ``` r
@@ -444,10 +444,10 @@ do.call(rbind, lapply(names(fits), function(k) {
              fingerprint = substr(m$fingerprint, 1, 10))
 }))
 #>   analysis n_supplied n_dev events n_held parameters apparent_C fingerprint
-#> 1        A        741   741     83      0          6     0.6425  2f3503a21a
-#> 2        B        741   741     83      0          8     0.6584  bc5b60c005
-#> 3        C        741   741     83      0          9     0.6695  173aa6c379
-#> 4        D        551   551     64    190          9     0.7116  13f51cd9f4
+#> 1        A        741   741     83      0          6     0.6425  20486eeb8c
+#> 2        B        741   741     83      0          8     0.6584  b40edbe891
+#> 3        C        741   741     83      0          9     0.6695  93ca893c56
+#> 4        D        551   551     64    190          9     0.7116  3b00d7880d
 ```
 
 The sample-size gate is reported per analysis, and it is the honest
@@ -511,10 +511,11 @@ names(checked) <- names(fits)
 
 checked$D
 #> <mm_validation>  full-process: TRUE
-#>   apparent                 n=551   events=64   C=0.7116 (0.6386-0.7846)
-#>   bootstrap, fixed model   n=551   events=64   C=0.6647  slope=0.8200
-#>   bootstrap, full process  n=551   events=64   C=0.6752  slope=0.8446
-#>   held out                 n=190   events=19   C=0.4974 (0.3275-0.6673)  slope=0.2950
+#>   columns: n, events/non-events, c-statistic with its 95% DeLong interval where one is estimable
+#>   apparent                 n=551   64/487 C=0.7116 (0.6386-0.7846)
+#>   bootstrap, fixed model   n=551   64/487 C=0.6647 no interval, see note  slope=0.8200
+#>   bootstrap, full process  n=551   64/487 C=0.6752 no interval, see note  slope=0.8446
+#>   held out                 n=190   19/171 C=0.4974 (0.3275-0.6673)  slope=0.2950
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 60 of 60 valid.
 ```
 
@@ -617,7 +618,7 @@ rbind(computed = c(intercept = apparent$cal_intercept,
                    slope = apparent$cal_slope),
       reported = c(withheld$cal_intercept, withheld$cal_slope))
 #>             intercept slope
-#> computed -1.26181e-15     1
+#> computed -1.40273e-15     1
 #> reported           NA    NA
 ```
 
@@ -694,12 +695,12 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpHph6OP/worked-example/uds-d_nomogram.pdf, /tmp/RtmpHph6OP/worked-example/uds-d_nomogram.svg, /tmp/RtmpHph6OP/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.pdf, /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.svg, /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
 #>   off-tick reading error    0.000856 in risk, midway between ticks
 #>   files           uds-d_nomogram.pdf, uds-d_nomogram.svg, uds-d_nomogram.png
 ```
@@ -857,14 +858,14 @@ c(between_ticks = mysterymodel:::mm_reading_error(nom$nomogram, fits$D),
   reported = nom$reading_error,
   at_ticks = nom$worst_disagreement)
 #> between_ticks      reported      at_ticks 
-#>  8.560571e-04  8.560571e-04  1.110223e-16
+#>  8.560571e-04  8.560571e-04  5.551115e-17
 ```
 
 ``` r
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpHph6OP/worked-example/worked-example_nomogram.pdf, /tmp/RtmpHph6OP/worked-example/worked-example_nomogram.svg, /tmp/RtmpHph6OP/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.pdf, /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.svg, /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -927,10 +928,10 @@ do.call(rbind, lapply(names(fits), function(k) data.frame(
   validation_matches = identical(checked[[k]]$fingerprint,
                                  fits[[k]]$fingerprint))))
 #>   analysis coefficients  development validation_matches
-#> 1        A 2f3503a21a4a c9552f752ad9               TRUE
-#> 2        B bc5b60c005ba c9552f752ad9               TRUE
-#> 3        C 173aa6c379e8 d3e0c5b952e9               TRUE
-#> 4        D 13f51cd9f4ad a97f8dd9ff7e               TRUE
+#> 1        A 20486eeb8ce2 c9552f752ad9               TRUE
+#> 2        B b40edbe891b8 c9552f752ad9               TRUE
+#> 3        C 93ca893c5644 d3e0c5b952e9               TRUE
+#> 4        D 3b00d7880d0b a97f8dd9ff7e               TRUE
 ```
 
 A and B share a development sample and differ in shape, so their
@@ -954,9 +955,10 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        41         8        38
+#>        42         8        38
 sort(everything[!used])
-#> [1] "mm_min_resamples"  "mm_no_information" "mm_profiles"
+#> [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"       
+#> [4] "mm_profiles"
 ```
 
 ``` r

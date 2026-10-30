@@ -146,7 +146,7 @@ that:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, offset <span class="op">=</span> <span class="va">lp</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>  slope     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">lp</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    intercept        slope </span></span>
-<span><span class="co">#&gt; 4.971539e-16 1.000000e+00</span></span></code></pre></div>
+<span><span class="co">#&gt; 8.172466e-17 1.000000e+00</span></span></code></pre></div>
 <p>The package detects the identity rather than assuming it, so a
 fitting method that does not force it, a penalized fit for instance,
 would have its apparent calibration reported as the estimate it would
@@ -299,7 +299,10 @@ argument was stopping it.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">note</span><span class="op">[</span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span></span>
 <span>                                    <span class="st">"bootstrap, fixed model"</span><span class="op">]</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;</span></span>
-<span><span class="co">#&gt; does not re-derive knots or levels. Resampled by whole pid</span></span></code></pre></div>
+<span><span class="co">#&gt; does not re-derive knots or levels. Resampled by whole pid. No</span></span>
+<span><span class="co">#&gt; interval: DeLong describes an apparent c-statistic, not a corrected</span></span>
+<span><span class="co">#&gt; one, and an interval for the corrected index needs a nested bootstrap</span></span>
+<span><span class="co">#&gt; that is not implemented here</span></span></code></pre></div>
 <p>The resample count in that note is the number <code>rms</code>
 actually fitted, not the number asked for.
 <code>predab.resample()</code> keeps only the resamples that converged
@@ -365,11 +368,84 @@ interval columns are in the full return value for exactly that
 reason.</p>
 </div>
 <div class="section level2">
+<h2 id="what-the-interval-is-and-the-three-rows-that-do-not-have-one">What the interval is, and the three rows that do not have one<a class="anchor" aria-label="anchor" href="#what-the-interval-is-and-the-three-rows-that-do-not-have-one"></a>
+</h2>
+<p>The interval on a c-statistic is DeLong’s, from <code>pROC</code>,
+and it describes the c-statistic of <strong>one model scored once on one
+sample</strong>. Two of the four rows in the table above are not
+that.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basis"</span>, <span class="st">"n"</span>, <span class="st">"events"</span>, <span class="st">"non_events"</span>,</span>
+<span>                       <span class="st">"c_stat"</span>, <span class="st">"c_lower"</span>, <span class="st">"c_upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                     basis   n events non_events    c_stat   c_lower   c_upper</span></span>
+<span><span class="co">#&gt; 1                apparent 404     45        359 0.6647478 0.5749341 0.7545614</span></span>
+<span><span class="co">#&gt; 2  bootstrap, fixed model 404     45        359 0.6067696        NA        NA</span></span>
+<span><span class="co">#&gt; 3 bootstrap, full process 404     45        359 0.6065333        NA        NA</span></span>
+<span><span class="co">#&gt; 4                held out 196     22        174 0.7857889 0.6770106 0.8945672</span></span></code></pre></div>
+<p>The bootstrap rows carry no interval, and the reason is in their
+notes rather than left as a pair of blanks:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">note</span><span class="op">[</span></span>
+<span>  <span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span> <span class="st">"bootstrap, fixed model"</span><span class="op">]</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;</span></span>
+<span><span class="co">#&gt; does not re-derive knots or levels. Resampled by whole pid. No</span></span>
+<span><span class="co">#&gt; interval: DeLong describes an apparent c-statistic, not a corrected</span></span>
+<span><span class="co">#&gt; one, and an interval for the corrected index needs a nested bootstrap</span></span>
+<span><span class="co">#&gt; that is not implemented here</span></span></code></pre></div>
+<p>A corrected index is an apparent one minus an average optimism.
+Neither <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code> nor the full-process loop returns
+the distribution of that difference, so there is nothing to put an
+interval around; the recognised answer is a nested bootstrap, which
+costs <code>B</code> times the correction and is not implemented here.
+What must not happen is the apparent row’s interval being read down the
+column as though it applied to the corrected estimate, which is why the
+blanks are annotated.</p>
+<p>Two more cases are reported rather than hidden. DeLong needs at least
+two of each outcome, so a cohort with one event gets its c-statistic and
+no interval:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">one_event</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  basis <span class="op">=</span> <span class="st">"one event"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: glm.fit: algorithm did not converge</span></span>
+<span><span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></span>
+<span><span class="va">one_event</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"events"</span>, <span class="st">"non_events"</span>, <span class="st">"c_stat"</span>, <span class="st">"c_lower"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    n events non_events c_stat c_lower</span></span>
+<span><span class="co">#&gt; 1 41      1         40      1      NA</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">one_event</span><span class="op">$</span><span class="va">note</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; the c-statistic has no interval here, which needs at least two of each</span></span>
+<span><span class="co">#&gt; outcome, and there are 1 event(s) and 40 non-event(s). the calibration</span></span>
+<span><span class="co">#&gt; slope is withheld: the fit behind it did not converge, so its</span></span>
+<span><span class="co">#&gt; coefficient marks where iteration stopped rather than an estimate</span></span></code></pre></div>
+<p>And where the classes separate completely, DeLong’s standard error is
+zero, so the interval it returns has zero width. That is the estimator
+running out of information, not a precise answer, and the note says so
+rather than leaving <code>1.000 to 1.000</code> on the page:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">separated</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.4</span>, length.out <span class="op">=</span> <span class="fl">30</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">30</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, each <span class="op">=</span> <span class="fl">30</span><span class="op">)</span>, basis <span class="op">=</span> <span class="st">"separated"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: glm.fit: algorithm did not converge</span></span>
+<span><span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">separated</span><span class="op">$</span><span class="va">note</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 95% DeLong interval, from 30 event(s) and 30 non-event(s). that</span></span>
+<span><span class="co">#&gt; interval has zero width, which is what DeLong returns when the classes</span></span>
+<span><span class="co">#&gt; separate completely or every prediction ties: the estimator has no</span></span>
+<span><span class="co">#&gt; information left to spend on an interval, so this is not a statement of</span></span>
+<span><span class="co">#&gt; precision. the calibration slope is withheld: the fit behind it did not</span></span>
+<span><span class="co">#&gt; converge, so its coefficient marks where iteration stopped rather than</span></span>
+<span><span class="co">#&gt; an estimate</span></span></code></pre></div>
+<p>No threshold on the event count is applied anywhere in this. There is
+no evidence in this package for a universal minimum, so instead every
+row states the method and the two counts its standard error is computed
+from, and a reader judges the three-event interval for themselves.</p>
+</div>
+<div class="section level2">
 <h2 id="rows-that-cannot-be-judged">Rows that cannot be judged<a class="anchor" aria-label="anchor" href="#rows-that-cannot-be-judged"></a>
 </h2>
 <p>The cohort above is complete. A real external cohort is not, and the
 two ways it is incomplete are not the same thing.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">holey</span> <span class="op">&lt;-</span> <span class="va">cohort</span></span>
 <span><span class="va">held_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span><span class="op">)</span></span>
 <span><span class="va">holey</span><span class="op">$</span><span class="va">bmi</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">25</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>                      <span class="co"># development, a missing predictor</span></span>
@@ -385,14 +461,15 @@ two ways it is incomplete are not the same thing.</p>
 <span></span>
 <span><span class="va">holey_validation</span></span>
 <span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
-<span><span class="co">#&gt;   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)</span></span>
-<span><span class="co">#&gt;   bootstrap, fixed model   n=389   events=43   C=0.5894  slope=0.6522</span></span>
-<span><span class="co">#&gt;   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921</span></span>
-<span><span class="co">#&gt;   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426</span></span>
+<span><span class="co">#&gt;   columns: n, events/non-events, c-statistic with its 95% DeLong interval where one is estimable</span></span>
+<span><span class="co">#&gt;   apparent                 n=389   43/346 C=0.6605 (0.5669-0.7541)</span></span>
+<span><span class="co">#&gt;   bootstrap, fixed model   n=389   43/346 C=0.5894 no interval, see note  slope=0.6522</span></span>
+<span><span class="co">#&gt;   bootstrap, full process  n=389   43/346 C=0.5971 no interval, see note  slope=0.6921</span></span>
+<span><span class="co">#&gt;   held out                 n=175   19/156 C=0.7702 (0.6491-0.8914)  slope=1.6426</span></span>
 <span><span class="co">#&gt;   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both</span></span>
 <span><span class="co">#&gt;   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both</span></span>
 <span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">eligibility</span><span class="op">$</span><span class="va">held_out</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 7</span></span>
 <span><span class="co">#&gt;  $ n_total          : int 196</span></span>
@@ -410,7 +487,7 @@ them hides which and because the specific error worth preventing is
 quietly taking a missing outcome for a non-event: that leaves the event
 count unchanged while inflating the denominator, so every reported risk
 comes out low and nothing in the table looks wrong.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="va">holey</span><span class="op">[</span><span class="va">holey</span><span class="op">$</span><span class="va">year</span> <span class="op">&gt;=</span> <span class="fl">2023</span>, <span class="op">]</span></span>
 <span><span class="va">row</span> <span class="op">&lt;-</span> <span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span> <span class="op">==</span> <span class="st">"held out"</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rows_in_the_held_out_period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">held</span><span class="op">)</span>,</span>
@@ -423,7 +500,7 @@ comes out low and nothing in the table looks wrong.</p>
 <p>The bootstraps resample the fitted cohort and not the frame it was
 handed, so a resample’s composition does not depend on how much of it
 was missing:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>supplied <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_supplied</span>,</span>
 <span>  fitted   <span class="op">=</span> <span class="va">holey_model</span><span class="op">$</span><span class="va">n_dev</span>,</span>
 <span>  resampled_by_the_full_process <span class="op">=</span></span>
@@ -434,15 +511,16 @@ was missing:</p>
 <span><span class="co">#&gt;                           389</span></span></code></pre></div>
 <p>And the caveat travels with the number rather than living in a
 methods section:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap</a></span><span class="op">(</span><span class="va">row</span><span class="op">$</span><span class="va">note</span>, <span class="fl">72</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; year &gt;= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13</span></span>
 <span><span class="co">#&gt; for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,</span></span>
 <span><span class="co">#&gt; event 8). Complete case, so these estimates assume the exclusions are</span></span>
-<span><span class="co">#&gt; uninformative, which is an assumption and not a finding. the scaled</span></span>
-<span><span class="co">#&gt; Brier is taken against the reference 0.09832, not this sample's own</span></span>
-<span><span class="co">#&gt; 0.09678, so the column compares like with like; against its own it</span></span>
-<span><span class="co">#&gt; would read 0.1370</span></span></code></pre></div>
+<span><span class="co">#&gt; uninformative, which is an assumption and not a finding. 95% DeLong</span></span>
+<span><span class="co">#&gt; interval, from 19 event(s) and 156 non-event(s). the scaled Brier is</span></span>
+<span><span class="co">#&gt; taken against the reference 0.09832, not this sample's own 0.09678, so</span></span>
+<span><span class="co">#&gt; the column compares like with like; against its own it would read</span></span>
+<span><span class="co">#&gt; 0.1370</span></span></code></pre></div>
 <p>That last sentence is the point. Complete-case analysis is a
 computational strategy, not a guarantee. Missingness can be informative,
 the more so in a cohort this size, so the exclusions are disclosed
@@ -461,7 +539,7 @@ string and anything below one. A count written with a decimal point is
 still a count, so <code>200.0</code> is fine. The check runs before any
 seed is set, so a refused call leaves the random-number state as it
 found it.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mm_validate.html">mm_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">2.7</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> `B` is 2.7, which is not a whole number of resamples. Truncating it to 2 would answer a question that was not asked.</span></span></code></pre></div>
@@ -469,7 +547,7 @@ found it.</p>
 used to clamp its input to the interior of <code>[0, 1]</code>, so a
 predicted risk of 1.5 became a Brier score of 0.18 and whatever produced
 the 1.5 stayed invisible.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">0L</span>, <span class="fl">1L</span><span class="op">)</span>, basis <span class="op">=</span> <span class="st">"probe"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> predicted probabilities must be finite and within [0, 1]. Found 1 invalid value(s); row 1 is 1.5.</span></span></code></pre></div>
@@ -477,7 +555,7 @@ the 1.5 stayed invisible.</p>
 the calibration terms are fitted on the logit scale, so a nudge survives
 on that one line and nowhere else: the Brier and the c-statistic read
 the probabilities as given.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0L</span>, <span class="fl">1L</span>, <span class="fl">1L</span>, <span class="fl">0L</span><span class="op">)</span>,</span>
 <span>                                  basis <span class="op">=</span> <span class="st">"probe"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>brier_reported <span class="op">=</span> <span class="va">edge</span><span class="op">$</span><span class="va">brier</span>,</span>
@@ -491,11 +569,11 @@ the probabilities as given.</p>
 </h2>
 <p>A fingerprint ties a validation result to the fit that produced it,
 so a table cannot drift from its model without the pairing changing:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "0c5c1900a0dbb975"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "92df44fff5c5dae3"</span></span></code></pre></div>
 <p>Report the held-out row when a split exists, the full-process row
 when it does not, the apparent row beside either so the optimism is
 visible, and the <code>note</code> column verbatim in the
