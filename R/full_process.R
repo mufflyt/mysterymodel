@@ -35,7 +35,18 @@
 mm_full_process <- function(model, cohort, B = 200L,
                             min_valid = ceiling(0.8 * B)) {
   project <- model$project
-  dev <- mm_split(project, cohort)$dev
+  # The rows the model was fitted on, not the rows it was handed. Resampling
+  # the supplied frame would draw rows no refit can use, so a resample's
+  # composition would depend on how much of it was missing.
+  supplied <- mm_split(project, cohort)$dev
+  eligible <- mm_evaluable(project, supplied)
+  dev <- supplied[eligible$usable, , drop = FALSE]
+  if (eligible$n_scored != model$n_dev) {
+    stop("the development rows of `cohort` give ", eligible$n_scored,
+         " evaluable row(s), and the model was fitted on ", model$n_dev,
+         ". The optimism of a fit cannot be estimated from a different ",
+         "sample.", call. = FALSE)
+  }
   y_dev <- mm_event_indicator(dev[[project$outcome]],
                               project$positive_class)
 
@@ -93,6 +104,8 @@ mm_full_process <- function(model, cohort, B = 200L,
   }
 
   list(optimism = optimism, corrected = corrected, apparent = apparent,
+       eligibility = eligible[setdiff(names(eligible),
+                                      c("usable", "predictable"))],
        valid = valid, B = B, adequate = adequate, note = note,
        covers = c("knot placement", "datadist", "factor levels"),
        failures = unique(failures))

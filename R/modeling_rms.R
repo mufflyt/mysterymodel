@@ -122,14 +122,11 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # carried came back labelled as interpolation and the drawn nomogram
   # reached axis values the model was never estimated on.
   model_vars <- c(project$outcome, project$predictors)
-  usable <- stats::complete.cases(supplied[, model_vars, drop = FALSE])
-  dev <- supplied[usable, , drop = FALSE]
-  y <- y_supplied[usable]
-  n_incomplete <- nrow(supplied) - nrow(dev)
-
-  by_variable <- vapply(model_vars,
-                        function(v) sum(is.na(supplied[[v]])), integer(1))
-  by_variable <- by_variable[by_variable > 0L]
+  eligible <- mm_evaluable(project, supplied)
+  dev <- supplied[eligible$usable, , drop = FALSE]
+  y <- y_supplied[eligible$usable]
+  n_incomplete <- eligible$n_excluded
+  by_variable <- eligible$by_variable
 
   if (n_incomplete > 0L) {
     warning(n_incomplete, " of ", nrow(supplied), " development row(s) were ",
@@ -241,6 +238,8 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
          lost_levels = lost,
+         eligibility = eligible[setdiff(names(eligible),
+                                        c("usable", "predictable"))],
          n_held     = nrow(parts$held),
          adequacy   = adequacy,
          schema     = mm_schema(project, dev),
@@ -321,6 +320,98 @@ mm_schema <- function(project, dev) {
   list(outcome = project$outcome,
        positive_class = project$positive_class,
        predictors = cols)
+}
+
+#' Which rows a complete-data model can be fitted to, or scored and counted on
+#'
+#' One rule, read by fitting and by both kinds of validation, so that the
+#' sample a model was estimated on and the sample it is judged against cannot
+#' be decided twice and differently. The breakdown is part of the return value
+#' rather than a side effect, because the exclusions belong in the report.
+#'
+#' A missing predictor and a missing outcome are counted apart, and the overlap
+#' separately. They are different exclusions: one is a patient who cannot be
+#' scored, the other a patient who can be scored but contributes nothing to a
+#' performance estimate. Neither is an event, and treating a missing outcome as
+#' a non-event is the specific error this separation exists to prevent.
+#'
+#' This is complete-case analysis, which is a computational strategy and not a
+#' guarantee. Missingness may be informative, the more so in the small clinical
+#' cohorts this package is for, so the counts are reported everywhere they
+#' apply rather than summarised away. Multiple imputation is the answer and is
+#' not in this package yet.
+#'
+#' @param project A [mm_project()].
+#' @param frame Rows to assess.
+#' @param require_outcome Whether the outcome must be observed. `TRUE` for
+#'   fitting and for scoring that will be turned into a metric; `FALSE` when
+#'   only a prediction is wanted.
+#'
+#' @return A list: `usable` and `predictable` masks, the counts
+#'   `n_total`, `n_scored`, `n_excluded`, `missing_predictor`,
+#'   `missing_outcome`, `missing_both`, and `by_variable`.
+#' @keywords internal
+mm_evaluable <- function(project, frame, require_outcome = TRUE) {
+  if (!is.data.frame(frame)) {
+    stop("`frame` must be a data frame.", call. = FALSE)
+  }
+  wanted <- c(project$predictors, if (require_outcome) project$outcome)
+  absent <- setdiff(wanted, names(frame))
+  if (length(absent)) {
+    stop("not columns of the frame: ", paste(absent, collapse = ", "),
+         call. = FALSE)
+  }
+
+  n <- nrow(frame)
+  blank <- function(cols) {
+    if (!length(cols)) return(rep(FALSE, n))
+    Reduce(`|`, lapply(cols, function(v) is.na(frame[[v]])))
+  }
+  no_predictor <- blank(project$predictors)
+  no_outcome <- if (require_outcome) blank(project$outcome) else
+    rep(FALSE, n)
+
+  by_variable <- vapply(wanted, function(v) sum(is.na(frame[[v]])),
+                        integer(1))
+
+  usable <- !no_predictor & !no_outcome
+  list(usable              = usable,
+       predictable         = !no_predictor,
+       n_total             = n,
+       n_scored            = sum(usable),
+       n_excluded          = sum(!usable),
+       missing_predictor   = sum(no_predictor & !no_outcome),
+       missing_outcome     = sum(no_outcome & !no_predictor),
+       missing_both        = sum(no_predictor & no_outcome),
+       by_variable         = by_variable[by_variable > 0L])
+}
+
+#' The exclusions, as a sentence for the note column
+#' @param e An [mm_evaluable()] report.
+#' @return A string, or `""` when nothing was excluded.
+#' @keywords internal
+mm_eligibility_note <- function(e) {
+  if (e$n_excluded == 0L) return("")
+  parts <- character(0)
+  if (e$missing_predictor > 0L) {
+    parts <- c(parts, sprintf("%d for a missing predictor",
+                              e$missing_predictor))
+  }
+  if (e$missing_outcome > 0L) {
+    parts <- c(parts, sprintf("%d for a missing outcome",
+                              e$missing_outcome))
+  }
+  if (e$missing_both > 0L) {
+    parts <- c(parts, sprintf("%d for both", e$missing_both))
+  }
+  sprintf(paste("%d of %d row(s) scored, %d excluded (%s; %s).",
+                "Complete case, so these estimates assume the exclusions",
+                "are uninformative, which is an assumption and not a",
+                "finding"),
+          e$n_scored, e$n_total, e$n_excluded,
+          paste(parts, collapse = ", "),
+          paste(sprintf("%s %d", names(e$by_variable), e$by_variable),
+                collapse = ", "))
 }
 
 #' Split a cohort the way the project declares

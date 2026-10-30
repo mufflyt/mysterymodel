@@ -21,8 +21,32 @@
 #'   the data-dependent choices the fixed-model bootstrap inherits. See
 #'   [mm_full_process()] for what it does and does not re-execute.
 #'
+#' @section Incomplete rows:
+#'
+#' Every basis is judged on the rows that can be judged, and the exclusions are
+#' reported rather than absorbed. [mm_evaluable()] is the one rule, the same one
+#' [mm_model()] fitted under, so the sample a model is measured against is the
+#' sample it was estimated on; validating against a cohort whose development
+#' rows do not match the fit is an error rather than a quietly different
+#' number. The bootstraps resample the fitted cohort, never the supplied frame.
+#'
+#' A missing predictor and a missing outcome are counted apart, with the
+#' overlap separately, because they are different exclusions and because taking
+#' a missing outcome for a non-event leaves the event count unchanged while
+#' inflating the denominator.
+#'
+#' Rows are selected first and [mm_predict()] is then called at its own default
+#' of `on_missing = "stop"`, so the complete-case path is explicit here and
+#' prediction keeps refusing to put a number on an incomplete record.
+#'
+#' This is complete-case analysis. It is a computational strategy and not a
+#' guarantee: the estimates assume the exclusions are uninformative, which is an
+#' assumption rather than a finding, and the `note` column says so whenever any
+#' row was excluded. Multiple imputation is not in this package yet.
+#'
 #' @param model A [mm_model()].
-#' @param cohort The cohort, for held-out scoring and the split.
+#' @param cohort The cohort, for held-out scoring and the split. Its
+#'   development rows must be the ones the model was fitted on.
 #' @param B Bootstrap resamples.
 #' @param full_process Also run the full-process bootstrap. Off by default
 #'   because it refits `B` times and costs accordingly.
@@ -55,13 +79,31 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
 
   rows <- list()
 
+  # One eligibility rule, the same one mm_model() fitted under, applied here
+  # rather than relaxed. Rows are selected first and mm_predict() is then
+  # called at its own default of on_missing = "stop": validation takes an
+  # explicit complete-case path instead of asking prediction to tolerate a
+  # missing predictor, because a prediction from incomplete input is the thing
+  # that default exists to refuse.
+  dev_eligible <- mm_evaluable(project, parts$dev)
+  if (dev_eligible$n_scored != model$n_dev) {
+    stop("the development rows of `cohort` give ", dev_eligible$n_scored,
+         " evaluable row(s), and the model was fitted on ", model$n_dev,
+         ". This is not the cohort the model was developed on, so every ",
+         "basis below would describe a different sample from the fit.",
+         call. = FALSE)
+  }
+
   # Apparent.
-  y_dev <- mm_event_indicator(parts$dev[[project$outcome]],
+  dev_scored <- parts$dev[dev_eligible$usable, , drop = FALSE]
+  y_dev <- mm_event_indicator(dev_scored[[project$outcome]],
                               project$positive_class)
-  p_dev <- mm_predict(model, parts$dev)$.pred
-  rows[[length(rows) + 1L]] <- mm_metrics(p_dev, y_dev,
-                                          basis = "apparent",
-                           note = "scored on the development rows")
+  p_dev <- mm_predict(model, dev_scored)$.pred
+  rows[[length(rows) + 1L]] <- mm_metrics(
+    p_dev, y_dev, basis = "apparent",
+    note = paste0("scored on the development rows",
+                  if (dev_eligible$n_excluded > 0L)
+                    paste0(". ", mm_eligibility_note(dev_eligible))))
 
   # Bootstrap, fixed model.
   set.seed(project$seed)
@@ -96,22 +138,42 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
       note = fp$note, stringsAsFactors = FALSE)
   }
 
-  # Held out.
+  # Held out. The same rule again, with the exclusions attributed, because an
+  # external cohort is where a missing outcome and a missing predictor are
+  # most likely to be confused for each other.
+  held_eligible <- NULL
   if (nrow(parts$held) > 0L) {
-    y_held <- mm_event_indicator(parts$held[[project$outcome]],
+    held_eligible <- mm_evaluable(project, parts$held)
+    held_scored <- parts$held[held_eligible$usable, , drop = FALSE]
+    y_held <- mm_event_indicator(held_scored[[project$outcome]],
                                  project$positive_class)
-    p_held <- mm_predict(model, parts$held)$.pred
+    p_held <- mm_predict(model, held_scored)$.pred
+    note <- sprintf("%s >= %s, scored once", project$split_var,
+                    format(project$split_at))
+    if (held_eligible$n_excluded > 0L) {
+      note <- paste0(note, ". ", mm_eligibility_note(held_eligible))
+    }
+    if (held_eligible$n_scored == 0L) {
+      warning("none of the ", held_eligible$n_total, " held-out row(s) can ",
+              "be scored: ", held_eligible$missing_predictor,
+              " lack a predictor, ", held_eligible$missing_outcome,
+              " lack the outcome, ", held_eligible$missing_both,
+              " lack both. The held-out row is reported with no estimate ",
+              "rather than omitted, so the absence is visible.",
+              call. = FALSE)
+    }
     rows[[length(rows) + 1L]] <- mm_metrics(p_held, y_held,
-                                            basis = "held out",
-                             note = sprintf("%s >= %s, scored once",
-                                            project$split_var,
-                                            format(project$split_at)))
+                                            basis = "held out", note = note)
   }
 
   structure(list(metrics = do.call(rbind, rows), B = B,
                  full_process = isTRUE(full_process),
                  clustered_by = model$project$cluster_id,
                  full_process_detail = fp,
+                 eligibility = lapply(
+                   list(development = dev_eligible, held_out = held_eligible),
+                   function(e) if (is.null(e)) NULL else
+                     e[setdiff(names(e), c("usable", "predictable"))]),
                  fingerprint = model$fingerprint),
             class = "mm_validation")
 }
@@ -128,6 +190,23 @@ mm_metrics <- function(p, y, basis, note = "") {
   keep <- !is.na(p) & !is.na(y)
   p <- pmin(pmax(as.numeric(p[keep]), 1e-10), 1 - 1e-10)
   y <- as.integer(y[keep])
+
+  # Nothing to estimate from, or nothing to discriminate between. Both are
+  # reported as absent with the reason attached, because pROC's error names
+  # neither, and a row quietly omitted from the table reads as a basis nobody
+  # asked for rather than one that could not be computed.
+  if (length(y) < 1L || length(unique(y)) < 2L) {
+    why <- if (length(y) < 1L) "no evaluable rows, so nothing to estimate" else
+      sprintf(paste("the outcome does not vary among the %d evaluable",
+                    "row(s), so discrimination is undefined"), length(y))
+    return(data.frame(
+      basis = basis, n = length(y), events = sum(y),
+      c_stat = NA_real_, c_lower = NA_real_, c_upper = NA_real_,
+      cal_intercept = NA_real_, cal_slope = NA_real_,
+      brier = NA_real_, brier_scaled = NA_real_,
+      note = if (nzchar(note)) paste0(note, ". ", why) else why,
+      stringsAsFactors = FALSE))
+  }
 
   roc <- pROC::roc(y, p, quiet = TRUE, direction = "<")
   ci <- suppressWarnings(as.numeric(pROC::ci.auc(roc)))
@@ -167,6 +246,14 @@ print.mm_validation <- function(x, ...) {
       cat(sprintf("  slope=%.4f", m$cal_slope[i]))
     }
     cat("\n")
+  }
+  for (which in c("development", "held_out")) {
+    e <- x$eligibility[[which]]
+    if (is.null(e) || e$n_excluded == 0L) next
+    cat("  ", gsub("_", " ", which), " eligibility: ", e$n_scored, " of ",
+        e$n_total, " scored, ", e$missing_predictor, " missing a predictor, ",
+        e$missing_outcome, " missing the outcome, ", e$missing_both,
+        " both\n", sep = "")
   }
   if (isTRUE(x$full_process)) {
     cat("  Full process re-derives ",

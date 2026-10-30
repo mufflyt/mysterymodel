@@ -16,7 +16,10 @@ data the caller actually has.}
 
 \item{on_missing}{One of \code{"stop"} or \code{"na"}. Rows with a missing predictor
 cannot be scored by a complete-data model; \code{"stop"} refuses them and
-\code{"na"} returns \code{NA} for those rows.}
+\code{"na"} returns \code{NA} for those rows. The default stands: \code{\link[=mm_validate]{mm_validate()}}
+selects its eligible rows first and then calls this function normally,
+rather than relaxing the refusal that a clinician holding an incomplete
+record most needs.}
 }
 \value{
 A data frame with one row per input row: \code{.pred} on the probability

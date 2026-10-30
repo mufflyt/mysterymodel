@@ -21,7 +21,10 @@
 #'   data the caller actually has.
 #' @param on_missing One of `"stop"` or `"na"`. Rows with a missing predictor
 #'   cannot be scored by a complete-data model; `"stop"` refuses them and
-#'   `"na"` returns `NA` for those rows.
+#'   `"na"` returns `NA` for those rows. The default stands: [mm_validate()]
+#'   selects its eligible rows first and then calls this function normally,
+#'   rather than relaxing the refusal that a clinician holding an incomplete
+#'   record most needs.
 #'
 #' @return A data frame with one row per input row: `.pred` on the probability
 #'   scale, and `.extrapolated` marking rows outside the development range.
