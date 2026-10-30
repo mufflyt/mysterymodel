@@ -14,9 +14,11 @@ mm_adequacy(
 )
 }
 \arguments{
-\item{n}{Development rows.}
+\item{n}{Development rows the model was fitted on, which is not the same as
+the rows it was handed when any are incomplete. \code{\link[=mm_model]{mm_model()}} reads this
+back off the fit for that reason.}
 
-\item{events}{Outcome events among them.}
+\item{events}{Outcome events among those rows.}
 
 \item{parameters}{Non-intercept model parameters.}
 

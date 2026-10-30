@@ -18,8 +18,10 @@
 #' large a sample should have been collected". The second question needs an
 #' R-squared from outside these data.
 #'
-#' @param n Development rows.
-#' @param events Outcome events among them.
+#' @param n Development rows the model was fitted on, which is not the same as
+#'   the rows it was handed when any are incomplete. [mm_model()] reads this
+#'   back off the fit for that reason.
+#' @param events Outcome events among those rows.
 #' @param parameters Non-intercept model parameters.
 #' @param nagelkerke Nagelkerke R-squared from the fitted model.
 #' @param likelihood_ratio Model likelihood ratio chi-squared.
