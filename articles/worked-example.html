@@ -30,15 +30,20 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/mysterymodel.html">Get started</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/nomogram.html">Reading the nomogram back</a></li>
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Which number are you reporting?</a></li>
+    <li><a class="dropdown-item" href="../articles/nomogram.html">Reading the nomogram back</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked examples</h6></li>
     <li><a class="dropdown-item" href="../articles/worked-example.html">A complicated worked example</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -693,7 +698,7 @@ is a check on the rows and not on their number:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">figures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"worked-example"</span><span class="op">)</span></span>
 <span><span class="va">nom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_nomogram.html">mm_nomogram</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, out_dir <span class="op">=</span> <span class="va">figures</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.pdf, /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.svg, /tmp/RtmpT40xP3/worked-example/uds-d_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.svg, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.png</span></span>
 <span><span class="va">nom</span></span>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
@@ -824,7 +829,7 @@ fixing is the claim, not the nomogram.</p>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exported</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_export.html">mm_nomogram_export</a></span><span class="op">(</span></span>
 <span>  <span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">figures</span>, <span class="st">"worked-example"</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.pdf, /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.svg, /tmp/RtmpT40xP3/worked-example/worked-example_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.svg, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.png</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">exported</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"</span></span>
 <span><span class="co">#&gt; [3] "worked-example_nomogram.png"</span></span>

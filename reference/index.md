@@ -1,5 +1,14 @@
 # Package index
 
+## Overview
+
+What the package is for, the order the steps happen in, and what it
+refuses to do quietly.
+
+- [`mysterymodel`](https://mufflyt.github.io/mysterymodel/reference/mysterymodel-package.md)
+  [`mysterymodel-package`](https://mufflyt.github.io/mysterymodel/reference/mysterymodel-package.md)
+  : mysterymodel: Opinionated Workflow for Clinical Prediction Models
+
 ## Specify
 
 What is being predicted, from which columns, and how the data divides.

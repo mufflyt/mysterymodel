@@ -19,9 +19,12 @@ log](https://mufflyt.github.io/mysterymodel/inst/decisions.md). Section
 spike is done: [**capability matrix for `rms`
 objects**](https://mufflyt.github.io/mysterymodel/inst/capability-matrix.md).
 
-The statistical spine of the §15 starting milestone now runs on
-synthetic data:
+The whole §15 starting milestone now runs on synthetic data:
 [`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md)
+→
+[`mm_clean()`](https://mufflyt.github.io/mysterymodel/reference/mm_clean.md)
+→
+[`mm_eda()`](https://mufflyt.github.io/mysterymodel/reference/mm_eda.md)
 →
 [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
 →
@@ -30,12 +33,15 @@ synthetic data:
 [`mm_validate()`](https://mufflyt.github.io/mysterymodel/reference/mm_validate.md)
 →
 [`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md),
-193 tests, `R CMD check` clean. The data-preparation and reporting ends
-of that chain are not built yet; the roadmap below says which.
+eight exported functions, 617 tests across 16 files, `R CMD check`
+clean. What is still missing is named in the roadmap below and in the
+[changelog](https://mufflyt.github.io/mysterymodel/NEWS.md): imputation
+inside resampling is the largest gap, and the reporting end is not built
+at all.
 
 ## Articles
 
-Three, each on synthetic data, each showing its own numbers rather than
+Four, each on synthetic data, each showing its own numbers rather than
 describing them:
 
 - [**From a raw export to a checked
@@ -49,12 +55,18 @@ describing them:
   back**](https://mufflyt.github.io/mysterymodel/articles/nomogram.html).
   The agreement check done by hand, including the clamped-interpolation
   error that reported 1.1% for a patient whose risk was 0.6%.
+- [**A complicated worked
+  example**](https://mufflyt.github.io/mysterymodel/articles/worked-example.html).
+  An awkward export, four competing plans, a leakage scan, and the
+  nomogram read back. It exercises every function in the package and
+  proves it does.
 
 ## The idea
 
-Three ecosystems, each used for what it is best at:
+Three ecosystems could do this work, and the package was planned around
+using each for what it is best at:
 
-|  | role here |
+|  | what it is best at |
 |----|----|
 | [**rms**](https://hbiostat.org/R/rms/) | regression, bootstrap internal validation, calibration, nomograms |
 | [**easystats**](https://easystats.github.io/easystats/) | collinearity, assumption checks, parameters, interpretation, reporting |
@@ -62,6 +74,14 @@ Three ecosystems, each used for what it is best at:
 
 A fourth, [mlr3](https://mlr3.org/), is worth adding for computationally
 heavy work on large data.
+
+What actually ships is narrower, and the capability spike is why. `rms`
+does the statistics; `pmsampsize` answers the sample-size question and
+`pROC` supplies the interval on the c-statistic. **easystats and
+tidymodels are not dependencies**: easystats has no prediction path for
+an [`rms::lrm()`](https://rdrr.io/pkg/rms/man/lrm.html) fit at all,
+which takes most of its surface with it. [What the spike
+settled](#what-the-spike-settled) has the measurements.
 
 ### How they compare
 
@@ -90,7 +110,8 @@ publication.
 ## Design commitments
 
 These are the decisions that make the package opinionated. They are
-defaults, not locks.
+defaults, not locks. Where one is an intention rather than working code,
+it says so.
 
 - **Continuous predictors stay continuous.** Nonlinearity is assessed,
   not assumed away by categorising.
@@ -102,7 +123,14 @@ defaults, not locks.
   labelled that way.
 - **Selection and imputation happen inside resampling**, never once
   beforehand. Doing it once leaks, and the leak flatters every number
-  downstream.
+  downstream. *Not yet implemented, and the package says so where it
+  matters*:
+  [`mm_full_process()`](https://mufflyt.github.io/mysterymodel/reference/mm_full_process.md)
+  names imputation, selection and tuning as steps it does not
+  re-execute, so its correction is not presented as validating a
+  strategy that includes them. Fitting is complete-case in the meantime,
+  with every excluded row counted and attributed
+  ([DEC-003](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
 - **Validation reports discrimination, calibration intercept and slope,
   Brier score, bootstrap optimism, and intervals.** Not discrimination
   alone. Each row names the method behind its interval and the event and
@@ -131,6 +159,10 @@ it afterwards from whichever code happened to run.
 ``` r
 
 library(mysterymodel)
+
+# Synthetic throughout, with known truth. The public repository carries no
+# patient data, so every number below is reproducible from these lines.
+uds_cohort <- mm_synthetic_cohort(n = 600, prevalence = 0.11, seed = 1978)
 
 project <- mm_project(
   slug           = "uds",
@@ -172,14 +204,12 @@ clean <- mm_clean(raw, rules = list(
 ))
 
 clean
-#> <mm_cohort>  300 in, 282 out, 18 excluded
-#>      300  rows as supplied
-#>      -10  aged 40 or over (did not meet the criterion)
-#>      290  remaining
-#>       -6  plausible BMI (did not meet the criterion)
-#>      284  remaining
-#>       -2  plausible BMI (criterion could not be determined for these rows)
-#>      282  remaining
+#> <mm_cohort>  600 in, 578 out, 22 excluded
+#>      600  rows as supplied
+#>      -18  aged 40 or over (did not meet the criterion)
+#>      582  remaining
+#>       -4  plausible BMI (did not meet the criterion)
+#>      578  remaining
 ```
 
 Rows in must equal rows out plus every exclusion, and
@@ -202,31 +232,34 @@ Then fit, validate and draw:
 
 model <- mm_model(project, cohort, nonlinear = "age",
                   interactions = list(c("prior_uti", "sex")))
-#> Warning: the development sample may be too small for this model: 338 rows
-#> is 582 short of the 920 a model of 7 parameter(s) needs at 10.1% prevalence
-#> for 90% shrinkage.
+#> Warning: the development sample may be too small for this model: 389 rows
+#> is 862 short of the 1251 a model of 7 parameter(s) needs at 11.1% prevalence
+#> for 90% shrinkage. Coefficients from a sample this size are expected to be
+#> overfitted; see the adequacy element of the returned object.
 
 model$adequacy
 #> <mm_adequacy>  adequate: FALSE
-#>   development 338 rows, 34 events (10.1%)
-#>   parameters  7 non-intercept, 4.9 events each (description, not the criterion)
-#>   shrinkage   0.697 expected, heuristic
-#>   requires    920 rows, 93 events (Riley, from the fitted R2 of 0.138)
+#>   development 389 rows, 43 events (11.1%)
+#>   parameters  7 non-intercept, 6.1 events each (description, not the criterion)
+#>   shrinkage   0.640 expected, heuristic
+#>   requires    1251 rows, 139 events (Riley, from the fitted R2 of 0.097)
+#>   389 rows is 862 short of the 1251 a model of 7 parameter(s) needs at 11.1% prevalence for 90% shrinkage
 
 mm_validate(model, cohort, B = 200, full_process = TRUE)
 #> <mm_validation>  full-process: TRUE
-#>   apparent                 n=404 events=45 C=0.6647 (0.5749-0.7546)  slope=1.0000
-#>   bootstrap, fixed model   n=404 events=45 C=0.5990                  slope=0.6779
-#>   bootstrap, full process  n=404 events=45 C=0.6112                  slope=0.7256
-#>   held out                 n=196 events=22 C=0.7858 (0.6770-0.8946)  slope=1.7370
+#>   columns: n, events/non-events, c-statistic with its 95% DeLong interval where one is estimable
+#>   apparent                 n=389   43/346 C=0.6809 (0.5911-0.7707)
+#>   bootstrap, fixed model   n=389   43/346 C=0.6211 no interval, see note  slope=0.7367
+#>   bootstrap, full process  n=389   43/346 C=0.6153 no interval, see note  slope=0.7225
+#>   held out                 n=189   19/170 C=0.7836 (0.6663-0.9009)  slope=1.4700
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 200 of 200 valid.
 
 mm_nomogram(model, out_dir = "figures")
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
-#>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 1.67e-16 (tolerance 1e-06)
-#>   off-tick reading error    0.000948 in risk, midway between ticks
+#>   profiles checked 24 at tabulated ticks
+#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
+#>   off-tick reading error    0.000633 in risk, midway between ticks
 ```
 
 Four things in that output are deliberate.
@@ -235,15 +268,23 @@ Four things in that output are deliberate.
 requirement from `pmsampsize`, not the events-per-parameter rule, which
 is reported as description and labelled as such. Note the agreement
 between the two independent routes to the same conclusion: the heuristic
-shrinkage of 0.697 and the bootstrap-estimated calibration slope of
-0.751 below. One circularity is disclosed rather than hidden, in
+shrinkage of 0.640 and the bootstrap-estimated calibration slope of
+0.737 below. One circularity is disclosed rather than hidden, in
 [`?mm_adequacy`](https://mufflyt.github.io/mysterymodel/reference/mm_adequacy.md):
 the requirement uses the fitted R-squared, so it answers whether this
 sample was adequate for the model it produced, not how large a sample
 should have been collected.
 
 **Performance is reported per basis, never as one number.** The same
-model measured four ways, and the spread is the point.
+model measured four ways, and the spread is the point. The apparent row
+carries no calibration slope, because scoring an unpenalized fit on its
+own rows forces the intercept to zero and the slope to one: those two
+numbers describe the estimator, not the model, so they are withheld
+rather than printed beside a held-out slope of 1.47. The two corrected
+rows carry no interval, and say why: DeLong describes an apparent
+c-statistic, and an interval for a corrected one needs a nested
+bootstrap that is not implemented
+([DEC-006](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
 
 The two bootstrap rows answer different questions. The fixed-model one,
 from [`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html),
