@@ -57,6 +57,16 @@
 #' @param full_process Also run the full-process bootstrap. Off by default
 #'   because it refits `B` times and costs accordingly.
 #'
+#' @section The scaled Brier column:
+#'
+#' Every basis is scaled against one reference, the Brier of a model
+#' predicting the development cohort's prevalence for everyone, reported as
+#' `brier_ref`. Scaling each basis by its own prevalence is the conventional
+#' within-sample skill score, and a column of those is a set of scores against
+#' different references, which is a comparison a reader will make down the
+#' column and should not. Where a basis has a prevalence of its own, the
+#' `note` gives the value its own reference would produce.
+#'
 #' @return An object of class `mm_validation`: a data frame of metrics by
 #'   basis, plus what produced them.
 #'
@@ -99,9 +109,16 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   y_dev <- mm_event_indicator(dev_scored[[project$outcome]],
                               project$positive_class)
   p_dev <- mm_predict(model, dev_scored)$.pred
+  # One reference for the whole scaled-Brier column: the Brier of a model
+  # predicting the development cohort's prevalence for everyone. Each sample's
+  # own prevalence would be the conventional within-sample skill score, but a
+  # column of those is a set of scores against different references, and a
+  # reader compares down a column.
+  dev_reference <- mean(y_dev) * (1 - mean(y_dev))
+
   rows[[length(rows) + 1L]] <- mm_withhold_identity_calibration(
     mm_metrics(
-      p_dev, y_dev, basis = "apparent",
+      p_dev, y_dev, basis = "apparent", reference = dev_reference,
       note = paste0("scored on the development rows",
                     if (dev_eligible$n_excluded > 0L)
                       paste0(". ", mm_eligibility_note(dev_eligible)))))
@@ -149,9 +166,13 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
     basis = "bootstrap, fixed model",
     n = model$n_dev, events = model$events_dev,
     c_stat = c_corrected, c_lower = NA_real_, c_upper = NA_real_,
-    cal_intercept = NA_real_,
+    # rms corrects the calibration intercept alongside the slope and this
+    # discarded it, reporting a blank where a number was available.
+    cal_intercept = if ("Intercept" %in% rownames(val)) {
+      unname(val["Intercept", "index.corrected"])
+    } else NA_real_,
     cal_slope = unname(val["Slope", "index.corrected"]),
-    brier = NA_real_, brier_scaled = NA_real_,
+    brier = NA_real_, brier_ref = NA_real_, brier_scaled = NA_real_,
     note = sprintf(paste("rms::validate, %s of %d resample(s) fitted.",
                          "Refits the same formula; does not re-derive knots",
                          "or levels. Resampled by %s%s"),
@@ -175,6 +196,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
       cal_intercept = unname(fp$corrected[["cal_intercept"]]),
       cal_slope = unname(fp$corrected[["cal_slope"]]),
       brier = unname(fp$corrected[["brier"]]),
+      brier_ref = fp$no_information_brier,
       brier_scaled = unname(fp$corrected[["brier_scaled"]]),
       note = fp$note, stringsAsFactors = FALSE)
   }
@@ -204,7 +226,8 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
               call. = FALSE)
     }
     rows[[length(rows) + 1L]] <- mm_metrics(p_held, y_held,
-                                            basis = "held out", note = note)
+                                            basis = "held out", note = note,
+                                            reference = dev_reference)
   }
 
   structure(list(metrics = do.call(rbind, rows), B = B,
@@ -260,9 +283,15 @@ mm_withhold_identity_calibration <- function(row, tol = 1e-6) {
 #' @param y 0/1 outcome.
 #' @param basis Label for the row.
 #' @param note What produced it.
+#' @param reference The no-information Brier to scale against, that is the
+#'   Brier of a model predicting one constant risk. `NULL` uses the scored
+#'   sample's own prevalence, which is the conventional within-sample skill
+#'   score and is not comparable across samples of different prevalence.
+#'   [mm_validate()] passes the development cohort's reference to every basis
+#'   so that one column means one thing.
 #' @return A one-row data frame.
 #' @keywords internal
-mm_metrics <- function(p, y, basis, note = "") {
+mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
   keep <- !is.na(p) & !is.na(y)
   p <- pmin(pmax(as.numeric(p[keep]), 1e-10), 1 - 1e-10)
   y <- as.integer(y[keep])
@@ -279,33 +308,74 @@ mm_metrics <- function(p, y, basis, note = "") {
       basis = basis, n = length(y), events = sum(y),
       c_stat = NA_real_, c_lower = NA_real_, c_upper = NA_real_,
       cal_intercept = NA_real_, cal_slope = NA_real_,
-      brier = NA_real_, brier_scaled = NA_real_,
+      brier = NA_real_, brier_ref = NA_real_, brier_scaled = NA_real_,
       note = if (nzchar(note)) paste0(note, ". ", why) else why,
       stringsAsFactors = FALSE))
   }
 
+  # The estimate comes from the ROC and the bounds from the interval, which
+  # are two computations. Reading the estimate out of the middle of
+  # `ci.auc()` tied them together, and `ci.auc()` returns all `NA` when
+  # DeLong cannot be computed, as with a single event, so a perfectly
+  # calculable c-statistic was being discarded along with its interval.
   roc <- pROC::roc(y, p, quiet = TRUE, direction = "<")
   ci <- suppressWarnings(as.numeric(pROC::ci.auc(roc)))
 
+  # A calibration from a fit that did not converge is not an estimate. The
+  # separation that causes it is informative and the glm says so in a warning,
+  # but the coefficient it leaves behind is an artefact of where iteration
+  # stopped, and printed in a column it reads like a finding.
   lp <- stats::qlogis(p)
-  int <- tryCatch(
-    unname(stats::coef(stats::glm(y ~ 1, family = stats::binomial(),
-                                  offset = lp))[1]),
-    error = function(e) NA_real_)
-  slope <- tryCatch(
-    unname(stats::coef(stats::glm(y ~ lp,
-                                  family = stats::binomial()))[2]),
-    error = function(e) NA_real_)
+  converged <- function(f) !is.null(f) && isTRUE(f$converged)
+  fit_int <- tryCatch(
+    stats::glm(y ~ 1, family = stats::binomial(), offset = lp),
+    error = function(e) NULL)
+  fit_slope <- tryCatch(
+    stats::glm(y ~ lp, family = stats::binomial()),
+    error = function(e) NULL)
+  int <- if (converged(fit_int)) unname(stats::coef(fit_int)[1]) else NA_real_
+  slope <- if (converged(fit_slope)) unname(stats::coef(fit_slope)[2]) else
+    NA_real_
 
   brier <- mean((p - y)^2)
   rate <- mean(y)
 
+  # B: the denominator a skill score is taken against. Left to itself each
+  # sample uses its own prevalence, which makes a column of scaled Briers
+  # a set of scores against different references.
+  no_information <- if (is.null(reference)) rate * (1 - rate) else reference
+
+  aside <- character(0)
+  if (is.na(ci[1]) && !is.na(as.numeric(roc$auc))) {
+    aside <- c(aside, paste("the c-statistic has no interval here, which",
+                            "needs at least two of each outcome"))
+  }
+  withheld <- c("intercept", "slope")[c(is.na(int), is.na(slope))]
+  if (length(withheld)) {
+    aside <- c(aside, sprintf(paste("the calibration %s is withheld: the fit",
+                                    "behind it did not converge, so its",
+                                    "coefficient marks where iteration",
+                                    "stopped rather than an estimate"),
+                              paste(withheld, collapse = " and ")))
+  }
+  if (!is.null(reference) &&
+      !isTRUE(all.equal(reference, rate * (1 - rate)))) {
+    aside <- c(aside, sprintf(paste("the scaled Brier is taken against the",
+                                    "reference %.5f, not this sample's own",
+                                    "%.5f, so the column compares like with",
+                                    "like; against its own it would read",
+                                    "%.4f"),
+                              no_information, rate * (1 - rate),
+                              1 - brier / (rate * (1 - rate))))
+  }
+
   data.frame(basis = basis, n = length(y), events = sum(y),
-             c_stat = ci[2], c_lower = ci[1], c_upper = ci[3],
+             c_stat = as.numeric(roc$auc), c_lower = ci[1], c_upper = ci[3],
              cal_intercept = int, cal_slope = slope,
-             brier = brier,
-             brier_scaled = 1 - brier / (rate * (1 - rate)),
-             note = note, stringsAsFactors = FALSE)
+             brier = brier, brier_ref = no_information,
+             brier_scaled = 1 - brier / no_information,
+             note = paste(Filter(nzchar, c(note, aside)), collapse = ". "),
+             stringsAsFactors = FALSE)
 }
 
 #' @export
