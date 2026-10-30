@@ -56,10 +56,30 @@ resample rather than inherited from the original fit.
 
 **Held out** is the rows the project's split reserved, scored once.
 
-The `brier` cell is empty on the fixed-model row because `rms::validate()`
-returns Somers' Dxy and the calibration slope, not a Brier score. An empty cell
-is the right answer there. Carrying the apparent Brier across into that row
-would make it look corrected when nothing corrected it.
+Two cells are empty, for two different reasons, and both are the right answer.
+
+The `brier` cell on the fixed-model row is empty because `rms::validate()`
+returns Somers' Dxy and the calibration slope, not a Brier score. Carrying the
+apparent Brier across into that row would make it look corrected when nothing
+corrected it.
+
+The `cal_slope` cell on the **apparent** row is empty because that number is an
+identity rather than an estimate. Scoring an unpenalized maximum-likelihood fit
+on the very rows that produced it forces the calibration intercept to zero and
+the slope to one: they are the fit's own score equations rearranged. Printed
+beside a held-out slope they read as the model being perfectly calibrated,
+which is the one thing they cannot show. You can watch them be exactly that:
+
+```{r identity}
+y <- as.integer(model$fit$y)
+lp <- as.numeric(model$fit$linear.predictors)
+c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
+  slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
+```
+
+The package detects the identity rather than assuming it, so a fitting method
+that does not force it, a penalized fit for instance, would have its apparent
+calibration reported as the estimate it would then be.
 
 ```{r split}
 parts <- mysterymodel:::mm_split(project, cohort)
@@ -97,6 +117,31 @@ round(rbind(apparent  = unlist(detail$apparent[names(detail$optimism)]),
             optimism  = detail$optimism,
             corrected = detail$corrected), 4)
 ```
+
+Those two calibration numbers in the `apparent` row are the identity again, and
+here they are load bearing rather than misleading: an in-sample slope that is
+exactly one in every resample is what makes the optimism of the slope equal to
+the mean out-of-sample shortfall, which is the quantity the corrected row
+reports.
+
+The scaled Brier in that table is derived, not differenced. It divides by
+`rate * (1 - rate)` of whichever rows were scored, so an in-sample value and an
+out-of-sample value are scaled by different constants and their difference would
+carry that drift as well as the optimism. The Brier itself is on one scale
+throughout, so it is corrected and the scaled version is then computed from the
+corrected value against one fixed denominator, the development cohort's own
+no-information Brier:
+
+```{r no-information}
+c(no_information_brier = detail$no_information_brier,
+  corrected_brier      = unname(detail$corrected[["brier"]]),
+  derived_scaled       = unname(detail$corrected[["brier_scaled"]]),
+  check = 1 - unname(detail$corrected[["brier"]]) /
+    detail$no_information_brier)
+```
+
+On a cohort of 150 that correction moved the reported number from -0.024 to
+-0.040, so it is not a rounding matter.
 
 Resamples that cannot be fitted are counted, not dropped quietly:
 

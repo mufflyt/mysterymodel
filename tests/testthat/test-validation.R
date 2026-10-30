@@ -41,12 +41,53 @@ test_that("apparent performance is at least as good as corrected", {
   expect_gte(app, cor)
 })
 
-test_that("apparent calibration slope is one by construction", {
+test_that("apparent calibration is an identity, so it is not reported", {
   f <- val_fixture()
   v <- mm_validate(f$model, f$cohort, B = 20)
+
+  # The quantities exist and are exactly 0 and 1, which is the point: the
+  # score equations of an unpenalized fit scored on its own rows force them.
+  # This half of the test records the fact.
+  # Read off the fit itself, so these are exactly the rows it was estimated
+  # on. The identity holds there and nowhere else: the held-out rows below
+  # give a slope of their own.
+  y <- as.integer(f$model$fit$y)
+  lp <- as.numeric(f$model$fit$linear.predictors)
+  expect_equal(unname(stats::coef(
+    stats::glm(y ~ 1, family = stats::binomial(), offset = lp))[1]), 0,
+    tolerance = 1e-6)
+  expect_equal(unname(stats::coef(
+    stats::glm(y ~ lp, family = stats::binomial()))[2]), 1,
+    tolerance = 1e-6)
+
+  # And this half records that they are withheld rather than printed, because
+  # beside a held-out slope they would read as the model being well
+  # calibrated, which is the one thing they cannot show.
   app <- v$metrics[v$metrics$basis == "apparent", ]
-  expect_equal(app$cal_slope, 1, tolerance = 1e-6)
-  expect_equal(app$cal_intercept, 0, tolerance = 1e-6)
+  expect_true(is.na(app$cal_slope))
+  expect_true(is.na(app$cal_intercept))
+  expect_match(app$note, "describe the estimator and not the model")
+
+  # The rows where calibration is estimable still carry it.
+  held <- v$metrics[v$metrics$basis == "held out", ]
+  expect_false(is.na(held$cal_slope))
+  expect_false(is.na(v$metrics$cal_slope[
+    v$metrics$basis == "bootstrap, fixed model"]))
+})
+
+test_that("a calibration that is not the identity is still reported", {
+  # Detected rather than assumed, so a fitting method that does not force the
+  # identity has its apparent calibration reported as the estimate it is.
+  deliberate <- data.frame(
+    basis = "apparent", n = 100L, events = 20L,
+    c_stat = 0.7, c_lower = 0.6, c_upper = 0.8,
+    cal_intercept = 0.4, cal_slope = 0.65,
+    brier = 0.1, brier_scaled = 0.2, note = "x",
+    stringsAsFactors = FALSE)
+  kept <- mysterymodel:::mm_withhold_identity_calibration(deliberate)
+  expect_equal(kept$cal_intercept, 0.4)
+  expect_equal(kept$cal_slope, 0.65)
+  expect_equal(kept$note, "x")
 })
 
 test_that("discrimination comes with an interval where it is estimable", {

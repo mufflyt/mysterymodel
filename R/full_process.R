@@ -39,7 +39,7 @@ mm_full_process <- function(model, cohort, B = 200L,
   # the supplied frame would draw rows no refit can use, so a resample's
   # composition would depend on how much of it was missing.
   supplied <- mm_split(project, cohort)$dev
-  eligible <- mm_evaluable(project, supplied)
+  eligible <- mm_evaluable(project, supplied, require_cluster = TRUE)
   dev <- supplied[eligible$usable, , drop = FALSE]
   mm_same_development(model, dev, "the optimism of this fit")
   y_dev <- mm_event_indicator(dev[[project$outcome]],
@@ -47,8 +47,18 @@ mm_full_process <- function(model, cohort, B = 200L,
 
   apparent <- mm_metrics(mm_predict(model, dev)$.pred, y_dev,
                          basis = "apparent")
-  wanted <- c("c_stat", "cal_intercept", "cal_slope", "brier",
-              "brier_scaled")
+
+  # The scaled Brier is not differenced across resamples. It divides by
+  # `rate * (1 - rate)` of whichever rows were scored, so an in-sample value
+  # and an out-of-sample value are scaled by different constants and their
+  # difference carries that drift as well as the optimism. The Brier itself is
+  # on one scale throughout, so it is corrected and the scaled version is
+  # derived from the corrected value against the development cohort's own
+  # fixed denominator, which is the no-information Brier the skill score is
+  # defined against.
+  wanted <- c("c_stat", "cal_intercept", "cal_slope", "brier")
+  rate_dev <- mean(y_dev)
+  no_information <- rate_dev * (1 - rate_dev)
 
   gaps <- matrix(NA_real_, nrow = B, ncol = length(wanted),
                  dimnames = list(NULL, wanted))
@@ -83,6 +93,11 @@ mm_full_process <- function(model, cohort, B = 200L,
   optimism <- colMeans(gaps, na.rm = TRUE)
   corrected <- unlist(apparent[wanted]) - optimism
 
+  # Derived, so that apparent minus optimism still equals corrected for this
+  # column and every term in it is scaled by the same constant.
+  corrected[["brier_scaled"]] <- 1 - corrected[["brier"]] / no_information
+  optimism[["brier_scaled"]] <- -optimism[["brier"]] / no_information
+
   adequate <- valid >= min_valid
   note <- sprintf(
     paste("full-process bootstrap, %d of %d resamples valid.",
@@ -99,6 +114,7 @@ mm_full_process <- function(model, cohort, B = 200L,
   }
 
   list(optimism = optimism, corrected = corrected, apparent = apparent,
+       no_information_brier = no_information,
        eligibility = eligible[setdiff(names(eligible),
                                       c("usable", "predictable"))],
        valid = valid, B = B, adequate = adequate, note = note,

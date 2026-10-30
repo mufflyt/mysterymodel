@@ -4,7 +4,7 @@
 \alias{mm_evaluable}
 \title{Which rows a complete-data model can be fitted to, or scored and counted on}
 \usage{
-mm_evaluable(project, frame, require_outcome = TRUE)
+mm_evaluable(project, frame, require_outcome = TRUE, require_cluster = FALSE)
 }
 \arguments{
 \item{project}{A \code{\link[=mm_project]{mm_project()}}.}
@@ -14,6 +14,13 @@ mm_evaluable(project, frame, require_outcome = TRUE)
 \item{require_outcome}{Whether the outcome must be observed. \code{TRUE} for
 fitting and for scoring that will be turned into a metric; \code{FALSE} when
 only a prediction is wanted.}
+
+\item{require_cluster}{Whether a declared \code{cluster_id} must be observed.
+\code{TRUE} for a development frame, because a row that cannot be assigned to a
+patient cannot take part in clustered resampling, and a bootstrap run on a
+subset of the rows the model was fitted to corrects the optimism of a
+different model from the one reported. \code{FALSE} for held-out rows, which are
+scored once and never resampled, so an identifier they lack costs nothing.}
 }
 \value{
 A list: \code{usable} and \code{predictable} masks, the counts

@@ -276,6 +276,11 @@ has to take the point estimate on its own.
 validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope")]
 ```
 
+The apparent row has no calibration slope, deliberately. Scoring the fit on its
+own rows forces the intercept to zero and the slope to one, so those two numbers
+describe the estimator rather than the model, and the second article shows them
+being exactly that. The rows where calibration can be estimated carry it.
+
 The `note` column is where each row says what produced it:
 
 ```{r notes}
