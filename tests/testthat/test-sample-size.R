@@ -2,27 +2,27 @@
 # warn on an overly ambitious parameter count rather than fit it quietly.
 
 test_that("a sparse-event cohort with many parameters warns", {
-  cohort <- cp_synthetic_cohort(n = 300, prevalence = 0.08, seed = 11)
-  project <- cp_project("uds", "event",
+  cohort <- mm_synthetic_cohort(n = 300, prevalence = 0.08, seed = 11)
+  project <- mm_project("uds", "event",
                         c("age", "bmi", "sex", "prior_uti", "indication"),
                         cohort = cohort)
   expect_warning(
-    cp_model(project, cohort, nonlinear = c("age", "bmi")),
+    mm_model(project, cohort, nonlinear = c("age", "bmi")),
     "too small for this model")
 })
 
 test_that("a frugal model on a large cohort does not warn", {
-  cohort <- cp_synthetic_cohort(n = 6000, prevalence = 0.25, seed = 7)
-  project <- cp_project("uds", "event", c("age", "sex"), cohort = cohort)
-  expect_no_warning(model <- cp_model(project, cohort))
+  cohort <- mm_synthetic_cohort(n = 6000, prevalence = 0.25, seed = 7)
+  project <- mm_project("uds", "event", c("age", "sex"), cohort = cohort)
+  expect_no_warning(model <- mm_model(project, cohort))
   expect_true(model$adequacy$adequate)
 })
 
 test_that("the report carries every quantity section 19 asks for", {
-  cohort <- cp_synthetic_cohort(n = 500, seed = 1978)
-  project <- cp_project("uds", "event", c("age", "bmi", "sex"),
+  cohort <- mm_synthetic_cohort(n = 500, seed = 1978)
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"),
                         cohort = cohort)
-  model <- suppressWarnings(cp_model(project, cohort, nonlinear = "age"))
+  model <- suppressWarnings(mm_model(project, cohort, nonlinear = "age"))
   a <- model$adequacy
   for (field in c("n", "events", "prevalence", "parameters",
                   "events_per_parameter", "heuristic_shrinkage",
@@ -34,13 +34,13 @@ test_that("the report carries every quantity section 19 asks for", {
 test_that("spline and interaction terms are counted as parameters", {
   # These are the terms spent without being noticed, so a count that missed
   # them would clear exactly the models that most need the warning.
-  cohort <- cp_synthetic_cohort(n = 2000, seed = 4)
-  project <- cp_project("uds", "event",
+  cohort <- mm_synthetic_cohort(n = 2000, seed = 4)
+  project <- mm_project("uds", "event",
                         c("age", "bmi", "sex", "prior_uti"),
                         cohort = cohort)
-  plain <- suppressWarnings(cp_model(project, cohort))
+  plain <- suppressWarnings(mm_model(project, cohort))
   curved <- suppressWarnings(
-    cp_model(project, cohort, nonlinear = "age",
+    mm_model(project, cohort, nonlinear = "age",
              interactions = list(c("prior_uti", "sex"))))
   expect_gt(curved$adequacy$parameters, plain$adequacy$parameters)
 })
@@ -48,20 +48,20 @@ test_that("spline and interaction terms are counted as parameters", {
 test_that("events per parameter is reported but is not the criterion", {
   # A cohort can clear ten events per parameter and still be inadequate on
   # the Riley requirement, which is the point of not gating on the old rule.
-  a <- cp_adequacy(n = 400, events = 120, parameters = 10,
+  a <- mm_adequacy(n = 400, events = 120, parameters = 10,
                    nagelkerke = 0.02, likelihood_ratio = 12)
   expect_gt(a$events_per_parameter, 10)
   expect_false(a$adequate)
 })
 
 test_that("shrinkage is the fraction of signal not spent on parameters", {
-  a <- cp_adequacy(n = 1000, events = 200, parameters = 5,
+  a <- mm_adequacy(n = 1000, events = 200, parameters = 5,
                    nagelkerke = 0.1, likelihood_ratio = 50)
   expect_equal(a$heuristic_shrinkage, (50 - 5) / 50)
 })
 
 test_that("an uncomputable requirement is reported, not guessed", {
-  a <- cp_adequacy(n = 100, events = 0, parameters = 3,
+  a <- mm_adequacy(n = 100, events = 0, parameters = 3,
                    nagelkerke = NA_real_)
   expect_false(a$adequate)
   expect_match(a$reason, "could not be computed")

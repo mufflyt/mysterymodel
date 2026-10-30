@@ -44,11 +44,11 @@ The three layers ask different questions. A **model helper** is applied directly
 
 ## Findings
 
-1. **easystats cannot predict from an `lrm` fit.** `insight::get_predicted()` returns NULL, not wrong numbers. Every prediction-dependent helper inherits this, so `cp_predict()` must call `rms` directly and no easystats prediction path may be used.
+1. **easystats cannot predict from an `lrm` fit.** `insight::get_predicted()` returns NULL, not wrong numbers. Every prediction-dependent helper inherits this, so `mm_predict()` must call `rms` directly and no easystats prediction path may be used.
 
 2. **No scoring rules from easystats.** `performance::model_performance()` returns only AIC, BIC, R2, RMSE, and declares its own RMSE unreliable. No AUC, no Brier, no log-loss, all three of which section 27 requires. They come from `rms`, `pROC` and `yardstick`.
 
-3. **The two collinearity measures answer different questions.** `rms::vif()` is per model-matrix parameter and reports 107.9 at its worst spline term; `performance::check_collinearity()` aggregates per variable and reports 1.01 at its lowest. Spline bases are collinear with each other by construction, so the per-parameter figure alarms without meaning and the per-variable figure reassures without detail. `cp_collinearity()` must report both, labelled.
+3. **The two collinearity measures answer different questions.** `rms::vif()` is per model-matrix parameter and reports 107.9 at its worst spline term; `performance::check_collinearity()` aggregates per variable and reports 1.01 at its lowest. Spline bases are collinear with each other by construction, so the per-parameter figure alarms without meaning and the per-variable figure reassures without detail. `mm_collinearity()` must report both, labelled.
 
 4. **The two newly installed easystats packages fail for the same reason.** `report::report()` errors with "argument is of length zero" and `modelbased::estimate_relation()` with "arguments imply differing number of rows: 251, 0". Both are downstream of finding 1: they ask for predictions, receive nothing, and fail on the empty result. They are not separate defects and no adapter fixes them short of a prediction path.
 

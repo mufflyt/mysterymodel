@@ -13,7 +13,7 @@
 #' specification requires that an interaction only be usable with its
 #' constituent main effects, and a formula is the last place to find out.
 #'
-#' @param project A [cp_project()] configuration.
+#' @param project A [mm_project()] configuration.
 #' @param cohort The development data. When the project declares a split, only
 #'   rows below `split_at` are used, and the held-out rows are returned
 #'   untouched for later scoring.
@@ -23,21 +23,21 @@
 #'   prespecified interactions. Exploratory discovery is not this argument.
 #' @param knots Knots for each spline term.
 #'
-#' @return An object of class `cp_model`.
+#' @return An object of class `mm_model`.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 300, seed = 1)
-#' project <- cp_project("uds", "event",
+#' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+#' project <- mm_project("uds", "event",
 #'                       c("age", "bmi", "sex", "prior_uti"),
 #'                       cohort = cohort)
-#' fit <- cp_model(project, cohort, nonlinear = "age",
+#' fit <- mm_model(project, cohort, nonlinear = "age",
 #'                 interactions = list(c("prior_uti", "sex")))
 #' fit
 #' @export
-cp_model <- function(project, cohort, nonlinear = NULL,
+mm_model <- function(project, cohort, nonlinear = NULL,
                      interactions = NULL, knots = 4L) {
-  if (!inherits(project, "cp_project")) {
-    stop("`project` must come from cp_project().", call. = FALSE)
+  if (!inherits(project, "mm_project")) {
+    stop("`project` must come from mm_project().", call. = FALSE)
   }
   if (!is.data.frame(cohort)) {
     stop("`cohort` must be a data frame.", call. = FALSE)
@@ -71,15 +71,15 @@ cp_model <- function(project, cohort, nonlinear = NULL,
     }
   }
 
-  parts <- cp_split(project, cohort)
+  parts <- mm_split(project, cohort)
   dev <- parts$dev
 
-  y <- cp_event_indicator(dev[[project$outcome]], project$positive_class)
+  y <- mm_event_indicator(dev[[project$outcome]], project$positive_class)
   if (length(unique(y)) < 2L) {
     stop("the outcome does not vary in the development rows.",
          call. = FALSE)
   }
-  dev[[".cp_y"]] <- y
+  dev[[".mm_y"]] <- y
 
   term_of <- function(p) {
     if (p %in% (nonlinear %||% character(0))) {
@@ -91,7 +91,7 @@ cp_model <- function(project, cohort, nonlinear = NULL,
     rhs <- c(rhs, paste(term_of(ia[1]), term_of(ia[2]), sep = ":"))
   }
   form <- stats::as.formula(
-    paste(".cp_y ~", paste(rhs, collapse = " + ")))
+    paste(".mm_y ~", paste(rhs, collapse = " + ")))
 
   dd <- rms::datadist(dev[, project$predictors, drop = FALSE])
   old <- options(datadist = dd)
@@ -102,7 +102,7 @@ cp_model <- function(project, cohort, nonlinear = NULL,
   # Section 19: the parameter budget is reported, and an overly ambitious
   # one warns rather than passing quietly. Splines and interactions are
   # counted, because they are the terms that get spent without being noticed.
-  adequacy <- cp_adequacy(
+  adequacy <- mm_adequacy(
     n = nrow(dev), events = sum(y),
     parameters = length(stats::coef(fit)) - 1L,
     nagelkerke = unname(fit$stats["R2"]),
@@ -126,17 +126,17 @@ cp_model <- function(project, cohort, nonlinear = NULL,
          events_dev = sum(y),
          n_held     = nrow(parts$held),
          adequacy   = adequacy,
-         schema     = cp_schema(project, dev),
+         schema     = mm_schema(project, dev),
          fingerprint = digest::digest(
            list(coef = unname(stats::coef(fit)),
                 formula = deparse(form)), algo = "sha256")),
-    class = "cp_model"
+    class = "mm_model"
   )
 }
 
 #' @export
-print.cp_model <- function(x, ...) {
-  cat("<cp_model: ", x$project$slug, ">\n", sep = "")
+print.mm_model <- function(x, ...) {
+  cat("<mm_model: ", x$project$slug, ">\n", sep = "")
   cat("  formula    ", deparse(x$formula), "\n", sep = "")
   cat("  developed  ", x$n_dev, " rows, ", x$events_dev, " events\n",
       sep = "")
@@ -162,7 +162,7 @@ print.cp_model <- function(x, ...) {
 #' @param positive_class The event level, or NULL to infer.
 #' @return Integer vector of 0 and 1.
 #' @keywords internal
-cp_event_indicator <- function(values, positive_class = NULL) {
+mm_event_indicator <- function(values, positive_class = NULL) {
   if (!is.null(positive_class)) {
     return(as.integer(as.character(values) == as.character(positive_class)))
   }
@@ -172,7 +172,7 @@ cp_event_indicator <- function(values, positive_class = NULL) {
   lev <- sort(unique(as.character(stats::na.omit(values))))
   if (length(lev) != 2L) {
     stop("cannot infer the event level from ", length(lev),
-         " distinct values. Set `positive_class` in cp_project().",
+         " distinct values. Set `positive_class` in mm_project().",
          call. = FALSE)
   }
   as.integer(as.character(values) == lev[2])
@@ -180,11 +180,11 @@ cp_event_indicator <- function(values, positive_class = NULL) {
 
 #' Record what a deployed prediction is allowed to receive
 #'
-#' @param project A [cp_project()].
+#' @param project A [mm_project()].
 #' @param dev The development rows.
 #' @return A list describing each predictor.
 #' @keywords internal
-cp_schema <- function(project, dev) {
+mm_schema <- function(project, dev) {
   cols <- lapply(project$predictors, function(p) {
     v <- dev[[p]]
     if (is.factor(v) || is.character(v)) {
@@ -205,11 +205,11 @@ cp_schema <- function(project, dev) {
 #' One place, so that fitting, validation and held-out scoring cannot disagree
 #' about which rows are development.
 #'
-#' @param project A [cp_project()].
+#' @param project A [mm_project()].
 #' @param cohort The cohort.
 #' @return A list with `dev` and `held`.
 #' @keywords internal
-cp_split <- function(project, cohort) {
+mm_split <- function(project, cohort) {
   if (is.null(project$split_var)) {
     return(list(dev = cohort, held = cohort[0, , drop = FALSE]))
   }

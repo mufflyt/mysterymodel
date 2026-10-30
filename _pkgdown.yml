@@ -9,31 +9,31 @@ reference:
       What is being predicted, from which columns, and how the data divides.
       Written down and checked before anything is fitted.
     contents:
-      - cp_project
+      - mm_project
   - title: Prepare
     desc: >
       Eligibility with a ledger that reconciles, and a description that
       carries its denominators.
     contents:
-      - cp_clean
-      - cp_eda
+      - mm_clean
+      - mm_eda
   - title: Fit and predict
     desc: >
       The model, and risks from exactly that model.
     contents:
-      - cp_model
-      - cp_predict
+      - mm_model
+      - mm_predict
   - title: Validate
     desc: >
       Performance on a stated basis, because apparent, bootstrap-corrected
       and held-out numbers are not interchangeable.
     contents:
-      - cp_validate
+      - mm_validate
   - title: Present
     desc: >
       A nomogram that is checked against the model it was drawn from.
     contents:
-      - cp_nomogram
+      - mm_nomogram
   - title: Data
     contents:
-      - cp_synthetic_cohort
+      - mm_synthetic_cohort

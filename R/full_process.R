@@ -23,7 +23,7 @@
 #' cohorts, and an optimism averaged over the survivors of a selection nobody
 #' reported is not the quantity it claims to be.
 #'
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @param cohort The cohort.
 #' @param B Resamples.
 #' @param min_valid Fewest successful resamples for the result to be
@@ -32,14 +32,14 @@
 #' @return A list with the optimism, the corrected metrics and the count of
 #'   valid resamples.
 #' @keywords internal
-cp_full_process <- function(model, cohort, B = 200L,
+mm_full_process <- function(model, cohort, B = 200L,
                             min_valid = ceiling(0.8 * B)) {
   project <- model$project
-  dev <- cp_split(project, cohort)$dev
-  y_dev <- cp_event_indicator(dev[[project$outcome]],
+  dev <- mm_split(project, cohort)$dev
+  y_dev <- mm_event_indicator(dev[[project$outcome]],
                               project$positive_class)
 
-  apparent <- cp_metrics(cp_predict(model, dev)$.pred, y_dev,
+  apparent <- mm_metrics(mm_predict(model, dev)$.pred, y_dev,
                          basis = "apparent")
   wanted <- c("c_stat", "cal_intercept", "cal_slope", "brier",
               "brier_scaled")
@@ -50,20 +50,20 @@ cp_full_process <- function(model, cohort, B = 200L,
 
   for (b in seq_len(B)) {
     set.seed(project$seed + b)
-    ix <- cp_resample(dev, project$cluster_id)
+    ix <- mm_resample(dev, project$cluster_id)
     draw <- dev[ix, , drop = FALSE]
 
     outcome <- tryCatch({
       # The whole strategy, refitted: knots, datadist and level handling are
       # all re-derived from this resample rather than inherited.
       refit <- suppressWarnings(
-        cp_model(project, draw, nonlinear = model$nonlinear,
+        mm_model(project, draw, nonlinear = model$nonlinear,
                  interactions = model$interactions, knots = model$knots))
-      y_draw <- cp_event_indicator(draw[[project$outcome]],
+      y_draw <- mm_event_indicator(draw[[project$outcome]],
                                    project$positive_class)
-      in_sample <- cp_metrics(cp_predict(refit, draw)$.pred, y_draw,
+      in_sample <- mm_metrics(mm_predict(refit, draw)$.pred, y_draw,
                               basis = "resample")
-      out_sample <- cp_metrics(cp_predict(refit, dev)$.pred, y_dev,
+      out_sample <- mm_metrics(mm_predict(refit, dev)$.pred, y_dev,
                                basis = "original")
       unlist(in_sample[wanted]) - unlist(out_sample[wanted])
     }, error = function(e) {

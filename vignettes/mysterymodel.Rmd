@@ -1,0 +1,308 @@
+---
+title: "From a raw export to a checked nomogram"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{From a raw export to a checked nomogram}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r attach}
+library(mysterymodel)
+```
+
+This is the whole pipeline on one cohort, in the order it has to run: say what
+is being predicted, account for every row that leaves, describe what is left,
+fit, validate on a stated basis, and draw an instrument that is checked against
+the model rather than assumed to match it.
+
+Every number below comes from synthetic data. The package carries no patient
+data and never will, so `mm_synthetic_cohort()` is what the examples, the
+fixtures and the articles all run on.
+
+## A cohort with known truth
+
+```{r cohort}
+raw <- mm_synthetic_cohort(n = 500, prevalence = 0.11, seed = 1978)
+str(raw, give.attr = FALSE)
+attr(raw, "truth")$formula
+```
+
+The generating model is deliberately not additive. It carries a quadratic age
+effect and one `prior_uti` by `sex` interaction, because a pipeline exercised
+only on additive data never reveals whether its spline and hierarchy handling
+are right. The `truth` attribute is what later sections are checked against.
+
+About 8% of rows are a second visit by a patient already present, which is what
+`pid` is for:
+
+```{r repeats}
+sum(duplicated(raw$pid))
+```
+
+The generator produces complete data and a real export does not, so a little
+missingness goes in deliberately. Everything downstream has to cope with it,
+and a vignette on complete data would not show whether it does.
+
+```{r holes}
+set.seed(4)
+raw$bmi[sample(nrow(raw), 9)] <- NA
+raw$indication[sample(nrow(raw), 6)] <- NA
+```
+
+## Describe what was exported, before deciding who is eligible
+
+```{r eda}
+desc <- mm_eda(raw, by = "event",
+               vars = c("age", "bmi", "sex", "prior_uti", "indication"))
+desc$table
+```
+
+The missing count sits beside each variable rather than in a separate table,
+because a percentage whose denominator quietly excludes missing rows reads as a
+fact about the cohort when it is a fact about the rows that happened to be
+complete. The denominator each percentage was taken over is the first row.
+
+```{r missing}
+desc$missing
+desc$duplicates
+```
+
+This is a data frame, not a rendered table. `gt`, `gtsummary`,
+`knitr::kable()` and Quarto can all render it, and none of them is needed to
+compute it.
+
+The cells are strings because the formatting is part of the contract: counts
+with thousands separators, percentages to one decimal, means with standard
+deviations, medians with the quartiles. The same four helpers build every cell,
+so a table cannot be internally inconsistent about how it rounds:
+
+```{r formatters}
+c(mysterymodel:::mm_count(12345),
+  mysterymodel:::mm_n_pct(45, 404),
+  mysterymodel:::mm_mean_sd(raw$age),
+  mysterymodel:::mm_median_iqr(raw$age))
+```
+
+## Eligibility, with a ledger that reconciles
+
+Each rule is a named one-sided formula. The name is what a flow diagram will
+say, so it should read as the criterion it expresses.
+
+```{r clean}
+cohort <- mm_clean(raw, rules = list(
+  "aged 40 or over"     = ~ age >= 40,
+  "plausible BMI"       = ~ bmi >= 16 & bmi <= 55,
+  "indication recorded" = ~ !is.na(indication)
+), label = "urodynamics studies as exported")
+
+cohort
+```
+
+Rows in must equal rows out plus every exclusion. `mm_clean()` errors rather
+than returning a cohort it cannot reconcile, which is the one thing it exists
+to prevent:
+
+```{r ledger}
+cohort$ledger[, c("rule", "n_excluded", "n_after", "reason")]
+c(in_ = cohort$n_in, out = cohort$n_out, excluded = cohort$n_excluded)
+```
+
+Look at the two `plausible BMI` lines. Nine rows have no BMI, so the rule is
+neither true nor false for them, and they leave under their own heading rather
+than passing. A rule that evaluates to `NA` is not a pass: treating unknown
+eligibility as eligible and treating it as ineligible are different studies,
+and the difference belongs in the diagram.
+
+The cohort that goes on to be modelled is complete by construction, because
+the rules above made completeness a stated eligibility criterion rather than a
+side effect of whatever the fitting function drops:
+
+```{r complete}
+mm_eda(cohort, vars = c("age", "bmi", "sex", "prior_uti",
+                        "indication"))$missing
+```
+
+Imputation instead of exclusion is a v0.3 item. Until it exists, the exclusion
+is visible in the ledger, which is the honest version of the same decision.
+
+## The plan, written down before anything is fitted
+
+```{r project}
+project <- mm_project(
+  slug           = "uds",
+  outcome        = "event",
+  predictors     = c("age", "bmi", "sex", "prior_uti", "indication"),
+  positive_class = 1,
+  cohort         = cohort$data,
+  split_var      = "year",
+  split_at       = 2023,
+  cluster_id     = "pid",
+  seed           = 1978
+)
+
+project
+```
+
+Nothing is fitted here. The point of the object is that a reviewer can check it
+against the protocol instead of reconstructing it afterwards from whichever
+code ran. It fails closed on configurations that cannot be meant:
+
+```{r fail-closed, error = TRUE}
+mm_project("uds", "event", c("age", "event"))
+
+mm_project("uds", "event", c("age", "bmi"), split_var = "year")
+
+mm_project("uds", "event", c("age", "bmi"),
+           positive_class = "yes", cohort = cohort$data)
+```
+
+The third is worth dwelling on. An inverted positive class inverts every risk
+the model goes on to report, and nothing downstream looks wrong.
+
+## Fit
+
+```{r model}
+model <- mm_model(project, cohort$data,
+                  nonlinear    = "age",
+                  interactions = list(c("prior_uti", "sex")),
+                  knots        = 4)
+
+model
+```
+
+The warning is the sample-size gate, and it is the honest answer for a cohort
+this size. The gate is the Riley requirement from `pmsampsize`, not the
+events-per-parameter rule, which is reported as description and labelled as
+such:
+
+```{r adequacy}
+model$adequacy
+```
+
+Two independent routes agree. The heuristic shrinkage above is computed from
+the likelihood ratio and the parameter count; the bootstrap calibration slopes
+in the validation section below are estimated by resampling. The two land within
+a few hundredths of each other, and neither calculation knows about the other.
+
+Strong hierarchy is enforced before a formula exists, because a formula is the
+last place to find out:
+
+```{r hierarchy, error = TRUE}
+mm_model(mm_project("uds", "event", c("age", "sex")), cohort$data,
+         interactions = list(c("sex", "prior_uti")))
+```
+
+What was fitted, and what a deployed prediction is allowed to receive:
+
+```{r schema}
+deparse1(model$formula)
+model$schema$predictors$sex
+model$schema$predictors$age
+model$fingerprint
+```
+
+## Predict
+
+```{r predict}
+patients <- data.frame(
+  age        = c(58, 71, 103),
+  bmi        = c(24.0, 33.5, 28.0),
+  sex        = factor(c("female", "male", "female")),
+  prior_uti  = factor(c("no", "yes", "no"), levels = c("no", "yes")),
+  indication = factor(c("incontinence", "retention", "prolapse"))
+)
+
+mm_predict(model, patients)
+```
+
+The third patient is 103 years old, beyond anything the model was developed on.
+That row is scored, because refusing it would be its own kind of dishonesty,
+but it is labelled rather than silently equated with interpolation.
+
+A level the model never saw is a different matter, and is refused by name:
+
+```{r unseen, error = TRUE}
+odd <- patients[1, ]
+odd$indication <- "urgency"
+mm_predict(model, odd)
+```
+
+`rms` would fail inside `predictrms()` without naming the variable or the
+level. A missing predictor is refused too, unless the caller says what to do
+with it:
+
+```{r missing-pred, error = TRUE}
+gap <- patients[1, ]
+gap$bmi <- NA
+mm_predict(model, gap)
+```
+
+```{r missing-na}
+mm_predict(model, gap, on_missing = "na")
+```
+
+## Validate, on a stated basis
+
+```{r validate}
+validation <- mm_validate(model, cohort$data, B = 100, full_process = TRUE)
+validation
+```
+
+One row per basis, because the three numbers a clinical prediction paper
+reports are not interchangeable, and presenting one as another is the
+commonest way a published model flatters itself. The `glm.fit` warnings come
+from the calibration slope in resamples where the predictions separate the
+outcome; a cohort with 32 events throws them, and suppressing them would hide
+exactly the instability the sample-size gate just warned about.
+
+The held-out row is the one to report, and it is sobering: 18 events support a
+c-statistic whose interval runs from 0.42 to 0.74. That is what a held-out
+sample this size can tell you, and the interval is in the table so that nobody
+has to take the point estimate on its own.
+
+```{r metrics}
+validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope")]
+```
+
+The `note` column is where each row says what produced it:
+
+```{r notes}
+cat(paste0("* ", validation$metrics$basis, ": ",
+           validation$metrics$note, collapse = "\n"))
+```
+
+The next article takes these four rows apart.
+
+## A nomogram that is checked against its model
+
+```{r nomogram}
+nom <- mm_nomogram(model, out_dir = NULL)
+nom
+```
+
+`mm_nomogram()` reads the drawn nomogram back the way a clinician reads it,
+summing points across axes and interpolating the printed linear predictor
+scale, without consulting the fit. Then it refuses to return if the answer
+disagrees with `mm_predict()`. A nomogram that disagrees with the model it was
+drawn from is worse than no nomogram, because it is a published instrument
+giving wrong risks.
+
+```{r nomogram-plot, fig.width = 9, fig.height = 6.5}
+plot(nom$nomogram)
+```
+
+Passing `out_dir` writes the PDF, and the SVG and PNG when `svglite` and `ragg`
+are installed. The third article reads this nomogram back by hand.
+
+## What is not here yet
+
+Imputation inside resampling, the flexible calibration curve, selection,
+collinearity reporting and the Quarto manuscript. The roadmap in the README
+says which version each belongs to. The pipeline above is honest about its own
+limits in the place it would be easiest to hide them, which is the `note`
+column of the validation table.

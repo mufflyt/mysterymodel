@@ -10,7 +10,7 @@
 #'
 #' @return Integer row indices, with replacement.
 #' @keywords internal
-cp_resample <- function(cohort, cluster_id = NULL) {
+mm_resample <- function(cohort, cluster_id = NULL) {
   n <- nrow(cohort)
   if (is.null(cluster_id)) {
     return(sample.int(n, n, replace = TRUE))

@@ -15,7 +15,7 @@
 #' studies and the difference belongs in the diagram.
 #'
 #' Nothing here imputes, recodes or drops a column. Missingness is described
-#' by [cp_eda()] and handled at imputation, where the choice is explicit.
+#' by [mm_eda()] and handled at imputation, where the choice is explicit.
 #'
 #' @param cohort The raw cohort.
 #' @param rules Named list of one-sided formulas, each evaluating to a
@@ -25,18 +25,18 @@
 #'   the criterion they express.
 #' @param label What the rows are, for the ledger's opening line.
 #'
-#' @return An object of class `cp_cohort`, holding `data` and `ledger`.
+#' @return An object of class `mm_cohort`, holding `data` and `ledger`.
 #'
 #' @examples
-#' raw <- cp_synthetic_cohort(n = 300, seed = 1)
-#' clean <- cp_clean(raw, rules = list(
+#' raw <- mm_synthetic_cohort(n = 300, seed = 1)
+#' clean <- mm_clean(raw, rules = list(
 #'   "aged 40 or over" = ~ age >= 40,
 #'   "plausible BMI"   = ~ bmi >= 16 & bmi <= 55
 #' ))
 #' clean
 #' clean$ledger
 #' @export
-cp_clean <- function(cohort, rules = list(), label = "rows as supplied") {
+mm_clean <- function(cohort, rules = list(), label = "rows as supplied") {
   if (!is.data.frame(cohort)) {
     stop("`cohort` must be a data frame.", call. = FALSE)
   }
@@ -123,12 +123,12 @@ cp_clean <- function(cohort, rules = list(), label = "rows as supplied") {
 
   structure(list(data = out, ledger = frame, n_in = n_in,
                  n_out = nrow(out), n_excluded = excluded),
-            class = "cp_cohort")
+            class = "mm_cohort")
 }
 
 #' @export
-print.cp_cohort <- function(x, ...) {
-  cat("<cp_cohort>  ", x$n_in, " in, ", x$n_out, " out, ",
+print.mm_cohort <- function(x, ...) {
+  cat("<mm_cohort>  ", x$n_in, " in, ", x$n_out, " out, ",
       x$n_excluded, " excluded\n", sep = "")
   for (i in seq_len(nrow(x$ledger))) {
     row <- x$ledger[i, ]

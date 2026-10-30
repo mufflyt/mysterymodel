@@ -19,28 +19,28 @@
 #' * **bootstrap, full process**, with `full_process = TRUE`. Refits the
 #'   whole strategy inside every resample, so the optimism corrected includes
 #'   the data-dependent choices the fixed-model bootstrap inherits. See
-#'   [cp_full_process()] for what it does and does not re-execute.
+#'   [mm_full_process()] for what it does and does not re-execute.
 #'
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @param cohort The cohort, for held-out scoring and the split.
 #' @param B Bootstrap resamples.
 #' @param full_process Also run the full-process bootstrap. Off by default
 #'   because it refits `B` times and costs accordingly.
 #'
-#' @return An object of class `cp_validation`: a data frame of metrics by
+#' @return An object of class `mm_validation`: a data frame of metrics by
 #'   basis, plus what produced them.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 300, seed = 1)
-#' project <- cp_project("uds", "event", c("age", "bmi", "sex"),
+#' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+#' project <- mm_project("uds", "event", c("age", "bmi", "sex"),
 #'                       cohort = cohort, split_var = "year",
 #'                       split_at = 2023)
-#' fit <- cp_model(project, cohort, nonlinear = "age")
-#' cp_validate(fit, cohort, B = 25)
+#' fit <- mm_model(project, cohort, nonlinear = "age")
+#' mm_validate(fit, cohort, B = 25)
 #' @export
-cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
-  if (!inherits(model, "cp_model")) {
-    stop("`model` must come from cp_model().", call. = FALSE)
+mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
+  if (!inherits(model, "mm_model")) {
+    stop("`model` must come from mm_model().", call. = FALSE)
   }
   if (length(B) != 1L || !is.numeric(B) || B < 1) {
     stop("`B` must be a single positive number of resamples.",
@@ -48,7 +48,7 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   }
   B <- as.integer(B)
   project <- model$project
-  parts <- cp_split(project, cohort)
+  parts <- mm_split(project, cohort)
 
   old <- options(datadist = model$datadist)
   on.exit(options(old), add = TRUE)
@@ -56,10 +56,10 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   rows <- list()
 
   # Apparent.
-  y_dev <- cp_event_indicator(parts$dev[[project$outcome]],
+  y_dev <- mm_event_indicator(parts$dev[[project$outcome]],
                               project$positive_class)
-  p_dev <- cp_predict(model, parts$dev)$.pred
-  rows[[length(rows) + 1L]] <- cp_metrics(p_dev, y_dev,
+  p_dev <- mm_predict(model, parts$dev)$.pred
+  rows[[length(rows) + 1L]] <- mm_metrics(p_dev, y_dev,
                                           basis = "apparent",
                            note = "scored on the development rows")
 
@@ -83,7 +83,7 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   # Bootstrap, whole strategy.
   fp <- NULL
   if (isTRUE(full_process)) {
-    fp <- cp_full_process(model, cohort, B = B)
+    fp <- mm_full_process(model, cohort, B = B)
     rows[[length(rows) + 1L]] <- data.frame(
       basis = "bootstrap, full process",
       n = model$n_dev, events = model$events_dev,
@@ -98,10 +98,10 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
 
   # Held out.
   if (nrow(parts$held) > 0L) {
-    y_held <- cp_event_indicator(parts$held[[project$outcome]],
+    y_held <- mm_event_indicator(parts$held[[project$outcome]],
                                  project$positive_class)
-    p_held <- cp_predict(model, parts$held)$.pred
-    rows[[length(rows) + 1L]] <- cp_metrics(p_held, y_held,
+    p_held <- mm_predict(model, parts$held)$.pred
+    rows[[length(rows) + 1L]] <- mm_metrics(p_held, y_held,
                                             basis = "held out",
                              note = sprintf("%s >= %s, scored once",
                                             project$split_var,
@@ -113,7 +113,7 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                  clustered_by = model$project$cluster_id,
                  full_process_detail = fp,
                  fingerprint = model$fingerprint),
-            class = "cp_validation")
+            class = "mm_validation")
 }
 
 #' Discrimination, calibration and accuracy for one set of predictions
@@ -124,7 +124,7 @@ cp_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
 #' @param note What produced it.
 #' @return A one-row data frame.
 #' @keywords internal
-cp_metrics <- function(p, y, basis, note = "") {
+mm_metrics <- function(p, y, basis, note = "") {
   keep <- !is.na(p) & !is.na(y)
   p <- pmin(pmax(as.numeric(p[keep]), 1e-10), 1 - 1e-10)
   y <- as.integer(y[keep])
@@ -154,8 +154,8 @@ cp_metrics <- function(p, y, basis, note = "") {
 }
 
 #' @export
-print.cp_validation <- function(x, ...) {
-  cat("<cp_validation>  full-process: ", x$full_process, "\n", sep = "")
+print.mm_validation <- function(x, ...) {
+  cat("<mm_validation>  full-process: ", x$full_process, "\n", sep = "")
   m <- x$metrics
   for (i in seq_len(nrow(m))) {
     cat(sprintf("  %-24s n=%-5d events=%-4d C=%.4f", m$basis[i], m$n[i],

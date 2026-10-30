@@ -14,7 +14,7 @@
 #' an `lrm` fit, so there is no prediction path through that ecosystem. See
 #' `inst/capability-matrix.md`.
 #'
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @param newdata Rows to score. Required: a model carries no copy of the
 #'   cohort, both because the specification asks that patient-level originals
 #'   not be retained and because a stored copy is one that can drift from the
@@ -27,15 +27,15 @@
 #'   scale, and `.extrapolated` marking rows outside the development range.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 300, seed = 1)
-#' project <- cp_project("uds", "event", c("age", "bmi", "sex"),
+#' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+#' project <- mm_project("uds", "event", c("age", "bmi", "sex"),
 #'                       cohort = cohort)
-#' fit <- cp_model(project, cohort, nonlinear = "age")
-#' head(cp_predict(fit, cohort[1:5, ]))
+#' fit <- mm_model(project, cohort, nonlinear = "age")
+#' head(mm_predict(fit, cohort[1:5, ]))
 #' @export
-cp_predict <- function(model, newdata, on_missing = c("stop", "na")) {
-  if (!inherits(model, "cp_model")) {
-    stop("`model` must come from cp_model().", call. = FALSE)
+mm_predict <- function(model, newdata, on_missing = c("stop", "na")) {
+  if (!inherits(model, "mm_model")) {
+    stop("`model` must come from mm_model().", call. = FALSE)
   }
   on_missing <- match.arg(on_missing)
   schema <- model$schema

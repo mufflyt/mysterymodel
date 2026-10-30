@@ -25,9 +25,9 @@
 #' @param likelihood_ratio Model likelihood ratio chi-squared.
 #' @param shrinkage Target shrinkage for the requirement, conventionally 0.9.
 #'
-#' @return An object of class `cp_adequacy`.
+#' @return An object of class `mm_adequacy`.
 #' @keywords internal
-cp_adequacy <- function(n, events, parameters, nagelkerke,
+mm_adequacy <- function(n, events, parameters, nagelkerke,
                         likelihood_ratio = NA_real_, shrinkage = 0.9) {
   prevalence <- events / n
 
@@ -79,12 +79,12 @@ cp_adequacy <- function(n, events, parameters, nagelkerke,
                  short_by = short_by,
                  target_shrinkage = shrinkage,
                  adequate = adequate, reason = reason),
-            class = "cp_adequacy")
+            class = "mm_adequacy")
 }
 
 #' @export
-print.cp_adequacy <- function(x, ...) {
-  cat("<cp_adequacy>  adequate: ", x$adequate, "\n", sep = "")
+print.mm_adequacy <- function(x, ...) {
+  cat("<mm_adequacy>  adequate: ", x$adequate, "\n", sep = "")
   cat("  development ", x$n, " rows, ", x$events, " events (",
       sprintf("%.1f%%", 100 * x$prevalence), ")\n", sep = "")
   cat("  parameters  ", x$parameters, " non-intercept, ",

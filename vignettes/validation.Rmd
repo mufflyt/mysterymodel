@@ -1,0 +1,221 @@
+---
+title: "Which number are you reporting?"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Which number are you reporting?}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r attach}
+library(mysterymodel)
+```
+
+A clinical prediction paper reports a c-statistic. There are at least four
+different quantities with that name available from one fitted model, they
+differ by more than the rounding a manuscript shows, and nothing in the number
+itself says which one it is. `mm_validate()` returns all of them, one per row,
+labelled, so that choosing is a decision someone makes rather than a default
+nobody noticed.
+
+```{r fit}
+cohort <- mm_synthetic_cohort(n = 600, prevalence = 0.11, seed = 1978)
+
+project <- mm_project("uds", "event",
+                      c("age", "bmi", "sex", "prior_uti"),
+                      positive_class = 1, cohort = cohort,
+                      split_var = "year", split_at = 2023,
+                      cluster_id = "pid", seed = 1978)
+
+model <- suppressWarnings(
+  mm_model(project, cohort, nonlinear = "age",
+           interactions = list(c("prior_uti", "sex"))))
+
+validation <- mm_validate(model, cohort, B = 100, full_process = TRUE)
+validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope",
+                       "brier")]
+```
+
+## The four bases
+
+**Apparent** is the model scored on the rows it was fitted to. It is always
+optimistic, and it is reported here so that the optimism is visible rather
+than absent.
+
+**Bootstrap, fixed model** comes from `rms::validate()`. Each resample refits
+the same formula, which corrects the optimism of *estimating coefficients*. It
+re-derives nothing the formula was shaped by.
+
+**Bootstrap, full process** refits the whole strategy inside every resample:
+knot placement, `datadist` and factor-level handling are all learned from the
+resample rather than inherited from the original fit.
+
+**Held out** is the rows the project's split reserved, scored once.
+
+The `brier` cell is empty on the fixed-model row because `rms::validate()`
+returns Somers' Dxy and the calibration slope, not a Brier score. An empty cell
+is the right answer there. Carrying the apparent Brier across into that row
+would make it look corrected when nothing corrected it.
+
+```{r split}
+parts <- mysterymodel:::mm_split(project, cohort)
+c(development = nrow(parts$dev), held_out = nrow(parts$held))
+range(parts$dev$year)
+range(parts$held$year)
+```
+
+One function owns the split, so fitting, validation and held-out scoring cannot
+disagree about which rows are development. A row with a missing `year` falls on
+neither side, and is an error rather than a silent drop.
+
+## What the full process does and does not cover
+
+This is the distinction the package will not let a caller skip. The detail
+object names what was actually repeated:
+
+```{r covers}
+detail <- validation$full_process_detail
+detail$covers
+cat(detail$note, "\n")
+```
+
+`covers` is a list that will grow. Imputation, selection, tuning and
+interaction screening are not re-executed, because the package does not do them
+yet. A strategy including any of them is not fully validated by this function
+either, and saying so in the returned object is what keeps the claim honest as
+the pipeline grows.
+
+The optimism and the correction are both available, rather than only their
+difference:
+
+```{r optimism}
+round(rbind(apparent  = unlist(detail$apparent[names(detail$optimism)]),
+            optimism  = detail$optimism,
+            corrected = detail$corrected), 4)
+```
+
+Resamples that cannot be fitted are counted, not dropped quietly:
+
+```{r valid}
+c(valid = detail$valid, of = detail$B)
+detail$adequate
+detail$failures
+```
+
+A resample that separates, or that is missing a factor level, is a real feature
+of a small cohort. An optimism averaged over the survivors of a selection
+nobody reported is not the quantity it claims to be, so the count is part of
+the result and `adequate` is `FALSE` when too few fitted.
+
+## One caution about comparing the two bootstrap rows
+
+They look comparable and are not. The fixed-model row derives its c-statistic
+from `rms`'s Somers' Dxy as `0.5 + Dxy / 2`; the full-process row is a mean of
+`pROC` AUCs over resamples. Two estimators of the same population quantity
+differ a little by construction, so a small gap between those two rows carries
+no information about the modelling strategy. Compare each against **apparent**,
+which is the comparison each was built to support.
+
+## Resampling the patient rather than the row
+
+The cohort has repeat visits. Resampling rows treats two visits by one person
+as two independent facts, and that narrows every interval it touches.
+
+```{r resample}
+dev <- parts$dev
+by_row     <- mysterymodel:::mm_resample(dev, cluster_id = NULL)
+by_patient <- mysterymodel:::mm_resample(dev, cluster_id = "pid")
+
+c(rows_in_cohort = nrow(dev),
+  row_draw       = length(by_row),
+  patient_draw   = length(by_patient))
+```
+
+A row draw always has exactly as many rows as the cohort. A patient draw has as
+many *patients*, so its row count varies with which patients were drawn, and a
+patient contributing two visits brings both or neither.
+
+Here is the property that matters, stated as a check rather than as a claim.
+Take the patients with exactly two visits, and count how many rows each of them
+contributes to the draw:
+
+```{r cluster-check}
+drawn <- dev[by_patient, ]
+twins <- names(which(table(dev$pid) == 2L))
+rows_drawn <- table(factor(drawn$pid, levels = twins))
+
+table(rows_drawn %% 2L)
+range(rows_drawn)
+```
+
+Every count is even. A patient drawn once brings two rows, a patient drawn
+twice brings four, a patient not drawn brings none. No single visit is ever
+separated from its sibling, which is what makes the resample a draw of patients
+rather than a draw of rows wearing patient labels.
+
+The project declares `cluster_id = "pid"`, so the full-process bootstrap drew
+patients:
+
+```{r clustered-by}
+validation$clustered_by
+```
+
+`rms::validate()` does not take that declaration, which is why the fixed-model
+row says so in its own note rather than leaving a reader to assume otherwise.
+
+```{r fixed-note}
+cat(validation$metrics$note[validation$metrics$basis ==
+                            "bootstrap, fixed model"], "\n")
+```
+
+## Scoring any set of predictions
+
+The metric helper that produces each row is usable on its own, which is how a
+calibration or subgroup table gets the same arithmetic as the main table
+instead of a second implementation of it:
+
+```{r metrics-direct}
+y <- mysterymodel:::mm_event_indicator(parts$held$event, 1)
+p <- mm_predict(model, parts$held)$.pred
+
+mysterymodel:::mm_metrics(p, y, basis = "held out, scored by hand")[
+  , c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
+      "cal_intercept", "cal_slope", "brier_scaled")]
+```
+
+Those are the same numbers as the held-out row of the main table, because it is
+the same function.
+
+## By subgroup
+
+```{r subgroup}
+held <- parts$held
+held$.p <- p
+held$.y <- y
+
+do.call(rbind, lapply(split(held, held$sex), function(g)
+  mysterymodel:::mm_metrics(g$.p, g$.y, basis = as.character(g$sex[1]))[
+    , c("basis", "n", "events", "c_stat", "cal_slope")]))
+```
+
+Read those with the event counts beside them. A c-statistic from a few dozen
+events is compatible with a wide range of truths, and the interval columns are
+in the full return value for exactly that reason.
+
+## The honest summary
+
+A fingerprint ties a validation result to the fit that produced it, so a table
+cannot drift from its model without the pairing changing:
+
+```{r fingerprint}
+identical(validation$fingerprint, model$fingerprint)
+substr(validation$fingerprint, 1, 16)
+```
+
+Report the held-out row when a split exists, the full-process row when it does
+not, the apparent row beside either so the optimism is visible, and the `note`
+column verbatim in the supplement.
