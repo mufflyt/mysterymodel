@@ -260,6 +260,17 @@ Resampling is by whole patient when the project declares a cluster.
 Resampling rows would treat two visits by one person as two independent
 facts, which narrows every interval it touches.
 
+**Invalid input is refused, not corrected.** A predictor that reproduces
+the outcome under another name used to fit happily and report an
+apparent c-statistic of 1.0000; `B = 2.7` ran two resamples; a predicted
+probability of 1.5 was clamped into a plausible Brier score. Each is now
+an error, because each silent correction produced a number a reader
+would believe
+([DEC-004](https://mufflyt.github.io/mysterymodel/inst/decisions.md)).
+Perfect separation is the deliberate exception: with four events it is
+as likely to be a small sample as a mistake, so it warns and the model
+still fits.
+
 **The nomogram is checked against the model, not assumed to match it.**
 [`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md)
 reads the drawn nomogram back the way a clinician does, summing points
@@ -407,3 +418,5 @@ A nomogram that is checked against the model it was drawn from.
   back](https://mufflyt.github.io/mysterymodel/articles/nomogram.md):
 - [Which number are you
   reporting?](https://mufflyt.github.io/mysterymodel/articles/validation.md):
+- [A complicated worked
+  example](https://mufflyt.github.io/mysterymodel/articles/worked-example.md):

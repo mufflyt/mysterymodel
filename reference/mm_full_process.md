@@ -23,7 +23,9 @@ mm_full_process(model, cohort, B = 200L, min_valid = ceiling(0.8 * B))
 
 - B:
 
-  Resamples.
+  Resamples, checked by
+  [`mm_check_resamples()`](https://mufflyt.github.io/mysterymodel/reference/mm_check_resamples.md)
+  before anything is drawn.
 
 - min_valid:
 

@@ -38,6 +38,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/nomogram.html">Reading the nomogram back</a></li>
     <li><a class="dropdown-item" href="articles/validation.html">Which number are you reporting?</a></li>
+    <li><a class="dropdown-item" href="articles/worked-example.html">A complicated worked example</a></li>
   </ul>
 </li>
       </ul>
@@ -317,6 +318,7 @@
 <p>The two bootstrap rows answer different questions. The fixed-model one, from <code><a href="https://rdrr.io/pkg/rms/man/validate.html" class="external-link">rms::validate()</a></code>, corrects the optimism of estimating coefficients for one formula. The full-process one refits the whole strategy inside every resample, so each resample gets its own spline knot placement, its own <code>datadist</code> and its own factor-level handling, all three being learned from data. It also states what it does <strong>not</strong> re-execute, which is imputation, selection and tuning, because the package does not do them yet and a strategy containing them would not be fully validated by it either.</p>
 <p>They are different estimators with their own Monte Carlo error, so a small gap between them is not evidence of anything.</p>
 <p>Resampling is by whole patient when the project declares a cluster. Resampling rows would treat two visits by one person as two independent facts, which narrows every interval it touches.</p>
+<p><strong>Invalid input is refused, not corrected.</strong> A predictor that reproduces the outcome under another name used to fit happily and report an apparent c-statistic of 1.0000; <code>B = 2.7</code> ran two resamples; a predicted probability of 1.5 was clamped into a plausible Brier score. Each is now an error, because each silent correction produced a number a reader would believe (<a href="inst/decisions.html">DEC-004</a>). Perfect separation is the deliberate exception: with four events it is as likely to be a small sample as a mistake, so it warns and the model still fits.</p>
 <p><strong>The nomogram is checked against the model, not assumed to match it.</strong> <code><a href="reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with <code><a href="reference/mm_predict.html">mm_predict()</a></code>. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.</p>
 <p><strong>The reading error between ticks is measured and reported.</strong> A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis’s own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.</p>
 </div>

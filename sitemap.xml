@@ -6,12 +6,15 @@
 <url><loc>https://mufflyt.github.io/mysterymodel/articles/mysterymodel.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/articles/nomogram.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/articles/validation.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/articles/worked-example.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/authors.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/index.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/index.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_adequacy.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_axis_names.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_axis_values.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_binary_forms.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_check_resamples.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_clean.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_count.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_eda.html</loc></url>
@@ -19,6 +22,7 @@
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_evaluable.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_event_indicator.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_full_process.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_leakage.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_mean_sd.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_median_iqr.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_metrics.html</loc></url>
@@ -32,6 +36,7 @@
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_predict.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_project.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_reading_error.html</loc></url>
+<url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_report_leakage.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_resample.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_restore_levels.html</loc></url>
 <url><loc>https://mufflyt.github.io/mysterymodel/reference/mm_same_development.html</loc></url>

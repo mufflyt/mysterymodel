@@ -36,6 +36,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/nomogram.html">Reading the nomogram back</a></li>
     <li><a class="dropdown-item" href="../articles/validation.html">Which number are you reporting?</a></li>
+    <li><a class="dropdown-item" href="../articles/worked-example.html">A complicated worked example</a></li>
   </ul>
 </li>
       </ul>
@@ -451,11 +452,46 @@ imputation is the answer and is not in this package yet;
 incomplete record in the meantime.</p>
 </div>
 <div class="section level2">
+<h2 id="two-input-contracts">Two input contracts<a class="anchor" aria-label="anchor" href="#two-input-contracts"></a>
+</h2>
+<p>A bootstrap count is a count. <code>B = 2.7</code> used to run two
+resamples, which answers a question nobody asked, so it is refused along
+with <code>NA</code>, <code>NaN</code>, either infinity, a vector, a
+string and anything below one. A count written with a decimal point is
+still a count, so <code>200.0</code> is fine. The check runs before any
+seed is set, so a refused call leaves the random-number state as it
+found it.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm_validate.html">mm_validate</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">cohort</span>, B <span class="op">=</span> <span class="fl">2.7</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> `B` is 2.7, which is not a whole number of resamples. Truncating it to 2 would answer a question that was not asked.</span></span></code></pre></div>
+<p>A predicted probability is a probability. <code><a href="../reference/mm_metrics.html">mm_metrics()</a></code>
+used to clamp its input to the interior of <code>[0, 1]</code>, so a
+predicted risk of 1.5 became a Brier score of 0.18 and whatever produced
+the 1.5 stayed invisible.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">0L</span>, <span class="fl">1L</span><span class="op">)</span>, basis <span class="op">=</span> <span class="st">"probe"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> predicted probabilities must be finite and within [0, 1]. Found 1 invalid value(s); row 1 is 1.5.</span></span></code></pre></div>
+<p>Zero and one are valid probabilities. Their logits are infinite and
+the calibration terms are fitted on the logit scale, so a nudge survives
+on that one line and nowhere else: the Brier and the c-statistic read
+the probabilities as given.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_metrics.html">mm_metrics</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0L</span>, <span class="fl">1L</span>, <span class="fl">1L</span>, <span class="fl">0L</span><span class="op">)</span>,</span>
+<span>                                  basis <span class="op">=</span> <span class="st">"probe"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>brier_reported <span class="op">=</span> <span class="va">edge</span><span class="op">$</span><span class="va">brier</span>,</span>
+<span>  brier_by_hand  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0L</span>, <span class="fl">1L</span>, <span class="fl">1L</span>, <span class="fl">0L</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,</span>
+<span>  slope_estimable <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">edge</span><span class="op">$</span><span class="va">cal_slope</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  brier_reported   brier_by_hand slope_estimable </span></span>
+<span><span class="co">#&gt;            0.18            0.18            1.00</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="the-honest-summary">The honest summary<a class="anchor" aria-label="anchor" href="#the-honest-summary"></a>
 </h2>
 <p>A fingerprint ties a validation result to the fit that produced it,
 so a table cannot drift from its model without the pairing changing:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>

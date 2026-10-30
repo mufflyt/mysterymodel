@@ -12,11 +12,16 @@ mm_metrics(p, y, basis, note = "", reference = NULL)
 
 - p:
 
-  Predicted probabilities.
+  Predicted probabilities. Must be numeric, the same length as `y`, and
+  within `[0, 1]` where observed. A value outside that interval is
+  refused rather than clamped, because clamping turns an upstream fault
+  into a plausible score. `NA` and `NaN` are missing and are dropped
+  pairwise, which is the package's one missing-value policy; a missing
+  prediction is never read as a probability of zero.
 
 - y:
 
-  0/1 outcome.
+  0/1 outcome, dropped pairwise with `p` where either is missing.
 
 - basis:
 

@@ -462,6 +462,51 @@ imputation is the answer and is not in this package yet;
 [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
 keeps refusing to put a number on an incomplete record in the meantime.
 
+## Two input contracts
+
+A bootstrap count is a count. `B = 2.7` used to run two resamples, which
+answers a question nobody asked, so it is refused along with `NA`,
+`NaN`, either infinity, a vector, a string and anything below one. A
+count written with a decimal point is still a count, so `200.0` is fine.
+The check runs before any seed is set, so a refused call leaves the
+random-number state as it found it.
+
+``` r
+
+mm_validate(model, cohort, B = 2.7)
+#> Error:
+#> ! `B` is 2.7, which is not a whole number of resamples. Truncating it to 2 would answer a question that was not asked.
+```
+
+A predicted probability is a probability.
+[`mm_metrics()`](https://mufflyt.github.io/mysterymodel/reference/mm_metrics.md)
+used to clamp its input to the interior of `[0, 1]`, so a predicted risk
+of 1.5 became a Brier score of 0.18 and whatever produced the 1.5 stayed
+invisible.
+
+``` r
+
+mysterymodel:::mm_metrics(c(1.5, 0.4, 0.6), c(1L, 0L, 1L), basis = "probe")
+#> Error:
+#> ! predicted probabilities must be finite and within [0, 1]. Found 1 invalid value(s); row 1 is 1.5.
+```
+
+Zero and one are valid probabilities. Their logits are infinite and the
+calibration terms are fitted on the logit scale, so a nudge survives on
+that one line and nowhere else: the Brier and the c-statistic read the
+probabilities as given.
+
+``` r
+
+edge <- mysterymodel:::mm_metrics(c(0, 1, 0.4, 0.6), c(0L, 1L, 1L, 0L),
+                                  basis = "probe")
+c(brier_reported = edge$brier,
+  brier_by_hand  = mean((c(0, 1, 0.4, 0.6) - c(0L, 1L, 1L, 0L))^2),
+  slope_estimable = !is.na(edge$cal_slope))
+#>  brier_reported   brier_by_hand slope_estimable 
+#>            0.18            0.18            1.00
+```
+
 ## The honest summary
 
 A fingerprint ties a validation result to the fit that produced it, so a

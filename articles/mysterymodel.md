@@ -359,6 +359,117 @@ model$fingerprint
 #> [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"
 ```
 
+## Preventing outcome leakage in clinical prediction models
+
+A predictor that carries the outcome is not predicting it. The model
+that results reports near-perfect discrimination, which reads as
+success, so this is the one mistake in the whole pipeline that makes its
+own output look better rather than worse.
+
+[`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md)
+checks that the outcome is not among the predictors. That is a
+comparison of names, and a copy under another name passes it:
+
+``` r
+
+leaky <- cohort$data
+leaky$triage_flag <- leaky$event        # the outcome, renamed
+```
+
+``` r
+
+mm_model(
+  mm_project("uds", "event", c("age", "bmi", "triage_flag"),
+             positive_class = 1, cohort = leaky, seed = 1978),
+  leaky)
+#> Error:
+#> ! outcome leakage: predictor `triage_flag` reads as binary with 1 is the event, and reproduces the outcome on every one of the 470 compared row(s). A predictor carrying `event` is not predicting it, and a model given one reports near-perfect discrimination, which reads as success. Remove it before fitting.
+```
+
+The detection is on values, not names. A column is read as 0/1 only
+where that is unambiguous: numeric holding just 0 and 1, a logical, or
+any column with exactly two observed values. For a two-valued column
+both assignments are tried, because the labels carry no information:
+
+``` r
+
+mysterymodel:::mm_binary_forms(factor(c("yes", "no", "yes")))
+#> [[1]]
+#> [[1]]$code
+#> [1] 0 1 0
+#> 
+#> [[1]]$label
+#> [1] "\"no\" is the event"
+#> 
+#> 
+#> [[2]]
+#> [[2]]$code
+#> [1] 1 0 1
+#> 
+#> [[2]]$label
+#> [1] "\"yes\" is the event"
+mysterymodel:::mm_binary_forms(c("mild", "moderate", "severe"))
+#> list()
+```
+
+### Five things that are not the same
+
+**A direct copy of the outcome** is settled by arithmetic. There is no
+cohort in which a column reproducing the outcome on every row is a
+prediction, so it is refused.
+
+**Perfect separation** is not. Every observed level of a categorical
+predictor sitting in one outcome class, or a numeric threshold that
+divides the classes completely, can be leakage and can equally be a
+cohort with four events. It is reported for you to settle, and the model
+still fits:
+
+``` r
+
+rare <- data.frame(event = c(rep(0L, 96), rep(1L, 4)),
+                   age = cohort$data$age[1:100])
+rare$marker <- c(runif(96, 0, 1), runif(4, 5, 6))
+
+flagged <- withCallingHandlers(
+  mm_model(mm_project("uds", "event", c("age", "marker"),
+                      positive_class = 1, cohort = rare, seed = 1978),
+           rare),
+  warning = function(w) {
+    cat(strwrap(conditionMessage(w), 72), sep = "\n"); invokeRestart("muffleWarning")
+  })
+#> possible outcome leakage, reported rather than refused because perfect
+#> separation can be a small cohort rather than a mistake: predictor
+#> `marker` every event lies above every non-event: non-events reach
+#> 0.9966129, events start at 5.438149, over 100 compared row(s). Check
+#> when each was measured relative to `event`, which no comparison of
+#> columns can tell you.
+#> the development sample may be too small for this model: 100 rows is 18
+#> short of the 118 a model of 2 parameter(s) needs at 4.0% prevalence for
+#> 90% shrinkage. Coefficients from a sample this size are expected to be
+#> overfitted; see the adequacy element of the returned object.
+```
+
+**A strong predictor** is reported as nothing at all. A high correlation
+with the outcome is what a predictor is for, and a package that
+complained about it would be useless.
+
+**A predictor measured after the outcome** is leakage that no comparison
+of columns can see. A post-operative laboratory value, a discharge code,
+a treatment chosen because the outcome had already happened: each can be
+weakly associated with the outcome and still be unusable. Whether a
+variable is available at the moment the prediction would be made is
+yours to establish, and the package cannot help.
+
+**Contamination between development and validation** is a different
+failure again: a transformation fitted on the whole cohort, a scaling
+constant or an imputation model learned before the split. This package
+re-derives knots, `datadist` and factor levels inside every full-process
+resample for that reason, and names what it does not re-derive.
+
+The first two are statistical questions the package answers. The last
+three are study-design questions it cannot, and saying so is more useful
+than a check that implies otherwise.
+
 ## Predict
 
 ``` r

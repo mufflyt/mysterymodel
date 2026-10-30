@@ -9,7 +9,14 @@ coefficients.
 ## Usage
 
 ``` r
-mm_model(project, cohort, nonlinear = NULL, interactions = NULL, knots = 4L)
+mm_model(
+  project,
+  cohort,
+  nonlinear = NULL,
+  interactions = NULL,
+  knots = 4L,
+  check_leakage = TRUE
+)
 ```
 
 ## Arguments
@@ -40,6 +47,17 @@ mm_model(project, cohort, nonlinear = NULL, interactions = NULL, knots = 4L)
 
   Knots for each spline term.
 
+- check_leakage:
+
+  Scan the development predictors for duplication of the outcome. `TRUE`
+  for a declared model.
+  [`mm_full_process()`](https://mufflyt.github.io/mysterymodel/reference/mm_full_process.md)
+  passes `FALSE` when refitting inside a resample, because the declared
+  cohort has already been scanned and a resample is a subset of it, so a
+  match there is a property of the draw rather than of the analysis. It
+  is not an override: there is no way to reach it with a cohort that has
+  not been scanned.
+
 ## Value
 
 An object of class `mm_model`.
@@ -62,6 +80,15 @@ so a saved model cannot carry patient identifiers into a place the data
 was never meant to go. The formula is built in
 [`baseenv()`](https://rdrr.io/r/base/environment.html) to keep that
 true.
+
+A predictor that reproduces the outcome is refused. A model given its
+own outcome under another name reports near-perfect discrimination,
+which reads as success, and the by-name check that `outcome` is not
+among `predictors` cannot see a renamed copy. Separation that is not
+duplication is reported instead of refused, because in a small cohort it
+can be real. See
+[`mm_leakage()`](https://mufflyt.github.io/mysterymodel/reference/mm_leakage.md),
+including what it cannot tell you.
 
 Strong hierarchy is enforced rather than assumed: an interaction is
 refused unless both of its main effects are in the project's predictors.

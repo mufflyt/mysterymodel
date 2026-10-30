@@ -8,3 +8,5 @@
   back](https://mufflyt.github.io/mysterymodel/articles/nomogram.md):
 - [Which number are you
   reporting?](https://mufflyt.github.io/mysterymodel/articles/validation.md):
+- [A complicated worked
+  example](https://mufflyt.github.io/mysterymodel/articles/worked-example.md):
