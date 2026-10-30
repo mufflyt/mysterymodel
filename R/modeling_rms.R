@@ -23,15 +23,28 @@
 #' specification requires that an interaction only be usable with its
 #' constituent main effects, and a formula is the last place to find out.
 #'
-#' Every count on the returned object describes the rows the model was
-#' estimated on, read back off the fit, not the rows it was handed. `rms`
-#' drops a row with a missing model variable before fitting, so the two differ
-#' whenever the development data is incomplete, and the difference is reported
-#' as `n_incomplete` and warned about rather than absorbed. It matters most for
+#' Which rows are modelled is decided once, before anything is fitted, and the
+#' `datadist`, the fit and the prediction schema are all built from that one
+#' frame. `rms` would otherwise drop a row with a missing model variable at fit
+#' time, leaving three parts of the same object describing three different
+#' samples: the fit estimated on the complete rows, the schema taking its
+#' ranges and levels from the supplied ones, and the datadist taking the
+#' limits that set a nomogram's drawn axis. A value no fitted row carried then
+#' came back labelled as interpolation, and the printed nomogram reached
+#' values the model was never estimated on.
+#'
+#' The difference is reported rather than absorbed, as `n_supplied`,
+#' `n_incomplete` and `incomplete_by`, and warned about. It matters most for
 #' the sample-size gate, which would otherwise judge a sample larger than the
-#' one that exists and so be most lenient exactly where it should be strictest.
-#' Deciding the analysis sample belongs in [mm_clean()], where the exclusion
-#' reaches the flow diagram, not in `na.action`.
+#' one that exists and so be most lenient exactly where it should be
+#' strictest. Deciding the analysis sample belongs in [mm_clean()], where the
+#' exclusion reaches the flow diagram, not in `na.action`.
+#'
+#' A factor level carried only by dropped rows is removed and named in
+#' `lost_levels`. It has no rows left to estimate it from, `rms` answers one
+#' with a singular Hessian whose message identifies neither the variable nor
+#' the level, and leaving it in the schema would let [mm_predict()] admit a
+#' level the model cannot score.
 #'
 #' @param project A [mm_project()] configuration.
 #' @param cohort The development data. When the project declares a split, only
@@ -92,12 +105,74 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   }
 
   parts <- mm_split(project, cohort)
-  dev <- parts$dev
+  supplied <- parts$dev
 
-  y <- mm_event_indicator(dev[[project$outcome]], project$positive_class)
-  if (length(unique(y)) < 2L) {
+  y_supplied <- mm_event_indicator(supplied[[project$outcome]],
+                                   project$positive_class)
+  if (length(unique(stats::na.omit(y_supplied))) < 2L) {
     stop("the outcome does not vary in the development rows.",
          call. = FALSE)
+  }
+
+  # Which rows are modelled is decided once, here, and the datadist, the fit
+  # and the schema are all built from that one frame. Leaving it to
+  # `na.action` at fit time decided it three times over: `rms` would fit the
+  # complete rows while the datadist took its limits and the schema took its
+  # ranges and levels from rows the model never saw, so a value no fitted row
+  # carried came back labelled as interpolation and the drawn nomogram
+  # reached axis values the model was never estimated on.
+  model_vars <- c(project$outcome, project$predictors)
+  usable <- stats::complete.cases(supplied[, model_vars, drop = FALSE])
+  dev <- supplied[usable, , drop = FALSE]
+  y <- y_supplied[usable]
+  n_incomplete <- nrow(supplied) - nrow(dev)
+
+  by_variable <- vapply(model_vars,
+                        function(v) sum(is.na(supplied[[v]])), integer(1))
+  by_variable <- by_variable[by_variable > 0L]
+
+  if (n_incomplete > 0L) {
+    warning(n_incomplete, " of ", nrow(supplied), " development row(s) were ",
+            "dropped before fitting, incomplete on ",
+            paste(sprintf("%s (%d)", names(by_variable), by_variable),
+                  collapse = ", "),
+            ". Every count reported here describes the ", nrow(dev),
+            " rows that were fitted, not the ", nrow(supplied), " supplied. ",
+            "Make the exclusion a rule in mm_clean() so it reaches the flow ",
+            "diagram, or impute, rather than leaving the analysis sample to ",
+            "be settled by na.action.", call. = FALSE)
+  }
+
+  # A factor level carried only by dropped rows has no rows left to estimate
+  # it from. `rms` responds to one with a singular Hessian, whose message
+  # names neither the variable nor the level, so the level is removed here and
+  # named. Removing it is also what makes mm_predict() refuse it later: a
+  # level the model cannot score must not be in the schema that admits it.
+  lost <- list()
+  for (p in project$predictors) {
+    if (!is.factor(supplied[[p]]) && !is.character(supplied[[p]])) next
+    gone <- setdiff(levels(factor(supplied[[p]])),
+                    levels(factor(dev[[p]])))
+    if (length(gone)) lost[[p]] <- gone
+    if (is.factor(dev[[p]])) dev[[p]] <- droplevels(dev[[p]])
+  }
+  if (length(lost)) {
+    warning("level(s) carried only by the dropped rows cannot be estimated ",
+            "and are not in this model: ",
+            paste(sprintf("%s = %s", names(lost),
+                          vapply(lost, paste, character(1),
+                                 collapse = "/")),
+                  collapse = "; "),
+            ". mm_predict() will refuse them by name rather than score them.",
+            call. = FALSE)
+  }
+
+  if (length(unique(y)) < 2L) {
+    stop("the outcome does not vary among the ", nrow(dev),
+         " complete development row(s), though it varies among the ",
+         nrow(supplied), " supplied. The rows carrying the other outcome ",
+         "value are incomplete on ",
+         paste(names(by_variable), collapse = ", "), ".", call. = FALSE)
   }
   dev[[".mm_y"]] <- y
 
@@ -124,31 +199,18 @@ mm_model <- function(project, cohort, nonlinear = NULL,
 
   fit <- rms::lrm(form, data = dev, x = TRUE, y = TRUE)
 
-  # `rms` drops rows with a missing model variable before fitting, so the
-  # sample the model was estimated on is not necessarily the one it was
-  # handed. Everything reported from here reads the fit rather than `dev`:
-  # a sample-size gate given rows the model never saw is lenient in exactly
-  # the case that most needs it strict.
-  n_fitted <- length(fit$y)
-  events_fitted <- sum(as.integer(fit$y))
-  n_incomplete <- nrow(dev) - n_fitted
-  by_variable <- if (is.null(fit$na.action)) integer(0) else {
-    counts <- fit$na.action$nmiss
-    counts <- counts[setdiff(names(counts), ".mm_y")]
-    counts[counts > 0L]
+  # `dev` is already complete on every model variable, so this should never
+  # fire. It is here because a silent further drop would put the fit and the
+  # counts back out of step, which is the whole defect this ordering fixes.
+  if (length(fit$y) != nrow(dev)) {
+    stop("rms dropped a further ", nrow(dev) - length(fit$y),
+         " row(s) from a frame that is complete on ",
+         paste(model_vars, collapse = ", "),
+         ". The reported sample would no longer be the fitted one.",
+         call. = FALSE)
   }
-
-  if (n_incomplete > 0L) {
-    warning(n_incomplete, " of ", nrow(dev), " development row(s) were ",
-            "dropped before fitting, incomplete on ",
-            paste(sprintf("%s (%d)", names(by_variable), by_variable),
-                  collapse = ", "),
-            ". Every count reported here describes the ", n_fitted,
-            " rows that were fitted, not the ", nrow(dev), " supplied. ",
-            "Make the exclusion a rule in mm_clean() so it reaches the flow ",
-            "diagram, or impute, rather than leaving the analysis sample to ",
-            "be settled by na.action.", call. = FALSE)
-  }
+  n_fitted <- nrow(dev)
+  events_fitted <- sum(y)
 
   # Section 19: the parameter budget is reported, and an overly ambitious
   # one warns rather than passing quietly. Splines and interactions are
@@ -175,9 +237,10 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          knots      = as.integer(knots),
          n_dev      = n_fitted,
          events_dev = events_fitted,
-         n_supplied = nrow(dev),
+         n_supplied = nrow(supplied),
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
+         lost_levels = lost,
          n_held     = nrow(parts$held),
          adequacy   = adequacy,
          schema     = mm_schema(project, dev),
