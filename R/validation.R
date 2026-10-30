@@ -1,3 +1,25 @@
+#' Why a corrected c-statistic is reported without an interval
+#'
+#' DeLong's standard error is for an apparent c-statistic computed once on one
+#' sample. A corrected index is an apparent one minus an average optimism, and
+#' neither [rms::validate()] nor [mm_full_process()] returns the distribution
+#' of that difference, so there is nothing here to put an interval around.
+#'
+#' The recognised answer is a nested bootstrap: an outer loop resampling the
+#' cohort, each iteration running the whole correction, and a percentile
+#' interval taken over the corrected values it produces. That is `B` times the
+#' work of the correction itself and is not implemented. Reporting it as
+#' absent, with the reason, is what keeps the apparent row's interval from
+#' being read down the column as though it applied here.
+#'
+#' @return One sentence.
+#' @keywords internal
+mm_no_corrected_interval <- function() {
+  paste("No interval: DeLong describes an apparent c-statistic, not a",
+        "corrected one, and an interval for the corrected index needs a",
+        "nested bootstrap that is not implemented here")
+}
+
 #' The fewest resamples a bootstrap correction may be averaged over
 #'
 #' Four fifths of the resamples requested. Both bootstraps apply it: `rms`
@@ -243,6 +265,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   rows[[length(rows) + 1L]] <- data.frame(
     basis = "bootstrap, fixed model",
     n = model$n_dev, events = model$events_dev,
+    non_events = model$n_dev - model$events_dev,
     c_stat = c_corrected, c_lower = NA_real_, c_upper = NA_real_,
     # rms corrects the calibration intercept alongside the slope and this
     # discarded it, reporting a blank where a number was available.
@@ -262,6 +285,8 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                      paste(". INADEQUATE: fewer than four fifths of the",
                            "resamples fitted")),
     stringsAsFactors = FALSE)
+  rows[[length(rows)]]$note <- paste0(rows[[length(rows)]]$note, ". ",
+                                      mm_no_corrected_interval())
 
   # Bootstrap, whole strategy.
   fp <- NULL
@@ -270,6 +295,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
     rows[[length(rows) + 1L]] <- data.frame(
       basis = "bootstrap, full process",
       n = model$n_dev, events = model$events_dev,
+      non_events = model$n_dev - model$events_dev,
       c_stat = unname(fp$corrected[["c_stat"]]),
       c_lower = NA_real_, c_upper = NA_real_,
       cal_intercept = unname(fp$corrected[["cal_intercept"]]),
@@ -277,7 +303,8 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
       brier = unname(fp$corrected[["brier"]]),
       brier_ref = fp$no_information_brier,
       brier_scaled = unname(fp$corrected[["brier_scaled"]]),
-      note = fp$note, stringsAsFactors = FALSE)
+      note = paste0(fp$note, ". ", mm_no_corrected_interval()),
+      stringsAsFactors = FALSE)
   }
 
   # Held out. The same rule again, with the exclusions attributed, because an
@@ -417,6 +444,7 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
                     "row(s), so discrimination is undefined"), length(y))
     return(data.frame(
       basis = basis, n = length(y), events = sum(y),
+      non_events = length(y) - sum(y),
       c_stat = NA_real_, c_lower = NA_real_, c_upper = NA_real_,
       cal_intercept = NA_real_, cal_slope = NA_real_,
       brier = NA_real_, brier_ref = NA_real_, brier_scaled = NA_real_,
@@ -463,9 +491,37 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
     reference
 
   aside <- character(0)
+  # What the interval is, and what it rests on, on every row that carries one.
+  # No threshold is applied: a count of events is what governs a DeLong
+  # standard error, and naming the two counts beside the method lets a reader
+  # judge an interval drawn from three events without the package inventing a
+  # minimum sample size it has no evidence for.
+  n_events <- sum(y)
+  n_non_events <- length(y) - n_events
+  rests_on <- sprintf("%d event(s) and %d non-event(s)",
+                      n_events, n_non_events)
   if (is.na(ci[1]) && !is.na(as.numeric(roc$auc))) {
-    aside <- c(aside, paste("the c-statistic has no interval here, which",
-                            "needs at least two of each outcome"))
+    aside <- c(aside, sprintf(paste("the c-statistic has no interval here,",
+                                    "which needs at least two of each",
+                                    "outcome, and there are %s"), rests_on))
+  } else if (!is.na(ci[1])) {
+    aside <- c(aside, sprintf("95%% DeLong interval, from %s", rests_on))
+    # Two intervals that are arithmetic rather than evidence. Both are
+    # returned as rms and pROC compute them, and both are said out loud,
+    # because an interval of zero width reads as precision and a limit
+    # resting on the end of the parameter space reads as an estimate.
+    if (isTRUE(all.equal(ci[3] - ci[1], 0))) {
+      aside <- c(aside, paste("that interval has zero width, which is what",
+                              "DeLong returns when the classes separate",
+                              "completely or every prediction ties: the",
+                              "estimator has no information left to spend",
+                              "on an interval, so this is not a statement",
+                              "of precision"))
+    } else if (ci[1] <= 0 || ci[3] >= 1) {
+      aside <- c(aside, paste("one limit sits on the edge of the parameter",
+                              "space, where pROC truncates it, so that limit",
+                              "is a bound and not an estimate"))
+    }
   }
   withheld <- c("intercept", "slope")[c(is.na(int), is.na(slope))]
   if (length(withheld)) {
@@ -487,6 +543,7 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
   }
 
   data.frame(basis = basis, n = length(y), events = sum(y),
+             non_events = length(y) - sum(y),
              c_stat = as.numeric(roc$auc), c_lower = ci[1], c_upper = ci[3],
              cal_intercept = int, cal_slope = slope,
              brier = brier, brier_ref = no_information,
@@ -497,13 +554,22 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
 
 #' @export
 print.mm_validation <- function(x, ...) {
-  cat("<mm_validation>  full-process: ", x$full_process, "\n", sep = "")
+  cat("<mm_validation>  full-process: ", x$full_process,
+      "\n  columns: n, events/non-events, c-statistic with its 95% DeLong ",
+      "interval where one is estimable\n", sep = "")
   m <- x$metrics
   for (i in seq_len(nrow(m))) {
-    cat(sprintf("  %-24s n=%-5d events=%-4d C=%.4f", m$basis[i], m$n[i],
-                m$events[i], m$c_stat[i]))
+    cat(sprintf("  %-24s n=%-5d %d/%d C=%.4f", m$basis[i], m$n[i],
+                m$events[i], m$non_events[i], m$c_stat[i]))
     if (!is.na(m$c_lower[i])) {
       cat(sprintf(" (%.4f-%.4f)", m$c_lower[i], m$c_upper[i]))
+      if (isTRUE(all.equal(m$c_upper[i] - m$c_lower[i], 0))) {
+        cat(" zero width, see note")
+      } else if (m$c_lower[i] <= 0 || m$c_upper[i] >= 1) {
+        cat(" limit at a bound, see note")
+      }
+    } else if (!is.na(m$c_stat[i])) {
+      cat(" no interval, see note")
     }
     if (!is.na(m$cal_slope[i])) {
       cat(sprintf("  slope=%.4f", m$cal_slope[i]))
