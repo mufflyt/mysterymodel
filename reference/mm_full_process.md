@@ -7,7 +7,7 @@ includes every data-dependent choice the strategy makes.
 ## Usage
 
 ``` r
-mm_full_process(model, cohort, B = 200L, min_valid = ceiling(0.8 * B))
+mm_full_process(model, cohort, B = 200L, min_valid = mm_min_resamples(B))
 ```
 
 ## Arguments

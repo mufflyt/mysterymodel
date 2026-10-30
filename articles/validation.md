@@ -96,7 +96,7 @@ lp <- as.numeric(model$fit$linear.predictors)
 c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
   slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
 #>    intercept        slope 
-#> 4.971539e-16 1.000000e+00
+#> 8.172466e-17 1.000000e+00
 ```
 
 The package detects the identity rather than assuming it, so a fitting
@@ -517,7 +517,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "0c5c1900a0dbb975"
+#> [1] "92df44fff5c5dae3"
 ```
 
 Report the held-out row when a split exists, the full-process row when

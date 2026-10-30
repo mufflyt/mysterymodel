@@ -469,7 +469,7 @@ refuses a cohort that is not the one a model was fitted on:</p>
 <span><span class="co">#&gt;   held out   190 rows</span></span>
 <span><span class="co">#&gt;   parameters 9 non-intercept, 710 short of the sample they need</span></span>
 <span><span class="co">#&gt;   apparent C 0.7116</span></span>
-<span><span class="co">#&gt;   fingerprint 13f51cd9f4ad63da</span></span></code></pre></div>
+<span><span class="co">#&gt;   fingerprint 3b00d7880d0bada1</span></span></code></pre></div>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fits</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">fits</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span></span>
@@ -480,10 +480,10 @@ refuses a cohort that is not the one a model was fitted on:</p>
 <span>             fingerprint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">m</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   analysis n_supplied n_dev events n_held parameters apparent_C fingerprint</span></span>
-<span><span class="co">#&gt; 1        A        741   741     83      0          6     0.6425  2f3503a21a</span></span>
-<span><span class="co">#&gt; 2        B        741   741     83      0          8     0.6584  bc5b60c005</span></span>
-<span><span class="co">#&gt; 3        C        741   741     83      0          9     0.6695  173aa6c379</span></span>
-<span><span class="co">#&gt; 4        D        551   551     64    190          9     0.7116  13f51cd9f4</span></span></code></pre></div>
+<span><span class="co">#&gt; 1        A        741   741     83      0          6     0.6425  20486eeb8c</span></span>
+<span><span class="co">#&gt; 2        B        741   741     83      0          8     0.6584  b40edbe891</span></span>
+<span><span class="co">#&gt; 3        C        741   741     83      0          9     0.6695  93ca893c56</span></span>
+<span><span class="co">#&gt; 4        D        551   551     64    190          9     0.7116  3b00d7880d</span></span></code></pre></div>
 <p>The sample-size gate is reported per analysis, and it is the honest
 answer for a cohort this size once the parameter count rises:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
@@ -625,7 +625,7 @@ can be shown doing both:</p>
 <span>                   slope <span class="op">=</span> <span class="va">apparent</span><span class="op">$</span><span class="va">cal_slope</span><span class="op">)</span>,</span>
 <span>      reported <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">withheld</span><span class="op">$</span><span class="va">cal_intercept</span>, <span class="va">withheld</span><span class="op">$</span><span class="va">cal_slope</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             intercept slope</span></span>
-<span><span class="co">#&gt; computed -1.26181e-15     1</span></span>
+<span><span class="co">#&gt; computed -1.40273e-15     1</span></span>
 <span><span class="co">#&gt; reported           NA    NA</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -692,12 +692,12 @@ is a check on the rows and not on their number:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">figures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"worked-example"</span><span class="op">)</span></span>
 <span><span class="va">nom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_nomogram.html">mm_nomogram</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, out_dir <span class="op">=</span> <span class="va">figures</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/uds-d_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmphjPZ3k/worked-example/uds-d_nomogram.pdf, /tmp/RtmphjPZ3k/worked-example/uds-d_nomogram.svg, /tmp/RtmphjPZ3k/worked-example/uds-d_nomogram.png</span></span>
 <span><span class="va">nom</span></span>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
-<span><span class="co">#&gt;   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   off-tick reading error    0.000856 in risk, midway between ticks</span></span>
 <span><span class="co">#&gt;   files           uds-d_nomogram.pdf, uds-d_nomogram.svg, uds-d_nomogram.png</span></span></code></pre></div>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
@@ -819,11 +819,11 @@ fixing is the claim, not the nomogram.</p>
 <span>  reported <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span>,</span>
 <span>  at_ticks <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">worst_disagreement</span><span class="op">)</span></span>
 <span><span class="co">#&gt; between_ticks      reported      at_ticks </span></span>
-<span><span class="co">#&gt;  8.560571e-04  8.560571e-04  1.110223e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;  8.560571e-04  8.560571e-04  5.551115e-17</span></span></code></pre></div>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exported</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_export.html">mm_nomogram_export</a></span><span class="op">(</span></span>
 <span>  <span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">figures</span>, <span class="st">"worked-example"</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.pdf, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.svg, /tmp/Rtmp2Wo62F/worked-example/worked-example_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmphjPZ3k/worked-example/worked-example_nomogram.pdf, /tmp/RtmphjPZ3k/worked-example/worked-example_nomogram.svg, /tmp/RtmphjPZ3k/worked-example/worked-example_nomogram.png</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">exported</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"</span></span>
 <span><span class="co">#&gt; [3] "worked-example_nomogram.png"</span></span>
@@ -878,10 +878,10 @@ fixing is the claim, not the nomogram.</p>
 <span>  validation_matches <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">checked</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">fingerprint</span>,</span>
 <span>                                 <span class="va">fits</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   analysis coefficients  development validation_matches</span></span>
-<span><span class="co">#&gt; 1        A 2f3503a21a4a c9552f752ad9               TRUE</span></span>
-<span><span class="co">#&gt; 2        B bc5b60c005ba c9552f752ad9               TRUE</span></span>
-<span><span class="co">#&gt; 3        C 173aa6c379e8 d3e0c5b952e9               TRUE</span></span>
-<span><span class="co">#&gt; 4        D 13f51cd9f4ad a97f8dd9ff7e               TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1        A 20486eeb8ce2 c9552f752ad9               TRUE</span></span>
+<span><span class="co">#&gt; 2        B b40edbe891b8 c9552f752ad9               TRUE</span></span>
+<span><span class="co">#&gt; 3        C 93ca893c5644 d3e0c5b952e9               TRUE</span></span>
+<span><span class="co">#&gt; 4        D 3b00d7880d0b a97f8dd9ff7e               TRUE</span></span></code></pre></div>
 <p>A and B share a development sample and differ in shape, so their
 coefficient fingerprints differ and their development fingerprints
 agree. D reserved rows, so both of its fingerprints stand alone.</p>
@@ -903,9 +903,9 @@ agree. D reserved rows, so both of its fingerprints stand alone.</p>
 <span>  exported <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">everything</span>, <span class="va">exported_fns</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  used_here <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">used</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; functions  exported used_here </span></span>
-<span><span class="co">#&gt;        38         8        38</span></span>
+<span><span class="co">#&gt;        41         8        38</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">everything</span><span class="op">[</span><span class="op">!</span><span class="va">used</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; character(0)</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "mm_min_resamples"  "mm_no_information" "mm_profiles"</span></span></code></pre></div>
 <div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">methods_used</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"print.mm_project"</span>, <span class="st">"print.mm_cohort"</span>, <span class="st">"print.mm_eda"</span>,</span>
 <span>                  <span class="st">"print.mm_model"</span>, <span class="st">"print.mm_adequacy"</span>,</span>
