@@ -68,16 +68,30 @@ refused unless both of its main effects are in the project's predictors.
 The specification requires that an interaction only be usable with its
 constituent main effects, and a formula is the last place to find out.
 
-Every count on the returned object describes the rows the model was
-estimated on, read back off the fit, not the rows it was handed. `rms`
-drops a row with a missing model variable before fitting, so the two
-differ whenever the development data is incomplete, and the difference
-is reported as `n_incomplete` and warned about rather than absorbed. It
-matters most for the sample-size gate, which would otherwise judge a
-sample larger than the one that exists and so be most lenient exactly
-where it should be strictest. Deciding the analysis sample belongs in
+Which rows are modelled is decided once, before anything is fitted, and
+the `datadist`, the fit and the prediction schema are all built from
+that one frame. `rms` would otherwise drop a row with a missing model
+variable at fit time, leaving three parts of the same object describing
+three different samples: the fit estimated on the complete rows, the
+schema taking its ranges and levels from the supplied ones, and the
+datadist taking the limits that set a nomogram's drawn axis. A value no
+fitted row carried then came back labelled as interpolation, and the
+printed nomogram reached values the model was never estimated on.
+
+The difference is reported rather than absorbed, as `n_supplied`,
+`n_incomplete` and `incomplete_by`, and warned about. It matters most
+for the sample-size gate, which would otherwise judge a sample larger
+than the one that exists and so be most lenient exactly where it should
+be strictest. Deciding the analysis sample belongs in
 [`mm_clean()`](https://mufflyt.github.io/mysterymodel/reference/mm_clean.md),
 where the exclusion reaches the flow diagram, not in `na.action`.
+
+A factor level carried only by dropped rows is removed and named in
+`lost_levels`. It has no rows left to estimate it from, `rms` answers
+one with a singular Hessian whose message identifies neither the
+variable nor the level, and leaving it in the schema would let
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+admit a level the model cannot score.
 
 ## Examples
 
