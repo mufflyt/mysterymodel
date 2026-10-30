@@ -30,7 +30,10 @@ commonest way a published model flatters itself.
 The bases are:
 \itemize{
 \item \strong{apparent}, the model scored on the rows it was fitted to. Always
-optimistic, reported so that the optimism is visible.
+optimistic, reported so that the optimism is visible. Its calibration is
+withheld rather than printed: scoring an unpenalized fit on its own rows
+forces the intercept to zero and the slope to one, so those two numbers
+describe the estimator and not the model.
 \item \strong{bootstrap, fixed model}, from \code{\link[rms:validate]{rms::validate()}}. Each resample refits
 the \emph{same formula}, which corrects the optimism of estimating
 coefficients. It does \strong{not} repeat imputation, selection, tuning or

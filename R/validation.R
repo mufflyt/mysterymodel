@@ -7,7 +7,10 @@
 #' The bases are:
 #'
 #' * **apparent**, the model scored on the rows it was fitted to. Always
-#'   optimistic, reported so that the optimism is visible.
+#'   optimistic, reported so that the optimism is visible. Its calibration is
+#'   withheld rather than printed: scoring an unpenalized fit on its own rows
+#'   forces the intercept to zero and the slope to one, so those two numbers
+#'   describe the estimator and not the model.
 #' * **bootstrap, fixed model**, from [rms::validate()]. Each resample refits
 #'   the *same formula*, which corrects the optimism of estimating
 #'   coefficients. It does **not** repeat imputation, selection, tuning or
@@ -88,7 +91,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   # explicit complete-case path instead of asking prediction to tolerate a
   # missing predictor, because a prediction from incomplete input is the thing
   # that default exists to refuse.
-  dev_eligible <- mm_evaluable(project, parts$dev)
+  dev_eligible <- mm_evaluable(project, parts$dev, require_cluster = TRUE)
   dev_scored <- parts$dev[dev_eligible$usable, , drop = FALSE]
   mm_same_development(model, dev_scored, "every basis below")
 
@@ -96,11 +99,12 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   y_dev <- mm_event_indicator(dev_scored[[project$outcome]],
                               project$positive_class)
   p_dev <- mm_predict(model, dev_scored)$.pred
-  rows[[length(rows) + 1L]] <- mm_metrics(
-    p_dev, y_dev, basis = "apparent",
-    note = paste0("scored on the development rows",
-                  if (dev_eligible$n_excluded > 0L)
-                    paste0(". ", mm_eligibility_note(dev_eligible))))
+  rows[[length(rows) + 1L]] <- mm_withhold_identity_calibration(
+    mm_metrics(
+      p_dev, y_dev, basis = "apparent",
+      note = paste0("scored on the development rows",
+                    if (dev_eligible$n_excluded > 0L)
+                      paste0(". ", mm_eligibility_note(dev_eligible)))))
 
   # Bootstrap, fixed model. `rms::validate()` passes `...` through to
   # `predab.resample()`, which takes a cluster and draws whole units when it
@@ -216,6 +220,38 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                      e[setdiff(names(e), c("usable", "predictable"))]),
                  fingerprint = model$fingerprint),
             class = "mm_validation")
+}
+
+#' Withhold a calibration that is an identity rather than an estimate
+#'
+#' Scoring an unpenalized maximum-likelihood fit on the very rows that produced
+#' it forces the calibration intercept to zero and the slope to one: they are
+#' the fit's own score equations rearranged, not evidence about calibration.
+#' Printed in a column beside a held-out slope they read as the model being
+#' perfectly calibrated, which is the one thing they cannot show.
+#'
+#' The identity is detected rather than assumed, so a fitting method that does
+#' not force it, a penalized fit for instance, has its apparent calibration
+#' reported as the estimate it would then be.
+#'
+#' @param row A one-row metrics frame from [mm_metrics()].
+#' @param tol How close to 0 and 1 counts as the identity.
+#' @return The row, with the calibration withheld and the reason appended when
+#'   it is an identity.
+#' @keywords internal
+mm_withhold_identity_calibration <- function(row, tol = 1e-6) {
+  if (is.na(row$cal_intercept) || is.na(row$cal_slope)) return(row)
+  if (abs(row$cal_intercept) > tol || abs(row$cal_slope - 1) > tol) {
+    return(row)
+  }
+  row$cal_intercept <- NA_real_
+  row$cal_slope <- NA_real_
+  row$note <- paste0(
+    row$note, ". Calibration is withheld here rather than reported as 0 and ",
+    "1: scoring the fit on its own rows forces both, so they describe the ",
+    "estimator and not the model. The bootstrap and held-out rows carry the ",
+    "calibration that can be estimated")
+  row
 }
 
 #' Discrimination, calibration and accuracy for one set of predictions

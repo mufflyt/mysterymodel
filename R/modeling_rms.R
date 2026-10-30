@@ -121,8 +121,8 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # ranges and levels from rows the model never saw, so a value no fitted row
   # carried came back labelled as interpolation and the drawn nomogram
   # reached axis values the model was never estimated on.
-  model_vars <- c(project$outcome, project$predictors)
-  eligible <- mm_evaluable(project, supplied)
+  model_vars <- c(project$outcome, project$predictors, project$cluster_id)
+  eligible <- mm_evaluable(project, supplied, require_cluster = TRUE)
   dev <- supplied[eligible$usable, , drop = FALSE]
   y <- y_supplied[eligible$usable]
   n_incomplete <- eligible$n_excluded
@@ -137,7 +137,16 @@ mm_model <- function(project, cohort, nonlinear = NULL,
             " rows that were fitted, not the ", nrow(supplied), " supplied. ",
             "Make the exclusion a rule in mm_clean() so it reaches the flow ",
             "diagram, or impute, rather than leaving the analysis sample to ",
-            "be settled by na.action.", call. = FALSE)
+            "be settled by na.action.",
+            if (!is.null(project$cluster_id) &&
+                project$cluster_id %in% names(by_variable))
+              paste0(" The ", project$cluster_id, " column is required ",
+                     "because this project declares a cluster: a row that ",
+                     "cannot be assigned to a patient cannot take part in ",
+                     "clustered resampling, and a bootstrap over a subset of ",
+                     "the fitted rows corrects the optimism of a different ",
+                     "model from the one reported."),
+            call. = FALSE)
   }
 
   # A factor level carried only by dropped rows has no rows left to estimate
@@ -352,16 +361,25 @@ mm_schema <- function(project, dev) {
 #' @param require_outcome Whether the outcome must be observed. `TRUE` for
 #'   fitting and for scoring that will be turned into a metric; `FALSE` when
 #'   only a prediction is wanted.
+#' @param require_cluster Whether a declared `cluster_id` must be observed.
+#'   `TRUE` for a development frame, because a row that cannot be assigned to a
+#'   patient cannot take part in clustered resampling, and a bootstrap run on a
+#'   subset of the rows the model was fitted to corrects the optimism of a
+#'   different model from the one reported. `FALSE` for held-out rows, which are
+#'   scored once and never resampled, so an identifier they lack costs nothing.
 #'
 #' @return A list: `usable` and `predictable` masks, the counts
 #'   `n_total`, `n_scored`, `n_excluded`, `missing_predictor`,
 #'   `missing_outcome`, `missing_both`, and `by_variable`.
 #' @keywords internal
-mm_evaluable <- function(project, frame, require_outcome = TRUE) {
+mm_evaluable <- function(project, frame, require_outcome = TRUE,
+                         require_cluster = FALSE) {
   if (!is.data.frame(frame)) {
     stop("`frame` must be a data frame.", call. = FALSE)
   }
-  wanted <- c(project$predictors, if (require_outcome) project$outcome)
+  needs_cluster <- isTRUE(require_cluster) && !is.null(project$cluster_id)
+  wanted <- c(project$predictors, if (require_outcome) project$outcome,
+              if (needs_cluster) project$cluster_id)
   absent <- setdiff(wanted, names(frame))
   if (length(absent)) {
     stop("not columns of the frame: ", paste(absent, collapse = ", "),
@@ -373,7 +391,8 @@ mm_evaluable <- function(project, frame, require_outcome = TRUE) {
     if (!length(cols)) return(rep(FALSE, n))
     Reduce(`|`, lapply(cols, function(v) is.na(frame[[v]])))
   }
-  no_predictor <- blank(project$predictors)
+  no_predictor <- blank(c(project$predictors,
+                          if (needs_cluster) project$cluster_id))
   no_outcome <- if (require_outcome) blank(project$outcome) else
     rep(FALSE, n)
 

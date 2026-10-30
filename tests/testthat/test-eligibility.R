@@ -202,9 +202,12 @@ test_that("complete data is unaffected in every reported number", {
   expect_equal(v$eligibility$development$n_excluded, 0L)
   expect_equal(v$eligibility$held_out$n_excluded, 0L)
   expect_equal(v$metrics$n[v$metrics$basis == "apparent"], model$n_dev)
-  # No eligibility sentence is added when there is nothing to report.
-  expect_equal(v$metrics$note[v$metrics$basis == "apparent"],
-               "scored on the development rows")
+  # No eligibility sentence is added when there is nothing to report. The
+  # calibration sentence is not an eligibility one and belongs there always.
+  expect_match(v$metrics$note[v$metrics$basis == "apparent"],
+               "^scored on the development rows")
+  expect_no_match(v$metrics$note[v$metrics$basis == "apparent"],
+                  "Complete case")
   expect_no_match(v$metrics$note[v$metrics$basis == "held out"],
                   "Complete case")
 })

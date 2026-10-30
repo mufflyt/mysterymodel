@@ -60,15 +60,39 @@ test_that("without a declared cluster it still draws rows, and says so", {
   expect_equal(boot$c_stat, 0.5 + direct["Dxy", "index.corrected"] / 2)
 })
 
-test_that("a fitted row with no cluster id is refused, not dropped", {
-  # predab.resample() splits on the cluster, and split() discards NA without
-  # a word, which would correct the optimism on fewer rows than are reported.
+test_that("a row with no cluster id leaves at fitting, with a reason", {
+  # It cannot take part in clustered resampling, and a bootstrap over a subset
+  # of the fitted rows corrects the optimism of a different model from the one
+  # reported. So the cluster column is required of a development frame and the
+  # exclusion is attributed, rather than surfacing later as a failure inside
+  # predab.resample(), whose split() would have discarded it without a word.
   cohort <- boot_cohort()
   cohort$pid[c(1, 2, 3)] <- NA
-  model <- suppressWarnings(
-    mm_model(boot_project(cohort, "pid"), cohort, nonlinear = "age"))
-  expect_error(mm_validate(model, cohort, B = 10),
-               "3 fitted row\\(s\\) have no pid")
+
+  said <- character(0)
+  model <- withCallingHandlers(
+    mm_model(boot_project(cohort, "pid"), cohort, nonlinear = "age"),
+    warning = function(cond) {
+      said <<- c(said, conditionMessage(cond))
+      invokeRestart("muffleWarning")
+    })
+
+  expect_equal(model$n_incomplete, 3L)
+  expect_equal(unname(model$incomplete_by[["pid"]]), 3L)
+  expect_equal(model$n_dev, nrow(cohort) - 3L)
+  expect_true(any(grepl("declares a cluster", said)))
+
+  # And validation then runs on that cohort, reporting the fitted sample.
+  v <- mm_validate(model, cohort, B = 10)
+  expect_equal(v$metrics$n[v$metrics$basis == "apparent"], model$n_dev)
+  expect_match(v$metrics$note[v$metrics$basis == "bootstrap, fixed model"],
+               "Resampled by whole pid")
+
+  # Held-out rows are scored once and never resampled, so an identifier they
+  # lack costs them nothing.
+  e <- mm_evaluable(boot_project(cohort, "pid"), cohort,
+                    require_cluster = FALSE)
+  expect_equal(e$n_scored, nrow(cohort))
 })
 
 test_that("the resamples rms actually fitted are reported, not the request", {
