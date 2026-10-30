@@ -74,7 +74,8 @@ mm_full_process <- function(model, cohort, B = 200L,
       # all re-derived from this resample rather than inherited.
       refit <- suppressWarnings(
         mm_model(project, draw, nonlinear = model$nonlinear,
-                 interactions = model$interactions, knots = model$knots))
+                 interactions = model$interactions, knots = model$knots,
+                 check_leakage = FALSE))
       y_draw <- mm_event_indicator(draw[[project$outcome]],
                                    project$positive_class)
       in_sample <- mm_metrics(mm_predict(refit, draw)$.pred, y_draw,
