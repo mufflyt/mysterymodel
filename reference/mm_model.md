@@ -68,6 +68,17 @@ refused unless both of its main effects are in the project's predictors.
 The specification requires that an interaction only be usable with its
 constituent main effects, and a formula is the last place to find out.
 
+Every count on the returned object describes the rows the model was
+estimated on, read back off the fit, not the rows it was handed. `rms`
+drops a row with a missing model variable before fitting, so the two
+differ whenever the development data is incomplete, and the difference
+is reported as `n_incomplete` and warned about rather than absorbed. It
+matters most for the sample-size gate, which would otherwise judge a
+sample larger than the one that exists and so be most lenient exactly
+where it should be strictest. Deciding the analysis sample belongs in
+[`mm_clean()`](https://mufflyt.github.io/mysterymodel/reference/mm_clean.md),
+where the exclusion reaches the flow diagram, not in `na.action`.
+
 ## Examples
 
 ``` r

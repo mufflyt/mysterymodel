@@ -68,11 +68,13 @@ development sample a model of this shape would need.</p>
 
 
 <dl><dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Development rows.</p></dd>
+<dd><p>Development rows the model was fitted on, which is not the same as
+the rows it was handed when any are incomplete. <code><a href="mm_model.html">mm_model()</a></code> reads this
+back off the fit for that reason.</p></dd>
 
 
 <dt id="arg-events">events<a class="anchor" aria-label="anchor" href="#arg-events"></a></dt>
-<dd><p>Outcome events among them.</p></dd>
+<dd><p>Outcome events among those rows.</p></dd>
 
 
 <dt id="arg-parameters">parameters<a class="anchor" aria-label="anchor" href="#arg-parameters"></a></dt>

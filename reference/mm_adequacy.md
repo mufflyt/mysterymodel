@@ -22,11 +22,14 @@ mm_adequacy(
 
 - n:
 
-  Development rows.
+  Development rows the model was fitted on, which is not the same as the
+  rows it was handed when any are incomplete.
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  reads this back off the fit for that reason.
 
 - events:
 
-  Outcome events among them.
+  Outcome events among those rows.
 
 - parameters:
 

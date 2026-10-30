@@ -250,6 +250,13 @@ rather than a side effect of whatever the fitting function drops:</p>
 <p>Imputation instead of exclusion is a v0.3 item. Until it exists, the
 exclusion is visible in the ledger, which is the honest version of the
 same decision.</p>
+<p>Skipping the rule does not get you a larger study. <code>rms</code>
+drops a row with a missing model variable before fitting, so the rows
+would leave anyway, just without appearing anywhere.
+<code><a href="../reference/mm_model.html">mm_model()</a></code> warns when that happens, names the variable that
+cost them, and counts from the fit rather than from the frame it was
+handed, because a sample-size gate given rows the model never saw is
+lenient in exactly the case that most needs it strict.</p>
 </div>
 <div class="section level2">
 <h2 id="the-plan-written-down-before-anything-is-fitted">The plan, written down before anything is fitted<a class="anchor" aria-label="anchor" href="#the-plan-written-down-before-anything-is-fitted"></a>

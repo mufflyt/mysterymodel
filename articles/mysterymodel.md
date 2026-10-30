@@ -223,6 +223,15 @@ Imputation instead of exclusion is a v0.3 item. Until it exists, the
 exclusion is visible in the ledger, which is the honest version of the
 same decision.
 
+Skipping the rule does not get you a larger study. `rms` drops a row
+with a missing model variable before fitting, so the rows would leave
+anyway, just without appearing anywhere.
+[`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+warns when that happens, names the variable that cost them, and counts
+from the fit rather than from the frame it was handed, because a
+sample-size gate given rows the model never saw is lenient in exactly
+the case that most needs it strict.
+
 ## The plan, written down before anything is fitted
 
 ``` r
