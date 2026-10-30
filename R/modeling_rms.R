@@ -23,6 +23,16 @@
 #' specification requires that an interaction only be usable with its
 #' constituent main effects, and a formula is the last place to find out.
 #'
+#' Every count on the returned object describes the rows the model was
+#' estimated on, read back off the fit, not the rows it was handed. `rms`
+#' drops a row with a missing model variable before fitting, so the two differ
+#' whenever the development data is incomplete, and the difference is reported
+#' as `n_incomplete` and warned about rather than absorbed. It matters most for
+#' the sample-size gate, which would otherwise judge a sample larger than the
+#' one that exists and so be most lenient exactly where it should be strictest.
+#' Deciding the analysis sample belongs in [mm_clean()], where the exclusion
+#' reaches the flow diagram, not in `na.action`.
+#'
 #' @param project A [mm_project()] configuration.
 #' @param cohort The development data. When the project declares a split, only
 #'   rows below `split_at` are used, and the held-out rows are returned
@@ -114,11 +124,37 @@ mm_model <- function(project, cohort, nonlinear = NULL,
 
   fit <- rms::lrm(form, data = dev, x = TRUE, y = TRUE)
 
+  # `rms` drops rows with a missing model variable before fitting, so the
+  # sample the model was estimated on is not necessarily the one it was
+  # handed. Everything reported from here reads the fit rather than `dev`:
+  # a sample-size gate given rows the model never saw is lenient in exactly
+  # the case that most needs it strict.
+  n_fitted <- length(fit$y)
+  events_fitted <- sum(as.integer(fit$y))
+  n_incomplete <- nrow(dev) - n_fitted
+  by_variable <- if (is.null(fit$na.action)) integer(0) else {
+    counts <- fit$na.action$nmiss
+    counts <- counts[setdiff(names(counts), ".mm_y")]
+    counts[counts > 0L]
+  }
+
+  if (n_incomplete > 0L) {
+    warning(n_incomplete, " of ", nrow(dev), " development row(s) were ",
+            "dropped before fitting, incomplete on ",
+            paste(sprintf("%s (%d)", names(by_variable), by_variable),
+                  collapse = ", "),
+            ". Every count reported here describes the ", n_fitted,
+            " rows that were fitted, not the ", nrow(dev), " supplied. ",
+            "Make the exclusion a rule in mm_clean() so it reaches the flow ",
+            "diagram, or impute, rather than leaving the analysis sample to ",
+            "be settled by na.action.", call. = FALSE)
+  }
+
   # Section 19: the parameter budget is reported, and an overly ambitious
   # one warns rather than passing quietly. Splines and interactions are
   # counted, because they are the terms that get spent without being noticed.
   adequacy <- mm_adequacy(
-    n = nrow(dev), events = sum(y),
+    n = n_fitted, events = events_fitted,
     parameters = length(stats::coef(fit)) - 1L,
     nagelkerke = unname(fit$stats["R2"]),
     likelihood_ratio = unname(fit$stats["Model L.R."]))
@@ -137,8 +173,11 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          nonlinear  = nonlinear,
          interactions = pairs,
          knots      = as.integer(knots),
-         n_dev      = nrow(dev),
-         events_dev = sum(y),
+         n_dev      = n_fitted,
+         events_dev = events_fitted,
+         n_supplied = nrow(dev),
+         n_incomplete = n_incomplete,
+         incomplete_by = by_variable,
          n_held     = nrow(parts$held),
          adequacy   = adequacy,
          schema     = mm_schema(project, dev),
@@ -155,6 +194,12 @@ print.mm_model <- function(x, ...) {
   cat("  formula    ", deparse(x$formula), "\n", sep = "")
   cat("  developed  ", x$n_dev, " rows, ", x$events_dev, " events\n",
       sep = "")
+  if (x$n_incomplete > 0L) {
+    cat("  dropped    ", x$n_incomplete, " of ", x$n_supplied,
+        " supplied row(s), incomplete on ",
+        paste(names(x$incomplete_by), collapse = ", "),
+        "\n", sep = "")
+  }
   if (x$n_held > 0L) {
     cat("  held out   ", x$n_held, " rows\n", sep = "")
   }
