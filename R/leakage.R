@@ -110,7 +110,8 @@ mm_leakage <- function(project, frame, y = NULL, min_overlap = 10L) {
            kind = duplicated_as$kind, n_compared = n_compared,
            n_missing = n_missing,
            detail = sprintf(
-             "reads as binary with %s, and %s the outcome on every one of the %d compared row(s)",
+             paste("reads as binary with %s, and %s the outcome on every",
+                   "one of the %d compared row(s)"),
              duplicated_as$label,
              if (identical(duplicated_as$kind, "copy")) "reproduces" else
                "is the exact complement of",

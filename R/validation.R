@@ -234,7 +234,8 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                    if (is.null(project$cluster_id)) "row" else
                      paste0("whole ", project$cluster_id),
                    if (enough) "" else
-                     ". INADEQUATE: fewer than four fifths of the resamples fitted"),
+                     paste(". INADEQUATE: fewer than four fifths of the",
+                           "resamples fitted")),
     stringsAsFactors = FALSE)
 
   # Bootstrap, whole strategy.

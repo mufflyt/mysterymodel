@@ -31,7 +31,8 @@ test_that("saboteur: points added to one nomogram axis are detected", {
   axis <- mysterymodel:::mm_axis_names(tampered)[1]
   tampered[[axis]]$points <- tampered[[axis]]$points + 7
 
-  profile <- mysterymodel:::mm_tick_profiles(nom$nomogram, model)[1, , drop = FALSE]
+  profile <- mysterymodel:::mm_tick_profiles(
+    nom$nomogram, model)[1, , drop = FALSE]
   gap <- abs(mysterymodel:::mm_nomogram_risk(tampered, profile) -
                mm_predict(model, profile)$.pred)
 
@@ -59,7 +60,8 @@ test_that("saboteur: a coefficient changed after drawing is detected", {
 
   drifted <- model
   drifted$fit$coefficients[2] <- drifted$fit$coefficients[2] * 1.5
-  profile <- mysterymodel:::mm_tick_profiles(nom$nomogram, model)[2, , drop = FALSE]
+  profile <- mysterymodel:::mm_tick_profiles(
+    nom$nomogram, model)[2, , drop = FALSE]
   gap <- abs(mysterymodel:::mm_nomogram_risk(nom$nomogram, profile) -
                mm_predict(drifted, profile)$.pred)
   expect_gt(gap, nom$tolerance)

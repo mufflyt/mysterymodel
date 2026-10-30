@@ -113,7 +113,7 @@ test_that("a numeric predictor separated by a threshold warns, and fits", {
   expect_s3_class(model, "mm_model")
 })
 
-test_that("a rare outcome with an accidental perfect predictor is not blocked", {
+test_that("a rare outcome with an accidental perfect predictor passes", {
   # Four events and a marker that happens to separate them. This is exactly
   # the case a hard stop on perfect separation would destroy.
   set.seed(3)

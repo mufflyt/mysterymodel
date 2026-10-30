@@ -213,6 +213,84 @@ model$schema$predictors$age
 model$fingerprint
 ```
 
+## Preventing outcome leakage in clinical prediction models
+
+A predictor that carries the outcome is not predicting it. The model that
+results reports near-perfect discrimination, which reads as success, so this
+is the one mistake in the whole pipeline that makes its own output look better
+rather than worse.
+
+`mm_project()` checks that the outcome is not among the predictors. That is a
+comparison of names, and a copy under another name passes it:
+
+```{r leak-setup}
+leaky <- cohort$data
+leaky$triage_flag <- leaky$event        # the outcome, renamed
+```
+
+```{r leak-refused, error = TRUE}
+mm_model(
+  mm_project("uds", "event", c("age", "bmi", "triage_flag"),
+             positive_class = 1, cohort = leaky, seed = 1978),
+  leaky)
+```
+
+The detection is on values, not names. A column is read as 0/1 only where that
+is unambiguous: numeric holding just 0 and 1, a logical, or any column with
+exactly two observed values. For a two-valued column both assignments are
+tried, because the labels carry no information:
+
+```{r leak-forms}
+mysterymodel:::mm_binary_forms(factor(c("yes", "no", "yes")))
+mysterymodel:::mm_binary_forms(c("mild", "moderate", "severe"))
+```
+
+### Five things that are not the same
+
+**A direct copy of the outcome** is settled by arithmetic. There is no cohort
+in which a column reproducing the outcome on every row is a prediction, so it
+is refused.
+
+**Perfect separation** is not. Every observed level of a categorical predictor
+sitting in one outcome class, or a numeric threshold that divides the classes
+completely, can be leakage and can equally be a cohort with four events. It is
+reported for you to settle, and the model still fits:
+
+```{r leak-separation}
+rare <- data.frame(event = c(rep(0L, 96), rep(1L, 4)),
+                   age = cohort$data$age[1:100])
+rare$marker <- c(runif(96, 0, 1), runif(4, 5, 6))
+
+flagged <- withCallingHandlers(
+  mm_model(mm_project("uds", "event", c("age", "marker"),
+                      positive_class = 1, cohort = rare, seed = 1978),
+           rare),
+  warning = function(w) {
+    cat(strwrap(conditionMessage(w), 72), sep = "\n"); invokeRestart("muffleWarning")
+  })
+```
+
+**A strong predictor** is reported as nothing at all. A high correlation with
+the outcome is what a predictor is for, and a package that complained about it
+would be useless.
+
+**A predictor measured after the outcome** is leakage that no comparison of
+columns can see. A post-operative laboratory value, a discharge code, a
+treatment chosen because the outcome had already happened: each can be weakly
+associated with the outcome and still be unusable. Whether a variable is
+available at the moment the prediction would be made is yours to establish,
+and the package cannot help.
+
+**Contamination between development and validation** is a different failure
+again: a transformation fitted on the whole cohort, a scaling constant or an
+imputation model learned before the split. This package re-derives knots,
+`datadist` and factor levels inside every full-process resample for that
+reason, and names what it does not re-derive.
+
+The first two are statistical questions the package answers. The last three
+are study-design questions it cannot, and saying so is more useful than a
+check that implies otherwise.
+
 ## Predict
 
 ```{r predict}

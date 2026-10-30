@@ -152,6 +152,64 @@ is the answer and remains unbuilt, as does the section 16 question of how to
 package portable imputers for new individual predictions, which this decision
 leaves open.
 
+## DEC-004: invalid statistical input is refused, never corrected
+
+**Settles:** the three defects found by the saboteur probing after PR #12.
+**Date:** 2026-10-30.
+
+Where an input cannot be what it claims to be, the package errors. It does not
+clamp, truncate, or coerce it into something nearby.
+
+| input | was | is |
+|---|---|---|
+| a predictor reproducing the outcome | fitted, apparent C of 1.0000 | refused |
+| `B = 2.7` | two resamples | refused |
+| a predicted probability of 1.5 | clamped, Brier of 0.18 | refused |
+
+### Why refusing beats correcting
+
+Each of the three had a silent correction available, and each correction
+produced a number a reader would believe. That is the whole problem. A clamped
+probability yields a plausible Brier score, a truncated `B` yields a plausible
+bootstrap, and a duplicated outcome yields the best discrimination anyone has
+ever reported. None of them looks wrong on the page, so the correction does
+not protect the analysis; it protects the run from stopping, at the analysis's
+expense.
+
+A refusal costs an analyst a minute and tells them where to look. A correction
+costs them a result they cannot reproduce and a reviewer's confidence.
+
+### Why duplication blocks and separation does not
+
+They are different findings. A column reproducing the outcome on every
+eligible row is settled by arithmetic: no cohort makes that a prediction.
+Perfect separation is not settled by anything the package can see. With four
+events, a marker that happens to divide them is as likely to be a small sample
+as a mistake, and refusing it would make the package useless for exactly the
+rare-outcome studies it is for.
+
+So duplication errors, separation warns, and a strong but non-deterministic
+association is not mentioned at all, because a correlation is what a predictor
+is for.
+
+### Where the scan runs, and why not earlier
+
+In [mm_model()], not [mm_project()]. The development frame does not exist
+until after the split, after the complete-case eligibility of DEC-003, and
+after a factor level carried only by excluded rows has been dropped. Scanning
+the supplied cohort would answer a question about rows the model will never
+see. [mm_full_process()] does not rescan a resample, because the declared
+cohort has already been scanned and a resample is a subset of it.
+
+### What this does not decide, and cannot
+
+Whether a predictor was available when the prediction would be made. No
+comparison of columns establishes the timing or the causal standing of a
+variable, so a value recorded after the outcome, a treatment chosen because of
+it, or a feature engineered from it can be weakly associated and still be
+unusable. That remains the analyst's, and the documentation says so rather
+than implying the check covers it.
+
 ## Still open from section 16
 
 - Final package name availability. The prefix half of this bullet is
