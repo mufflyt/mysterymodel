@@ -27,7 +27,10 @@ test_that("the bootstrap does not claim to validate a strategy", {
   expect_false(v$full_process)
   boot <- v$metrics[v$metrics$basis == "bootstrap, fixed model", ]
   expect_match(boot$note, "does not re-derive")
-  expect_match(boot$note, "resamples rows even when a cluster is declared")
+  # And it says how many resamples rms actually fitted, and on what unit,
+  # rather than restating the number that was requested.
+  expect_match(boot$note, "20 of 20 resample\\(s\\) fitted")
+  expect_match(boot$note, "Resampled by row")
 })
 
 test_that("apparent performance is at least as good as corrected", {

@@ -36,7 +36,10 @@ the \emph{same formula}, which corrects the optimism of estimating
 coefficients. It does \strong{not} repeat imputation, selection, tuning or
 interaction screening, so it is not validation of a modelling strategy
 that includes those steps. The specification requires that distinction be
-made rather than assumed, and this column is where it is made.
+made rather than assumed, and this column is where it is made. It does
+draw whole clusters when the project declares one, by passing \code{cluster}
+through to \code{\link[rms:predab.resample]{rms::predab.resample()}}, and it reports how many resamples
+actually fitted, because rms keeps only those and says so only when asked.
 \item \strong{held out}, rows the project's split reserved. Scored once.
 \item \strong{bootstrap, full process}, with \code{full_process = TRUE}. Refits the
 whole strategy inside every resample, so the optimism corrected includes

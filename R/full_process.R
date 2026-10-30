@@ -41,12 +41,7 @@ mm_full_process <- function(model, cohort, B = 200L,
   supplied <- mm_split(project, cohort)$dev
   eligible <- mm_evaluable(project, supplied)
   dev <- supplied[eligible$usable, , drop = FALSE]
-  if (eligible$n_scored != model$n_dev) {
-    stop("the development rows of `cohort` give ", eligible$n_scored,
-         " evaluable row(s), and the model was fitted on ", model$n_dev,
-         ". The optimism of a fit cannot be estimated from a different ",
-         "sample.", call. = FALSE)
-  }
+  mm_same_development(model, dev, "the optimism of this fit")
   y_dev <- mm_event_indicator(dev[[project$outcome]],
                               project$positive_class)
 

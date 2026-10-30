@@ -13,7 +13,10 @@
 #'   coefficients. It does **not** repeat imputation, selection, tuning or
 #'   interaction screening, so it is not validation of a modelling strategy
 #'   that includes those steps. The specification requires that distinction be
-#'   made rather than assumed, and this column is where it is made.
+#'   made rather than assumed, and this column is where it is made. It does
+#'   draw whole clusters when the project declares one, by passing `cluster`
+#'   through to [rms::predab.resample()], and it reports how many resamples
+#'   actually fitted, because rms keeps only those and says so only when asked.
 #' * **held out**, rows the project's split reserved. Scored once.
 #'
 #' * **bootstrap, full process**, with `full_process = TRUE`. Refits the
@@ -86,16 +89,10 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   # missing predictor, because a prediction from incomplete input is the thing
   # that default exists to refuse.
   dev_eligible <- mm_evaluable(project, parts$dev)
-  if (dev_eligible$n_scored != model$n_dev) {
-    stop("the development rows of `cohort` give ", dev_eligible$n_scored,
-         " evaluable row(s), and the model was fitted on ", model$n_dev,
-         ". This is not the cohort the model was developed on, so every ",
-         "basis below would describe a different sample from the fit.",
-         call. = FALSE)
-  }
+  dev_scored <- parts$dev[dev_eligible$usable, , drop = FALSE]
+  mm_same_development(model, dev_scored, "every basis below")
 
   # Apparent.
-  dev_scored <- parts$dev[dev_eligible$usable, , drop = FALSE]
   y_dev <- mm_event_indicator(dev_scored[[project$outcome]],
                               project$positive_class)
   p_dev <- mm_predict(model, dev_scored)$.pred
@@ -105,10 +102,45 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
                   if (dev_eligible$n_excluded > 0L)
                     paste0(". ", mm_eligibility_note(dev_eligible))))
 
-  # Bootstrap, fixed model.
+  # Bootstrap, fixed model. `rms::validate()` passes `...` through to
+  # `predab.resample()`, which takes a cluster and draws whole units when it
+  # is given one, so resampling rows under a clustered design was this
+  # package's omission rather than a limit of rms. The vector is the
+  # development rows in the order they were fitted, which the identity check
+  # above has just established.
+  validate_args <- list(model$fit, B = B)
+  if (!is.null(project$cluster_id)) {
+    ids <- as.character(dev_scored[[project$cluster_id]])
+    if (anyNA(ids)) {
+      stop(sum(is.na(ids)), " fitted row(s) have no ", project$cluster_id,
+           ". `predab.resample()` splits on the cluster and would drop them ",
+           "without saying so, leaving the correction computed on fewer rows ",
+           "than are reported.", call. = FALSE)
+    }
+    validate_args$cluster <- ids
+  }
   set.seed(project$seed)
-  val <- rms::validate(model$fit, B = B)
+  val <- do.call(rms::validate, validate_args)
   c_corrected <- 0.5 + val["Dxy", "index.corrected"] / 2
+
+  # `predab.resample()` keeps only the resamples that fitted, `btrain[1:j, ]`,
+  # and its own report of the shortfall is behind `pr`, which defaults off.
+  # So a corrected index can be an average over a self-selected subset with
+  # nothing on the object to say so. rms does return the count, as the `n`
+  # column, and the full-process row next door has disclosed its own count
+  # since it was written.
+  fitted_resamples <- if ("n" %in% colnames(val)) {
+    unname(val["Dxy", "n"])
+  } else NA_integer_
+  enough <- is.na(fitted_resamples) || fitted_resamples >= ceiling(0.8 * B)
+  if (!enough) {
+    warning("rms fitted only ", fitted_resamples, " of ", B,
+            " bootstrap resamples, so the fixed-model correction is averaged ",
+            "over the ones that converged. An optimism estimated from a ",
+            "self-selected subset is not the quantity it claims to be.",
+            call. = FALSE)
+  }
+
   rows[[length(rows) + 1L]] <- data.frame(
     basis = "bootstrap, fixed model",
     n = model$n_dev, events = model$events_dev,
@@ -116,10 +148,15 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
     cal_intercept = NA_real_,
     cal_slope = unname(val["Slope", "index.corrected"]),
     brier = NA_real_, brier_scaled = NA_real_,
-    note = sprintf(paste("rms::validate, B = %d. Refits the same formula;",
-                         "does not re-derive knots or levels, and resamples",
-                         "rows even when a cluster is declared"),
-                   B),
+    note = sprintf(paste("rms::validate, %s of %d resample(s) fitted.",
+                         "Refits the same formula; does not re-derive knots",
+                         "or levels. Resampled by %s%s"),
+                   if (is.na(fitted_resamples)) "an unreported number" else
+                     format(fitted_resamples), B,
+                   if (is.null(project$cluster_id)) "row" else
+                     paste0("whole ", project$cluster_id),
+                   if (enough) "" else
+                     ". INADEQUATE: fewer than four fifths of the resamples fitted"),
     stringsAsFactors = FALSE)
 
   # Bootstrap, whole strategy.
@@ -167,6 +204,9 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   }
 
   structure(list(metrics = do.call(rbind, rows), B = B,
+                 fixed_model = list(B = B, fitted = fitted_resamples,
+                                    adequate = enough,
+                                    clustered_by = project$cluster_id),
                  full_process = isTRUE(full_process),
                  clustered_by = model$project$cluster_id,
                  full_process_detail = fp,
@@ -254,6 +294,10 @@ print.mm_validation <- function(x, ...) {
         e$n_total, " scored, ", e$missing_predictor, " missing a predictor, ",
         e$missing_outcome, " missing the outcome, ", e$missing_both,
         " both\n", sep = "")
+  }
+  if (!isTRUE(x$fixed_model$adequate)) {
+    cat("  INADEQUATE: rms fitted ", x$fixed_model$fitted, " of ",
+        x$fixed_model$B, " fixed-model resamples.\n", sep = "")
   }
   if (isTRUE(x$full_process)) {
     cat("  Full process re-derives ",

@@ -245,7 +245,13 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          schema     = mm_schema(project, dev),
          fingerprint = digest::digest(
            list(coef = unname(stats::coef(fit)),
-                formula = deparse(form)), algo = "sha256")),
+                formula = deparse(form)), algo = "sha256"),
+         # Which rows were fitted, as a hash rather than a copy. A row count
+         # cannot tell a cohort from a different cohort of the same size, and
+         # an "apparent" number computed on rows the model never saw is not
+         # apparent. The columns are the ones the analysis reads, so a change
+         # to any of them is a different development sample.
+         development = mm_sample_digest(project, dev)),
     class = "mm_model"
   )
 }
@@ -412,6 +418,65 @@ mm_eligibility_note <- function(e) {
           paste(parts, collapse = ", "),
           paste(sprintf("%s %d", names(e$by_variable), e$by_variable),
                 collapse = ", "))
+}
+
+#' A fingerprint of the rows an analysis was run on
+#'
+#' Factors are hashed as their values and not as their level sets, because
+#' [mm_model()] drops a level no fitted row carries and a caller re-deriving
+#' the same frame has not. Numeric columns are hashed as they are, so nothing
+#' is rounded on the way in.
+#'
+#' @param project A [mm_project()].
+#' @param frame The rows.
+#' @return A SHA-256 string. Not a copy of the data, and not invertible.
+#' @keywords internal
+mm_sample_digest <- function(project, frame) {
+  vars <- c(project$outcome, project$predictors, project$cluster_id)
+  vars <- intersect(vars, names(frame))
+  digest::digest(
+    lapply(frame[, vars, drop = FALSE], function(v)
+      if (is.factor(v) || is.character(v)) as.character(v) else v),
+    algo = "sha256")
+}
+
+#' Refuse a cohort that is not the one the model was developed on
+#'
+#' A row count cannot distinguish a cohort from a different cohort of the same
+#' size, and every basis [mm_validate()] reports describes the development
+#' sample. Scoring a different one and calling the result apparent is not a
+#' smaller error than scoring none.
+#'
+#' The comparison is order sensitive, because the pairing of predictors to
+#' outcome is what a c-statistic measures: the same rows in a different order
+#' are the same sample, but nothing cheap tells that apart from the same
+#' predictor rows carrying permuted outcomes, which is a different sample
+#' entirely. So a reordered cohort is refused too, and the message says so.
+#'
+#' @param model A [mm_model()].
+#' @param dev The development rows a caller has re-derived.
+#' @param what What the caller is about to do, for the message.
+#' @return `TRUE`, invisibly, or an error.
+#' @keywords internal
+mm_same_development <- function(model, dev, what) {
+  project <- model$project
+  if (nrow(dev) != model$n_dev) {
+    stop("the development rows of `cohort` give ", nrow(dev),
+         " evaluable row(s), and the model was fitted on ", model$n_dev,
+         ". This is not the cohort the model was developed on, so ", what,
+         " would describe a different sample from the fit.", call. = FALSE)
+  }
+  seen <- mm_sample_digest(project, dev)
+  if (!identical(seen, model$development)) {
+    stop("`cohort` has the same number of evaluable development rows as the ",
+         "model was fitted on, and they are not the same rows: the ",
+         "development fingerprint is ", substr(seen, 1, 12), " and the model ",
+         "was fitted on ", substr(model$development, 1, 12), ". ", what,
+         " would be computed on data the model never saw. If only the row ",
+         "order changed, pass the cohort in the order it was fitted in.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 #' Split a cohort the way the project declares

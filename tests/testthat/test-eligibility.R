@@ -29,6 +29,12 @@ test_that("a missing predictor and a missing outcome are counted apart", {
     is.na(held$prior_uti)
   no_out <- is.na(held$event)
 
+  # The masks themselves, elementwise. Counts alone would pass a mask that is
+  # right in its totals and wrong about which rows it names, and every other
+  # assertion in this file is downstream of the mask being right.
+  expect_identical(e$usable, !no_pred & !no_out)
+  expect_identical(e$predictable, !no_pred)
+
   expect_equal(e$n_total, nrow(held))
   expect_equal(e$n_scored, sum(!no_pred & !no_out))
   expect_equal(e$missing_predictor, sum(no_pred & !no_out))
@@ -51,14 +57,19 @@ test_that("a missing outcome is excluded, never counted as a non-event", {
   v <- suppressWarnings(mm_validate(model, cohort, B = 10))
 
   held <- cohort[cohort$year >= 2023, , drop = FALSE]
-  e <- mm_evaluable(project, held)
   row <- v$metrics[v$metrics$basis == "held out", ]
 
-  expect_equal(row$n, e$n_scored)
+  # The mask is computed here rather than taken from mm_evaluable(), so this
+  # does not pass by agreeing with the function it is checking.
+  scorable <- !is.na(held$event) & !is.na(held$age) & !is.na(held$bmi) &
+    !is.na(held$sex) & !is.na(held$prior_uti)
+
+  expect_equal(row$n, sum(scorable))
   expect_lt(row$n, nrow(held))
   # The events are those among the scored rows. Treating the missing outcomes
   # as non-events would leave the event count the same but inflate n.
-  expect_equal(row$events, sum(held$event[e$usable] == 1L))
+  expect_equal(row$events, sum(held$event[scorable] == 1L))
+  expect_gt(sum(is.na(held$event)), 0)
 })
 
 test_that("validation scores the sample the model was fitted on", {
