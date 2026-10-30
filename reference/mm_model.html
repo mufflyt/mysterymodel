@@ -89,7 +89,16 @@ prespecified interactions. Exploratory discovery is not this argument.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>x</code> and <code>y</code> are kept on the fit, because validation and calibration need
 them and a fit without them fails later for reasons that do not name this
-decision.</p>
+decision. That is the only patient-level retention: the design matrix the
+model was fitted on and the outcome it was fitted to.</p>
+<p>Nothing else of the cohort survives, and the mechanism is worth naming
+because the default behaviour is the opposite. A formula keeps the
+environment it was built in, <code><a href="https://rdrr.io/pkg/rms/man/lrm.html" class="external-link">rms::lrm()</a></code> stores that environment on
+<code>fit$terms</code> and <code>fit$sformula</code>, and a formula built in this function's own
+frame would hold the cohort, the development rows and the split. The
+identifier column in particular is in none of them, so a saved model cannot
+carry patient identifiers into a place the data was never meant to go. The
+formula is built in <code><a href="https://rdrr.io/r/base/environment.html" class="external-link">baseenv()</a></code> to keep that true.</p>
 <p>Strong hierarchy is enforced rather than assumed: an interaction is refused
 unless both of its main effects are in the project's predictors. The
 specification requires that an interaction only be usable with its
