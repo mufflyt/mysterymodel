@@ -221,3 +221,70 @@ than implying the check covers it.
   recommends synthetic examples by default.
 - Accepted calibrated-risk interval method, and bootstrap CI calculation.
 - Which scalable model-fitting backends to support. No unapproved default.
+
+## DEC-005: what the simplification audit removed, and what it did not
+
+**Settles:** the disposition of the thirteen findings from the repo-wide audit
+for over-engineering.
+**Date:** 2026-10-30.
+
+Nine findings were implemented and four were retained. The rule applied was
+that a line earns its place by doing a necessary scientific, operational,
+reproducibility or compatibility job, and that a smaller package which moves a
+reported number has not been simplified but altered. Every accepted change was
+held to a fingerprint covering coefficients, predictions, each validation
+basis, nomogram ticks and readings, adequacy, ledgers, random-number state and
+all eight printed surfaces, and every one of them is identical at tolerance
+zero.
+
+### The four retained, with the evidence
+
+**`pROC` is kept.** The proposal was `Hmisc::rcorr.cens()`, already installed
+because `rms` depends on it. On eight fixtures, typical, heavily tied,
+perfectly separated, near 0.5, n = 4, and 1% events among 2000, the two agree
+on the c-statistic to within 1e-14. They do not agree on its uncertainty:
+`Hmisc` reports a normal approximation from the Somers' Dxy standard error and
+`pROC` reports DeLong, and the interval widths differ by about a percent
+typically and by a fifth at two events. The decisive case is one event, where
+DeLong is undefined. `pROC` returns `NA` and [mm_metrics()] says the interval
+needs at least two of each outcome, which is the disclosure PR #11 was written
+to produce; `rcorr.cens()` returns 0.699 to 0.901. Manufacturing an interval
+exactly where the package currently reports that none is estimable is a loss
+of rigour that a removed dependency does not pay for. Changing the inferential
+method remains available as its own proposal, with its own decision record.
+
+**The capability spike is kept.** `data-raw/capability_spike.R` was re-run on
+2026-10-30 under R 4.5.2 and rms 8.1.1, the versions in the matrix header, and
+reproduced all 21 rows of `inst/capability-matrix.md` byte for byte apart from
+the generation date. It is therefore the matrix's working provenance rather
+than a spent script, and section 14 of the specification still rests on it.
+
+**`mm_nomogram(fun_at = )` is kept.** It is a documented argument of an
+exported function. No internal caller exercising it says nothing about who
+depends on it, and the package has a version number that has not yet promised
+anything.
+
+**`mm_adequacy(shrinkage = )` is kept.** The target shrinkage is a
+methodological assumption, not a constant: a study planning to a stricter
+target needs a larger sample, and hardcoding 0.9 would decide that for the
+analyst. The `target_shrinkage` field is kept with it, unread by the package,
+because the requirement is meaningless beside the target it was computed
+under and `reason` names that target only when the sample falls short.
+
+**`mm_resample()` stays in its own file.** The move saves no lines, the
+function is one idea with its own test file, and both the validation and the
+worked-example articles exercise it on its own.
+
+### What the nine changed
+
+Three duplications became one definition each: profile construction for the
+nomogram's two readings, which are compared with each other and so must be
+built alike; the four-fifths resampling floor, a methodological judgement that
+was written twice; and `rate * (1 - rate)`, written five times, now a helper
+that still takes the rate as an argument because which rate goes in is the
+whole question. Four arguments and fields nothing set or read were removed:
+`require_outcome`, the `predictable` mask, `what`, and pmsampsize's required
+EPP. The internal `%||%` went, base R having shipped it since 4.4.0. The
+single-use closure guarding the random-number state was inlined, and the guard
+is now tested against an existing state, an absent one, and an error raised
+after seeding.
