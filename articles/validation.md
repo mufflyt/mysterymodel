@@ -64,6 +64,23 @@ Somers’ Dxy and the calibration slope, not a Brier score. Carrying the
 apparent Brier across into that row would make it look corrected when
 nothing corrected it.
 
+The scaled Brier gets the same treatment one step further on. It is a
+score against a reference, and left alone each basis would use its own
+prevalence, so a column of them would be scores against different
+references. Every basis here is scaled against the development cohort’s
+reference, reported as `brier_ref`, and a basis with a prevalence of its
+own keeps that value in its `note`:
+
+``` r
+
+validation$metrics[, c("basis", "brier", "brier_ref", "brier_scaled")]
+#>                     basis      brier  brier_ref brier_scaled
+#> 1                apparent 0.09391697 0.09897927  0.051144980
+#> 2  bootstrap, fixed model         NA         NA           NA
+#> 3 bootstrap, full process 0.09828239 0.09897927  0.007040662
+#> 4                held out 0.08482979 0.09897927  0.142953979
+```
+
 The `cal_slope` cell on the **apparent** row is empty because that
 number is an identity rather than an estimate. Scoring an unpenalized
 maximum-likelihood fit on the very rows that produced it forces the
@@ -79,7 +96,7 @@ lp <- as.numeric(model$fit$linear.predictors)
 c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
   slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
 #>    intercept        slope 
-#> 8.172466e-17 1.000000e+00
+#> 4.971539e-16 1.000000e+00
 ```
 
 The package detects the identity rather than assuming it, so a fitting
@@ -289,17 +306,36 @@ table instead of a second implementation of it:
 y <- mysterymodel:::mm_event_indicator(parts$held$event, 1)
 p <- mm_predict(model, parts$held)$.pred
 
-mysterymodel:::mm_metrics(p, y, basis = "held out, scored by hand")[
-  , c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
-      "cal_intercept", "cal_slope", "brier_scaled")]
-#>                      basis   n events    c_stat   c_lower   c_upper
-#> 1 held out, scored by hand 196     22 0.7857889 0.6770106 0.8945672
-#>   cal_intercept cal_slope brier_scaled
-#> 1   -0.05204503  1.736982    0.1486883
+by_hand <- mysterymodel:::mm_metrics(p, y, basis = "held out, by hand")
+by_hand[, c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
+            "cal_intercept", "cal_slope")]
+#>               basis   n events    c_stat   c_lower   c_upper cal_intercept
+#> 1 held out, by hand 196     22 0.7857889 0.6770106 0.8945672   -0.05204503
+#>   cal_slope
+#> 1  1.736982
 ```
 
 Those are the same numbers as the held-out row of the main table,
-because it is the same function.
+because it is the same function. One column is deliberately not the
+same, and it is worth seeing why:
+
+``` r
+
+held_row <- validation$metrics[validation$metrics$basis == "held out", ]
+c(main_table   = held_row$brier_scaled,
+  main_ref     = held_row$brier_ref,
+  by_hand      = by_hand$brier_scaled,
+  by_hand_ref  = by_hand$brier_ref)
+#>  main_table    main_ref     by_hand by_hand_ref 
+#>  0.14295398  0.09897927  0.14868833  0.09964598
+```
+
+A scaled Brier is a score against a reference, and a bare call uses the
+reference of the rows it was given. The main table passes the
+development cohort’s reference to every basis instead, so that reading
+down the column compares like with like. A subgroup table wants the bare
+behaviour, since each subgroup’s own skill score is the question being
+asked there.
 
 ## By subgroup
 
@@ -412,7 +448,10 @@ cat(strwrap(row$note, 72), sep = "\n")
 #> year >= 2023, scored once. 175 of 196 row(s) scored, 21 excluded (13
 #> for a missing predictor, 6 for a missing outcome, 2 for both; bmi 15,
 #> event 8). Complete case, so these estimates assume the exclusions are
-#> uninformative, which is an assumption and not a finding
+#> uninformative, which is an assumption and not a finding. the scaled
+#> Brier is taken against the reference 0.09832, not this sample's own
+#> 0.09678, so the column compares like with like; against its own it
+#> would read 0.1370
 ```
 
 That last sentence is the point. Complete-case analysis is a
@@ -433,7 +472,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "92df44fff5c5dae3"
+#> [1] "0c5c1900a0dbb975"
 ```
 
 Report the held-out row when a split exists, the full-process row when

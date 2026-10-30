@@ -97,6 +97,16 @@ is an assumption rather than a finding, and the `note` column says so
 whenever any row was excluded. Multiple imputation is not in this
 package yet.
 
+## The scaled Brier column
+
+Every basis is scaled against one reference, the Brier of a model
+predicting the development cohort's prevalence for everyone, reported as
+`brier_ref`. Scaling each basis by its own prevalence is the
+conventional within-sample skill score, and a column of those is a set
+of scores against different references, which is a comparison a reader
+will make down the column and should not. Where a basis has a prevalence
+of its own, the `note` gives the value its own reference would produce.
+
 ## Examples
 
 ``` r

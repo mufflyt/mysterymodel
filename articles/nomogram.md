@@ -33,7 +33,7 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
 #>   profiles checked 21 at tabulated ticks
-#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 2.08e-16 (tolerance 1e-06)
 #>   off printed scale 8 tick profile(s) fall beyond the drawn axis
 #>   off-tick reading error    0.00203 in risk, midway between ticks
 ```
@@ -136,7 +136,7 @@ the agreement evidence rather than a restatement.
 
 abs(unname(mysterymodel:::mm_nomogram_risk(nom$nomogram, patient)) -
     mm_predict(model, patient)$.pred)
-#> [1] 5.551115e-17
+#> [1] 1.94289e-16
 ```
 
 ## Every tick, not one patient
@@ -174,9 +174,9 @@ fitted <- mm_predict(model, profiles)$.pred
 
 summary(abs(read - fitted))
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> 0.000e+00 0.000e+00 8.674e-18 1.355e-17 1.388e-17 1.110e-16
+#> 0.000e+00 0.000e+00 8.674e-18 2.379e-17 2.082e-17 2.082e-16
 nom$worst_disagreement
-#> [1] 1.110223e-16
+#> [1] 2.081668e-16
 ```
 
 Machine precision, across a model with a spline and an interaction. If
@@ -188,7 +188,7 @@ would refuse to return at all:
 
 mm_nomogram(model, out_dir = NULL, tolerance = 1e-20)
 #> Error:
-#> ! the nomogram disagrees with mm_predict() by 1.11e-16 at a tabulated profile, over the tolerance of 1e-20. A nomogram that does not reproduce its own model must not be published.
+#> ! the nomogram disagrees with mm_predict() by 2.08e-16 at a tabulated profile, over the tolerance of 1e-20. A nomogram that does not reproduce its own model must not be published.
 ```
 
 That refusal is the whole design. An instrument that does not reproduce
@@ -285,7 +285,7 @@ unexamined. Fitting the same model without the spline makes it vanish:
 linear <- suppressWarnings(
   mm_model(project, cohort, interactions = list(c("prior_uti", "sex"))))
 mm_nomogram(linear, out_dir = NULL)$reading_error
-#> [1] 6.938894e-17
+#> [1] 2.081668e-17
 ```
 
 ## Readings that fall off the drawn scale
@@ -314,7 +314,7 @@ mysterymodel:::mm_off_axis(nom$nomogram, c(min(totals), total, 500))
 
 out <- file.path(tempdir(), "nomogram-article")
 drawn <- mm_nomogram(model, out_dir = out, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpGPtMBo/nomogram-article/uds_nomogram.pdf, /tmp/RtmpGPtMBo/nomogram-article/uds_nomogram.svg, /tmp/RtmpGPtMBo/nomogram-article/uds_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmpmjao8N/nomogram-article/uds_nomogram.pdf, /tmp/Rtmpmjao8N/nomogram-article/uds_nomogram.svg, /tmp/Rtmpmjao8N/nomogram-article/uds_nomogram.png
 basename(drawn$files)
 #> [1] "uds_nomogram.pdf" "uds_nomogram.svg" "uds_nomogram.png"
 ```
