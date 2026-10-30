@@ -6,7 +6,17 @@
 #'
 #' `x` and `y` are kept on the fit, because validation and calibration need
 #' them and a fit without them fails later for reasons that do not name this
-#' decision.
+#' decision. That is the only patient-level retention: the design matrix the
+#' model was fitted on and the outcome it was fitted to.
+#'
+#' Nothing else of the cohort survives, and the mechanism is worth naming
+#' because the default behaviour is the opposite. A formula keeps the
+#' environment it was built in, `rms::lrm()` stores that environment on
+#' `fit$terms` and `fit$sformula`, and a formula built in this function's own
+#' frame would hold the cohort, the development rows and the split. The
+#' identifier column in particular is in none of them, so a saved model cannot
+#' carry patient identifiers into a place the data was never meant to go. The
+#' formula is built in `baseenv()` to keep that true.
 #'
 #' Strong hierarchy is enforced rather than assumed: an interaction is refused
 #' unless both of its main effects are in the project's predictors. The
@@ -90,8 +100,13 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   for (ia in pairs) {
     rhs <- c(rhs, paste(term_of(ia[1]), term_of(ia[2]), sep = ":"))
   }
+  # Built in `baseenv()`, not in this frame. `stats::as.formula()` defaults to
+  # the calling frame, which here holds `cohort`, `dev`, `parts` and `y`, and
+  # `rms::lrm()` keeps that environment on `fit$terms` and `fit$sformula`. A
+  # model built the default way therefore carries the whole cohort, patient
+  # identifiers included, into anything that saves it.
   form <- stats::as.formula(
-    paste(".mm_y ~", paste(rhs, collapse = " + ")))
+    paste(".mm_y ~", paste(rhs, collapse = " + ")), env = baseenv())
 
   dd <- rms::datadist(dev[, project$predictors, drop = FALSE])
   old <- options(datadist = dd)

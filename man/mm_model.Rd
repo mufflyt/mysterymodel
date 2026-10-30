@@ -32,7 +32,17 @@ actually given, a prediction schema and a fingerprint of the coefficients.
 \details{
 \code{x} and \code{y} are kept on the fit, because validation and calibration need
 them and a fit without them fails later for reasons that do not name this
-decision.
+decision. That is the only patient-level retention: the design matrix the
+model was fitted on and the outcome it was fitted to.
+
+Nothing else of the cohort survives, and the mechanism is worth naming
+because the default behaviour is the opposite. A formula keeps the
+environment it was built in, \code{rms::lrm()} stores that environment on
+\code{fit$terms} and \code{fit$sformula}, and a formula built in this function's own
+frame would hold the cohort, the development rows and the split. The
+identifier column in particular is in none of them, so a saved model cannot
+carry patient identifiers into a place the data was never meant to go. The
+formula is built in \code{baseenv()} to keep that true.
 
 Strong hierarchy is enforced rather than assumed: an interaction is refused
 unless both of its main effects are in the project's predictors. The
