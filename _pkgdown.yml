@@ -3,7 +3,29 @@ url: https://mufflyt.github.io/mysterymodel/
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left: [intro, articles, reference, news]
+
+articles:
+  - title: Using the package
+    navbar: Guides
+    contents:
+      - mysterymodel
+      - validation
+      - nomogram
+  - title: Worked examples
+    navbar: Worked examples
+    contents:
+      - worked-example
+
 reference:
+  - title: Overview
+    desc: >
+      What the package is for, the order the steps happen in, and what it
+      refuses to do quietly.
+    contents:
+      - mysterymodel-package
   - title: Specify
     desc: >
       What is being predicted, from which columns, and how the data divides.
