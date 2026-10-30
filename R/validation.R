@@ -332,8 +332,13 @@ mm_withhold_identity_calibration <- function(row, tol = 1e-6) {
 
 #' Discrimination, calibration and accuracy for one set of predictions
 #'
-#' @param p Predicted probabilities.
-#' @param y 0/1 outcome.
+#' @param p Predicted probabilities. Must be numeric, the same length as `y`,
+#'   and within `[0, 1]` where observed. A value outside that interval is
+#'   refused rather than clamped, because clamping turns an upstream fault into
+#'   a plausible score. `NA` and `NaN` are missing and are dropped pairwise,
+#'   which is the package's one missing-value policy; a missing prediction is
+#'   never read as a probability of zero.
+#' @param y 0/1 outcome, dropped pairwise with `p` where either is missing.
 #' @param basis Label for the row.
 #' @param note What produced it.
 #' @param reference The no-information Brier to scale against, that is the
@@ -345,8 +350,35 @@ mm_withhold_identity_calibration <- function(row, tol = 1e-6) {
 #' @return A one-row data frame.
 #' @keywords internal
 mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
+  if (!is.numeric(p)) {
+    stop("predicted probabilities must be numeric, and are of class ",
+         class(p)[1], ".", call. = FALSE)
+  }
+  if (length(p) != length(y)) {
+    stop("there are ", length(p), " predicted probabilit(y/ies) and ",
+         length(y), " outcome(s). Recycling the shorter one would score ",
+         "rows against the wrong outcomes.", call. = FALSE)
+  }
+
+  # Refused, not clamped. A probability of 1.5 was being folded to just under
+  # one and turned into a plausible Brier score, which hides whatever upstream
+  # produced it. NaN stays missing, under the one missing-value policy below,
+  # rather than becoming a second one.
+  impossible <- !is.na(p) & (!is.finite(p) | p < 0 | p > 1)
+  if (any(impossible)) {
+    where <- which(impossible)
+    shown <- utils::head(where, 3L)
+    stop("predicted probabilities must be finite and within [0, 1]. Found ",
+         length(where), " invalid value(s); ",
+         paste(sprintf("row %d is %s", shown, format(p[shown])),
+               collapse = ", "),
+         if (length(where) > length(shown))
+           sprintf(" and %d more", length(where) - length(shown)),
+         ".", call. = FALSE)
+  }
+
   keep <- !is.na(p) & !is.na(y)
-  p <- pmin(pmax(as.numeric(p[keep]), 1e-10), 1 - 1e-10)
+  p <- as.numeric(p[keep])
   y <- as.integer(y[keep])
 
   # Nothing to estimate from, or nothing to discriminate between. Both are
@@ -378,7 +410,12 @@ mm_metrics <- function(p, y, basis, note = "", reference = NULL) {
   # separation that causes it is informative and the glm says so in a warning,
   # but the coefficient it leaves behind is an artefact of where iteration
   # stopped, and printed in a column it reads like a finding.
-  lp <- stats::qlogis(p)
+  # 0 and 1 are valid probabilities whose logits are infinite, and the
+  # calibration terms are fitted on the logit scale. The nudge is confined to
+  # this line: the Brier below and the c-statistic above read the probabilities
+  # as given, so no reported number is computed from an altered value except
+  # the two that cannot be computed otherwise.
+  lp <- stats::qlogis(pmin(pmax(p, 1e-10), 1 - 1e-10))
   converged <- function(f) !is.null(f) && isTRUE(f$converged)
   fit_int <- tryCatch(
     stats::glm(y ~ 1, family = stats::binomial(), offset = lp),

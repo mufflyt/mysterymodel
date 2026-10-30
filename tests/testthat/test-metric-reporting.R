@@ -194,3 +194,85 @@ test_that("valid resample counts are statistically unchanged", {
   expect_identical(mm_validate(model, cohort, B = 25L)$metrics$c_stat,
                    mm_validate(model, cohort, B = 25.0)$metrics$c_stat)
 })
+
+# The probability contract. An impossible probability is an upstream fault, and
+# clamping it to the edge of the interval turns that fault into a plausible
+# score. Reference values below are computed here, not taken from the package.
+
+test_that("an impossible probability is refused, not clamped", {
+  expect_error(
+    mysterymodel:::mm_metrics(c(1.5, 0.4), c(1L, 0L), basis = "p"),
+    "within \\[0, 1\\]")
+  expect_error(
+    mysterymodel:::mm_metrics(c(-0.1, 0.4), c(1L, 0L), basis = "p"),
+    "within \\[0, 1\\]")
+  expect_error(
+    mysterymodel:::mm_metrics(c(Inf, 0.4), c(1L, 0L), basis = "p"),
+    "within \\[0, 1\\]")
+  expect_error(
+    mysterymodel:::mm_metrics(c(-Inf, 0.4), c(1L, 0L), basis = "p"),
+    "within \\[0, 1\\]")
+})
+
+test_that("the refusal names where the trouble is, and bounds the list", {
+  invalid <- mysterymodel:::mm_metrics
+  expect_error(invalid(c(0.4, 0.6, 1.5), c(1L, 0L, 1L), basis = "p"),
+               "row 3 is 1.5")
+  # Four invalid values, three shown, the rest counted rather than printed.
+  expect_error(invalid(c(2, 3, 4, 5, 0.4, 0.6), c(1L, 0L, 1L, 0L, 1L, 0L),
+                       basis = "p"),
+               "Found 4 invalid value\\(s\\)")
+  expect_error(invalid(c(2, 3, 4, 5, 0.4, 0.6), c(1L, 0L, 1L, 0L, 1L, 0L),
+                       basis = "p"),
+               "and 1 more")
+})
+
+test_that("0 and 1 are valid probabilities and are not altered", {
+  # They are refused by nothing, and the Brier is computed from them as given.
+  # The logit nudge the calibration terms need must not reach it.
+  set.seed(2)
+  outcome <- stats::rbinom(200L, 1L, 0.3)
+  risk <- pmin(pmax(0.3 + 0.2 * outcome + stats::rnorm(200, 0, 0.1), 0), 1)
+  risk[1:2] <- c(0, 1)
+
+  row <- mysterymodel:::mm_metrics(risk, outcome, basis = "p")
+  expect_equal(row$n, 200L)
+  expect_equal(row$brier, mean((risk - outcome)^2))
+  expect_false(is.na(row$cal_slope))
+})
+
+test_that("a non-numeric probability and a length mismatch are refused", {
+  expect_error(
+    mysterymodel:::mm_metrics(c("0.2", "0.3"), c(1L, 0L), basis = "p"),
+    "must be numeric")
+  expect_error(
+    mysterymodel:::mm_metrics(c(0.2, 0.3), c(1L, 0L, 1L), basis = "p"),
+    "Recycling the shorter one")
+})
+
+test_that("missing predictions stay missing and are dropped pairwise", {
+  # Never read as a probability of zero, and the reported count is the count
+  # actually scored.
+  for (absent in list(NA_real_, NaN)) {
+    row <- suppressWarnings(mysterymodel:::mm_metrics(
+      c(absent, 0.4, 0.6, 0.2), c(1L, 0L, 1L, 0L), basis = "p"))
+    expect_equal(row$n, 3L)
+    expect_equal(row$brier, mean((c(0.4, 0.6, 0.2) - c(0L, 1L, 0L))^2))
+  }
+  # A missing outcome drops its row too, and is not a non-event.
+  row <- suppressWarnings(mysterymodel:::mm_metrics(
+    c(0.4, 0.6, 0.2, 0.8), c(1L, NA, 1L, 0L), basis = "p"))
+  expect_equal(row$n, 3L)
+  expect_equal(row$events, 2L)
+})
+
+test_that("an all-event or no-event sample gives no estimate, with a reason", {
+  all_events <- mysterymodel:::mm_metrics(c(0.4, 0.6, 0.8), c(1L, 1L, 1L),
+                                          basis = "p")
+  expect_true(is.na(all_events$c_stat))
+  expect_match(all_events$note, "does not vary")
+  none <- mysterymodel:::mm_metrics(c(0.4, 0.6, 0.8), c(0L, 0L, 0L),
+                                    basis = "p")
+  expect_true(is.na(none$c_stat))
+  expect_equal(none$events, 0L)
+})
