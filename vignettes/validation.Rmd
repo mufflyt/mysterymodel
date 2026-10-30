@@ -63,6 +63,16 @@ returns Somers' Dxy and the calibration slope, not a Brier score. Carrying the
 apparent Brier across into that row would make it look corrected when nothing
 corrected it.
 
+The scaled Brier gets the same treatment one step further on. It is a score
+against a reference, and left alone each basis would use its own prevalence, so
+a column of them would be scores against different references. Every basis here
+is scaled against the development cohort's reference, reported as `brier_ref`,
+and a basis with a prevalence of its own keeps that value in its `note`:
+
+```{r brier-ref}
+validation$metrics[, c("basis", "brier", "brier_ref", "brier_scaled")]
+```
+
 The `cal_slope` cell on the **apparent** row is empty because that number is an
 identity rather than an estimate. Scoring an unpenalized maximum-likelihood fit
 on the very rows that produced it forces the calibration intercept to zero and
@@ -237,13 +247,28 @@ instead of a second implementation of it:
 y <- mysterymodel:::mm_event_indicator(parts$held$event, 1)
 p <- mm_predict(model, parts$held)$.pred
 
-mysterymodel:::mm_metrics(p, y, basis = "held out, scored by hand")[
-  , c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
-      "cal_intercept", "cal_slope", "brier_scaled")]
+by_hand <- mysterymodel:::mm_metrics(p, y, basis = "held out, by hand")
+by_hand[, c("basis", "n", "events", "c_stat", "c_lower", "c_upper",
+            "cal_intercept", "cal_slope")]
 ```
 
 Those are the same numbers as the held-out row of the main table, because it is
-the same function.
+the same function. One column is deliberately not the same, and it is worth
+seeing why:
+
+```{r reference-differs}
+held_row <- validation$metrics[validation$metrics$basis == "held out", ]
+c(main_table   = held_row$brier_scaled,
+  main_ref     = held_row$brier_ref,
+  by_hand      = by_hand$brier_scaled,
+  by_hand_ref  = by_hand$brier_ref)
+```
+
+A scaled Brier is a score against a reference, and a bare call uses the
+reference of the rows it was given. The main table passes the development
+cohort's reference to every basis instead, so that reading down the column
+compares like with like. A subgroup table wants the bare behaviour, since
+each subgroup's own skill score is the question being asked there.
 
 ## By subgroup
 

@@ -45,8 +45,6 @@ mm_full_process <- function(model, cohort, B = 200L,
   y_dev <- mm_event_indicator(dev[[project$outcome]],
                               project$positive_class)
 
-  apparent <- mm_metrics(mm_predict(model, dev)$.pred, y_dev,
-                         basis = "apparent")
 
   # The scaled Brier is not differenced across resamples. It divides by
   # `rate * (1 - rate)` of whichever rows were scored, so an in-sample value
@@ -59,6 +57,8 @@ mm_full_process <- function(model, cohort, B = 200L,
   wanted <- c("c_stat", "cal_intercept", "cal_slope", "brier")
   rate_dev <- mean(y_dev)
   no_information <- rate_dev * (1 - rate_dev)
+  apparent <- mm_metrics(mm_predict(model, dev)$.pred, y_dev,
+                         basis = "apparent", reference = no_information)
 
   gaps <- matrix(NA_real_, nrow = B, ncol = length(wanted),
                  dimnames = list(NULL, wanted))

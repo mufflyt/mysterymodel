@@ -75,6 +75,18 @@ assumption rather than a finding, and the \code{note} column says so whenever an
 row was excluded. Multiple imputation is not in this package yet.
 }
 
+\section{The scaled Brier column}{
+
+
+Every basis is scaled against one reference, the Brier of a model
+predicting the development cohort's prevalence for everyone, reported as
+\code{brier_ref}. Scaling each basis by its own prevalence is the conventional
+within-sample skill score, and a column of those is a set of scores against
+different references, which is a comparison a reader will make down the
+column and should not. Where a basis has a prevalence of its own, the
+\code{note} gives the value its own reference would produce.
+}
+
 \examples{
 cohort <- mm_synthetic_cohort(n = 300, seed = 1)
 project <- mm_project("uds", "event", c("age", "bmi", "sex"),

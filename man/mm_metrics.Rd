@@ -4,7 +4,7 @@
 \alias{mm_metrics}
 \title{Discrimination, calibration and accuracy for one set of predictions}
 \usage{
-mm_metrics(p, y, basis, note = "")
+mm_metrics(p, y, basis, note = "", reference = NULL)
 }
 \arguments{
 \item{p}{Predicted probabilities.}
@@ -14,6 +14,13 @@ mm_metrics(p, y, basis, note = "")
 \item{basis}{Label for the row.}
 
 \item{note}{What produced it.}
+
+\item{reference}{The no-information Brier to scale against, that is the
+Brier of a model predicting one constant risk. \code{NULL} uses the scored
+sample's own prevalence, which is the conventional within-sample skill
+score and is not comparable across samples of different prevalence.
+\code{\link[=mm_validate]{mm_validate()}} passes the development cohort's reference to every basis
+so that one column means one thing.}
 }
 \value{
 A one-row data frame.
