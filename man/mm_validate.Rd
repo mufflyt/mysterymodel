@@ -9,7 +9,8 @@ mm_validate(model, cohort, B = 200L, full_process = FALSE)
 \arguments{
 \item{model}{A \code{\link[=mm_model]{mm_model()}}.}
 
-\item{cohort}{The cohort, for held-out scoring and the split.}
+\item{cohort}{The cohort, for held-out scoring and the split. Its
+development rows must be the ones the model was fitted on.}
 
 \item{B}{Bootstrap resamples.}
 
@@ -43,6 +44,31 @@ the data-dependent choices the fixed-model bootstrap inherits. See
 \code{\link[=mm_full_process]{mm_full_process()}} for what it does and does not re-execute.
 }
 }
+\section{Incomplete rows}{
+
+
+Every basis is judged on the rows that can be judged, and the exclusions are
+reported rather than absorbed. \code{\link[=mm_evaluable]{mm_evaluable()}} is the one rule, the same one
+\code{\link[=mm_model]{mm_model()}} fitted under, so the sample a model is measured against is the
+sample it was estimated on; validating against a cohort whose development
+rows do not match the fit is an error rather than a quietly different
+number. The bootstraps resample the fitted cohort, never the supplied frame.
+
+A missing predictor and a missing outcome are counted apart, with the
+overlap separately, because they are different exclusions and because taking
+a missing outcome for a non-event leaves the event count unchanged while
+inflating the denominator.
+
+Rows are selected first and \code{\link[=mm_predict]{mm_predict()}} is then called at its own default
+of \code{on_missing = "stop"}, so the complete-case path is explicit here and
+prediction keeps refusing to put a number on an incomplete record.
+
+This is complete-case analysis. It is a computational strategy and not a
+guarantee: the estimates assume the exclusions are uninformative, which is an
+assumption rather than a finding, and the \code{note} column says so whenever any
+row was excluded. Multiple imputation is not in this package yet.
+}
+
 \examples{
 cohort <- mm_synthetic_cohort(n = 300, seed = 1)
 project <- mm_project("uds", "event", c("age", "bmi", "sex"),
