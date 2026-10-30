@@ -29,9 +29,12 @@ Imports:
     stats,
     utils
 Suggests: 
+    knitr,
     ragg,
+    rmarkdown,
     svglite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 Config/roxygen2/version: 8.1.0
+VignetteBuilder: knitr

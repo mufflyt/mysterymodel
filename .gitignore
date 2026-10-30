@@ -8,3 +8,5 @@ inst/doc
 .DS_Store
 *.Rcheck/
 *.tar.gz
+figure/
+vignettes/figure/

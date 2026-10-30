@@ -4,7 +4,7 @@
 #' later step reads this object, so no step has to guess and no two steps can
 #' quietly disagree.
 #'
-#' Nothing is fitted and no row is modelled. `cp_project()` records choices and
+#' Nothing is fitted and no row is modelled. `mm_project()` records choices and
 #' fails closed on combinations that cannot be meant. That is the point: the
 #' configuration is what a reviewer should be able to check against the
 #' protocol, rather than reconstruct afterwards from whichever code ran.
@@ -29,16 +29,16 @@
 #' @param seed Single whole number, recorded here so that a later resampling
 #'   step cannot invent one of its own.
 #'
-#' @return An object of class `cp_project`.
+#' @return An object of class `mm_project`.
 #'
 #' @examples
-#' cp_project("uds", "event", c("age", "bmi", "sex"))
+#' mm_project("uds", "event", c("age", "bmi", "sex"))
 #'
 #' # Temporal validation: develop before 2023, hold out 2023 onwards.
-#' cp_project("uds", "event", c("age", "bmi"),
+#' mm_project("uds", "event", c("age", "bmi"),
 #'            split_var = "year", split_at = 2023)
 #' @export
-cp_project <- function(slug, outcome, predictors, positive_class = NULL,
+mm_project <- function(slug, outcome, predictors, positive_class = NULL,
                        cohort = NULL, split_var = NULL, split_at = NULL,
                        cluster_id = NULL, seed = 1978L) {
   one_name <- function(x, what) {
@@ -116,13 +116,13 @@ cp_project <- function(slug, outcome, predictors, positive_class = NULL,
          split_at       = split_at,
          cluster_id     = cluster_id,
          seed           = as.integer(seed)),
-    class = "cp_project"
+    class = "mm_project"
   )
 }
 
 #' @export
-print.cp_project <- function(x, ...) {
-  cat("<cp_project: ", x$slug, ">\n", sep = "")
+print.mm_project <- function(x, ...) {
+  cat("<mm_project: ", x$slug, ">\n", sep = "")
   cat("  outcome    ", x$outcome,
       if (is.null(x$positive_class)) "" else
         paste0(" (event = ", x$positive_class, ")"), "\n", sep = "")

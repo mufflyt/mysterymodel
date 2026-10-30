@@ -28,11 +28,11 @@
 #'   true coefficients and the generating formula.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 200, seed = 1)
+#' cohort <- mm_synthetic_cohort(n = 200, seed = 1)
 #' table(cohort$event)
 #' attr(cohort, "truth")$coefficients
 #' @export
-cp_synthetic_cohort <- function(n = 500, prevalence = 0.11,
+mm_synthetic_cohort <- function(n = 500, prevalence = 0.11,
                                 years = 2019:2024, repeat_frac = 0.08,
                                 seed = 1978L) {
   if (length(n) != 1L || !is.numeric(n) || n < 20) {

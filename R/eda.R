@@ -17,21 +17,21 @@
 #' `gt`, `gtsummary`, `knitr::kable()` or Quarto can render it, and none of
 #' them is needed to compute it.
 #'
-#' @param cohort A data frame, or a [cp_clean()] result.
+#' @param cohort A data frame, or a [mm_clean()] result.
 #' @param by Optional column to stratify by, typically the outcome.
 #' @param vars Columns to describe. Defaults to all but `by`.
 #' @param digits Decimal places for continuous summaries.
 #'
-#' @return An object of class `cp_eda`, holding `table` and `missing`.
+#' @return An object of class `mm_eda`, holding `table` and `missing`.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 300, seed = 1)
-#' cp_eda(cohort, by = "event", vars = c("age", "bmi", "sex"))
+#' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+#' mm_eda(cohort, by = "event", vars = c("age", "bmi", "sex"))
 #' @export
-cp_eda <- function(cohort, by = NULL, vars = NULL, digits = 1) {
-  if (inherits(cohort, "cp_cohort")) cohort <- cohort$data
+mm_eda <- function(cohort, by = NULL, vars = NULL, digits = 1) {
+  if (inherits(cohort, "mm_cohort")) cohort <- cohort$data
   if (!is.data.frame(cohort)) {
-    stop("`cohort` must be a data frame or a cp_clean() result.",
+    stop("`cohort` must be a data frame or a mm_clean() result.",
          call. = FALSE)
   }
   if (!is.null(by)) {
@@ -68,27 +68,27 @@ cp_eda <- function(cohort, by = NULL, vars = NULL, digits = 1) {
 
     if (is.numeric(col)) {
       add(v, "mean (SD)", lapply(strata, function(ix)
-        cp_mean_sd(col[ix], digits)))
+        mm_mean_sd(col[ix], digits)))
       add(v, "median (p25, p75)", lapply(strata, function(ix)
-        cp_median_iqr(col[ix], digits)))
+        mm_median_iqr(col[ix], digits)))
     } else {
       lev <- levels(factor(col))
       for (l in lev) {
         add(v, paste0(l, ", n (%)"), lapply(strata, function(ix) {
           sub <- col[ix]
           denom <- sum(!is.na(sub))
-          cp_n_pct(sum(!is.na(sub) & as.character(sub) == l), denom)
+          mm_n_pct(sum(!is.na(sub) & as.character(sub) == l), denom)
         }))
       }
     }
     add(v, "missing, n (%)", lapply(strata, function(ix)
-      cp_n_pct(sum(is.na(col[ix])), length(ix))))
+      mm_n_pct(sum(is.na(col[ix])), length(ix))))
   }
 
   table <- do.call(rbind, rows)
   denom <- data.frame(
     c(list(variable = "(denominator)", statistic = "n"),
-      lapply(strata, function(ix) cp_count(length(ix)))),
+      lapply(strata, function(ix) mm_count(length(ix)))),
     stringsAsFactors = FALSE, check.names = FALSE)
   table <- rbind(denom, table)
 
@@ -104,23 +104,23 @@ cp_eda <- function(cohort, by = NULL, vars = NULL, digits = 1) {
   structure(list(table = table, missing = missing, n = nrow(cohort),
                  by = by,
                  duplicates = sum(duplicated(cohort))),
-            class = "cp_eda")
+            class = "mm_eda")
 }
 
 #' Count with thousands separators
 #' @param n A count.
 #' @return A string.
 #' @keywords internal
-cp_count <- function(n) formatC(n, format = "d", big.mark = ",")
+mm_count <- function(n) formatC(n, format = "d", big.mark = ",")
 
 #' Count and percentage of a stated denominator
 #' @param n Count.
 #' @param denom Denominator.
 #' @return A string.
 #' @keywords internal
-cp_n_pct <- function(n, denom) {
+mm_n_pct <- function(n, denom) {
   if (denom == 0L) return("0 (-)")
-  sprintf("%s (%.1f%%)", cp_count(n), 100 * n / denom)
+  sprintf("%s (%.1f%%)", mm_count(n), 100 * n / denom)
 }
 
 #' Mean and standard deviation
@@ -128,7 +128,7 @@ cp_n_pct <- function(n, denom) {
 #' @param digits Decimal places.
 #' @return A string.
 #' @keywords internal
-cp_mean_sd <- function(x, digits = 1) {
+mm_mean_sd <- function(x, digits = 1) {
   x <- x[!is.na(x)]
   if (!length(x)) return("-")
   sprintf("%.*f (%.*f)", digits, mean(x), digits, stats::sd(x))
@@ -139,7 +139,7 @@ cp_mean_sd <- function(x, digits = 1) {
 #' @param digits Decimal places.
 #' @return A string.
 #' @keywords internal
-cp_median_iqr <- function(x, digits = 1) {
+mm_median_iqr <- function(x, digits = 1) {
   x <- x[!is.na(x)]
   if (!length(x)) return("-")
   q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE)
@@ -147,11 +147,11 @@ cp_median_iqr <- function(x, digits = 1) {
 }
 
 #' @export
-print.cp_eda <- function(x, ...) {
-  cat("<cp_eda>  ", cp_count(x$n), " rows", sep = "")
+print.mm_eda <- function(x, ...) {
+  cat("<mm_eda>  ", mm_count(x$n), " rows", sep = "")
   if (!is.null(x$by)) cat(", by ", x$by, sep = "")
   if (x$duplicates > 0L) {
-    cat(", ", cp_count(x$duplicates), " duplicated row(s)", sep = "")
+    cat(", ", mm_count(x$duplicates), " duplicated row(s)", sep = "")
   }
   cat("\n")
   print(x$table, row.names = FALSE)

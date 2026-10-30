@@ -1,0 +1,252 @@
+---
+title: "Reading the nomogram back"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reading the nomogram back}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r attach}
+library(mysterymodel)
+```
+
+A nomogram is a published instrument. Someone will read risks off it for real
+patients, by hand, years after the code that drew it stopped running. So the
+question `mm_nomogram()` answers is not "did `rms` draw something" but "does
+what it drew give the same answer as the model it was drawn from".
+
+This article does by hand what `mm_nomogram()` does internally, because the
+check is only convincing if you can see it.
+
+```{r fit}
+cohort <- mm_synthetic_cohort(n = 500, prevalence = 0.11, seed = 1978)
+
+project <- mm_project("uds", "event",
+                      c("age", "bmi", "sex", "prior_uti"),
+                      positive_class = 1, cohort = cohort, seed = 1978)
+
+model <- suppressWarnings(
+  mm_model(project, cohort, nonlinear = "age",
+           interactions = list(c("prior_uti", "sex"))))
+
+nom <- mm_nomogram(model, out_dir = NULL)
+nom
+```
+
+```{r plot, fig.width = 9, fig.height = 6.5}
+plot(nom$nomogram)
+```
+
+## An interaction makes one variable appear on several axes
+
+```{r axes}
+nom$axes
+```
+
+`sex` is not an axis. There are two axes that each hold both `sex` and
+`prior_uti`, and they are mutually exclusive: a patient with no prior UTI reads
+one, a patient with a prior UTI reads the other. A reader who gathered `sex`
+ticks from a single axis would get half the model.
+
+```{r axis-values}
+mysterymodel:::mm_axis_values(nom$nomogram, project$predictors)
+```
+
+That is why the points reader gathers a predictor's tabulated values across
+axes rather than off one, and why an axis contributes only when the profile
+matches every categorical value the axis holds fixed. Exactly one of the two
+applies to any patient, so nothing is counted twice and nothing is missed.
+
+## Reading one patient, by hand
+
+Take a 70 year old woman with a BMI of 31 and a prior UTI.
+
+```{r patient}
+patient <- data.frame(
+  age       = 70,
+  bmi       = 31,
+  sex       = factor("female", levels = model$schema$predictors$sex$levels),
+  prior_uti = factor("yes", levels = model$schema$predictors$prior_uti$levels)
+)
+```
+
+Sum the points from every axis that applies:
+
+```{r points}
+total <- unname(mysterymodel:::mm_nomogram_points(nom$nomogram, patient))
+total
+```
+
+Convert the total to the linear predictor using the printed scale, then to a
+risk:
+
+```{r read}
+lp <- mysterymodel:::mm_total_to_lp(nom$nomogram, total)
+c(total_points = total, linear_predictor = lp, risk = plogis(lp))
+
+unname(mysterymodel:::mm_nomogram_risk(nom$nomogram, patient))
+```
+
+Now ask the model the same question:
+
+```{r compare}
+mm_predict(model, patient)$.pred
+```
+
+Neither calculation consulted the other. The reader above touched only
+`nom$nomogram`, a list of printed axis values; `mm_predict()` touched only the
+fitted `lrm` object. That independence is what makes the agreement evidence
+rather than a restatement.
+
+```{r gap}
+abs(unname(mysterymodel:::mm_nomogram_risk(nom$nomogram, patient)) -
+    mm_predict(model, patient)$.pred)
+```
+
+## Every tick, not one patient
+
+`mm_nomogram()` does not check a profile someone chose. It varies each
+predictor over all of its tabulated ticks while the others sit at their first,
+so every tick of every axis is exercised without taking the product of them
+all:
+
+```{r profiles}
+profiles <- mysterymodel:::mm_tick_profiles(nom$nomogram, model)
+nrow(profiles)
+head(profiles)
+```
+
+Those profiles come back again in the next section, where one of them turns out
+to be the reason the points-to-risk step is written the way it is.
+
+```{r check-all}
+read <- vapply(seq_len(nrow(profiles)), function(i)
+  mysterymodel:::mm_nomogram_risk(nom$nomogram, profiles[i, , drop = FALSE]),
+  numeric(1))
+fitted <- mm_predict(model, profiles)$.pred
+
+summary(abs(read - fitted))
+nom$worst_disagreement
+```
+
+Machine precision, across a model with a spline and an interaction. If the
+worst gap exceeded `tolerance`, `mm_nomogram()` would refuse to return at all:
+
+```{r refuse, error = TRUE}
+mm_nomogram(model, out_dir = NULL, tolerance = 1e-20)
+```
+
+That refusal is the whole design. An instrument that does not reproduce its own
+model must not reach a manuscript, and the only moment anyone is in a position
+to notice is the moment it is drawn.
+
+## Why the points-to-risk step is a line and not an interpolation
+
+The printed linear predictor axis is affine in total points, so the line
+through it is the exact mapping:
+
+```{r affine}
+head(data.frame(points = nom$nomogram$lp$x,
+                lp     = nom$nomogram$lp$x.real))
+```
+
+Interpolating between those ticks with clamped ends looks equivalent, and
+inside the printed range it is. The axis does not start at zero points, though,
+and nothing stops a patient from scoring below where it starts. Here is the
+lowest-scoring profile this model admits, a 20 year old woman at the bottom of
+the BMI range with no prior UTI:
+
+```{r lowest}
+totals <- vapply(seq_len(nrow(profiles)), function(i)
+  unname(mysterymodel:::mm_nomogram_points(nom$nomogram,
+                                           profiles[i, , drop = FALSE])),
+  numeric(1))
+
+lowest <- profiles[which.min(totals), , drop = FALSE]
+lowest
+min(totals)
+min(nom$nomogram$lp$x)
+```
+
+Zero points, and the printed risk axis begins at 16.3. Clamped interpolation
+has nowhere to go, so it returns the value at the lowest printed tick:
+
+```{r clamped}
+clamped <- approx(nom$nomogram$lp$x, nom$nomogram$lp$x.real,
+                  xout = min(totals), rule = 2)$y
+exact <- mysterymodel:::mm_total_to_lp(nom$nomogram, min(totals))
+
+c(clamped_risk = plogis(clamped),
+  exact_risk   = plogis(exact),
+  model_risk   = mm_predict(model, lowest)$.pred)
+```
+
+A risk of 1.1% reported for a patient whose risk is 0.6%, with no warning and
+nothing on the page to suggest the reading was out of range. That is the error
+this package shipped in its own first nomogram reader, and it is why
+`mm_total_to_lp()` uses the exact affine line instead and checks its linearity
+rather than trusting it: the function errors if the axis deviates from affine by
+more than 1e-8.
+
+## Reading between ticks has a cost, and here it is
+
+Everything above holds at the nomogram's own tabulated values. A clinician
+reads between them, and a spline curves between printed ticks where linear
+interpolation across them does not.
+
+```{r reading-error}
+nom$reading_error
+```
+
+That is the largest risk difference found midway between ticks, the worst case
+for interpolating across a curve. It is a property of every printed nomogram
+and of every clinician reading one, not a defect of this package, and reporting
+its size is the alternative to leaving it unexamined. Fitting the same model
+without the spline makes it vanish:
+
+```{r linear-model}
+linear <- suppressWarnings(
+  mm_model(project, cohort, interactions = list(c("prior_uti", "sex"))))
+mm_nomogram(linear, out_dir = NULL)$reading_error
+```
+
+## Readings that fall off the drawn scale
+
+```{r off-axis}
+nom$off_axis
+range(nom$nomogram$lp$x)
+```
+
+A total outside the printed range is a reading a clinician cannot take, however
+well the arithmetic behind it works. Those profiles are counted rather than
+quietly reported as the nearest printed tick.
+
+```{r off-axis-direct}
+mysterymodel:::mm_off_axis(nom$nomogram, c(min(totals), total, 500))
+```
+
+## Exporting
+
+```{r export}
+out <- file.path(tempdir(), "nomogram-article")
+drawn <- mm_nomogram(model, out_dir = out, width = 13, height = 9)
+basename(drawn$files)
+```
+
+The landscape shape is the default because that is what the specification asks
+for. The PDF is always written; the SVG and PNG follow when `svglite` and
+`ragg` are installed, which is why they are suggested rather than required
+dependencies.
+
+```{r fingerprint}
+identical(drawn$fingerprint, model$fingerprint)
+```
+
+The fingerprint is the fit's, so a figure in a manuscript can be tied to the
+coefficients that produced it. A nomogram whose fingerprint does not match the
+model table beside it was drawn from a different fit.

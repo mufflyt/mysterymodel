@@ -55,9 +55,49 @@ Which corrections the legacy UDS analysis needs. That requires reading
 `Elena.Rmd` and its verified outputs, which sections 84 and 237 both insist on
 before any claim of equivalence. No defect is asserted here.
 
+## DEC-002: the public prefix is `mm_`
+
+**Settles:** section 16, first bullet, prefix half. **Date:** 2026-10-29.
+
+Every exported and internal function takes the prefix `mm_`, after the package
+name, in place of the `cp_` the specification carried as provisional. Class
+names move with them: `mm_project`, `mm_cohort`, `mm_eda`, `mm_model`,
+`mm_adequacy`, `mm_validation`, `mm_nomogram`.
+
+### Why
+
+`cp_` was shorthand for `clinpredict`, the alternate name section 3 keeps until
+clearance. The package is `mysterymodel`, so `cp_` names a package that is not
+this one, and a reader who meets `cp_validate()` has no way to guess which
+library to attach. A prefix that is not the package name is a prefix that has to
+be looked up.
+
+`cp_` is also not ours to assume: it is short enough to collide with any other
+package that reaches for the same two letters, and a collision between two
+`cp_predict()` functions is resolved by whichever was attached last.
+
+### Scope
+
+A mechanical rename, with no change to any signature, return value, check or
+number. The test suite is the evidence: it was renamed in the same pass and
+passes unchanged otherwise, so nothing in the statistics moved.
+
+### What this does not decide
+
+Package name availability on CRAN, which is the other half of the same section
+16 bullet and still open. `mm_` follows `mysterymodel`, so a forced rename of
+the package would put this decision back on the table.
+
+### Migration
+
+None offered. There is no released version, no `0.1.0` tag and no reverse
+dependency, so no caller exists to break. The prefix is settled now precisely
+so that no caller ever has to be migrated.
+
 ## Still open from section 16
 
-- Final package name availability, and whether `cp_` survives API review.
+- Final package name availability. The prefix half of this bullet is
+  settled in DEC-002.
 - Minimum supported R version and operating systems.
 - Outcome families in v0.1. The specification recommends binary first.
 - How to package portable imputers for new individual predictions.

@@ -2,7 +2,7 @@
 #'
 #' Builds the canonical [rms::nomogram()] from the exact fitted model, with the
 #' same `datadist` it was fitted under, then reads the drawn nomogram back the
-#' way a clinician reads it and checks that the answer matches [cp_predict()].
+#' way a clinician reads it and checks that the answer matches [mm_predict()].
 #'
 #' A nomogram that disagrees with the model it was drawn from is worse than no
 #' nomogram, because it is a published instrument giving wrong risks. So the
@@ -17,28 +17,28 @@
 #' reading it, not a defect here, and `reading_error` reports its size instead
 #' of hiding it.
 #'
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @param out_dir Directory for the exported files. `NULL` draws nothing.
 #' @param tolerance Largest absolute difference in predicted risk tolerated
-#'   between the nomogram and [cp_predict()] at tabulated values.
+#'   between the nomogram and [mm_predict()] at tabulated values.
 #' @param width,height Inches. The default is the landscape shape the
 #'   specification asks for.
 #' @param fun_at Risk ticks for the printed risk axis.
 #'
-#' @return An object of class `cp_nomogram`.
+#' @return An object of class `mm_nomogram`.
 #'
 #' @examples
-#' cohort <- cp_synthetic_cohort(n = 300, seed = 1)
-#' project <- cp_project("uds", "event", c("age", "bmi", "sex"),
+#' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+#' project <- mm_project("uds", "event", c("age", "bmi", "sex"),
 #'                       cohort = cohort)
-#' fit <- cp_model(project, cohort, nonlinear = "age")
-#' nom <- cp_nomogram(fit, out_dir = NULL)
+#' fit <- mm_model(project, cohort, nonlinear = "age")
+#' nom <- mm_nomogram(fit, out_dir = NULL)
 #' nom
 #' @export
-cp_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
+mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
                         width = 13, height = 9, fun_at = NULL) {
-  if (!inherits(model, "cp_model")) {
-    stop("`model` must come from cp_model().", call. = FALSE)
+  if (!inherits(model, "mm_model")) {
+    stop("`model` must come from mm_model().", call. = FALSE)
   }
   old <- options(datadist = model$datadist)
   on.exit(options(old), add = TRUE)
@@ -48,22 +48,22 @@ cp_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
   if (!is.null(fun_at)) args$fun.at <- fun_at
   nom <- do.call(rms::nomogram, args)
 
-  axes <- cp_axis_names(nom)
-  profiles <- cp_tick_profiles(nom, model)
+  axes <- mm_axis_names(nom)
+  profiles <- mm_tick_profiles(nom, model)
   from_nom <- vapply(seq_len(nrow(profiles)),
-                     function(i) cp_nomogram_risk(nom,
+                     function(i) mm_nomogram_risk(nom,
                                                   profiles[i, , drop = FALSE]),
                      numeric(1))
   totals <- vapply(seq_len(nrow(profiles)),
-                   function(i) cp_nomogram_points(nom,
+                   function(i) mm_nomogram_points(nom,
                                                   profiles[i, , drop = FALSE]),
                    numeric(1))
-  from_model <- cp_predict(model, profiles)$.pred
+  from_model <- mm_predict(model, profiles)$.pred
   gap <- abs(from_nom - from_model)
   worst <- max(gap, na.rm = TRUE)
 
   if (worst > tolerance) {
-    stop("the nomogram disagrees with cp_predict() by ",
+    stop("the nomogram disagrees with mm_predict() by ",
          format(worst, digits = 3), " at a tabulated profile, over the ",
          "tolerance of ", format(tolerance), ". A nomogram that does not ",
          "reproduce its own model must not be published.", call. = FALSE)
@@ -71,17 +71,17 @@ cp_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
 
   files <- character(0)
   if (!is.null(out_dir)) {
-    files <- cp_nomogram_export(nom, out_dir, model$project$slug,
+    files <- mm_nomogram_export(nom, out_dir, model$project$slug,
                                width, height)
   }
 
   structure(list(nomogram = nom, axes = axes,
                  profiles_checked = nrow(profiles),
                  worst_disagreement = worst, tolerance = tolerance,
-                 off_axis = sum(cp_off_axis(nom, totals)),
-                 reading_error = cp_reading_error(nom, model),
+                 off_axis = sum(mm_off_axis(nom, totals)),
+                 reading_error = mm_reading_error(nom, model),
                  files = files, fingerprint = model$fingerprint),
-            class = "cp_nomogram")
+            class = "mm_nomogram")
 }
 
 #' The tabulated values each predictor has on the nomogram
@@ -95,8 +95,8 @@ cp_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
 #' @param predictors Model predictors.
 #' @return Named list of tabulated values.
 #' @keywords internal
-cp_axis_values <- function(nom, predictors) {
-  axes <- cp_axis_names(nom)
+mm_axis_values <- function(nom, predictors) {
+  axes <- mm_axis_names(nom)
   out <- lapply(predictors, function(p) {
     vals <- list()
     for (ax in axes) {
@@ -115,7 +115,7 @@ cp_axis_values <- function(nom, predictors) {
 #' @param nom An `rms` nomogram.
 #' @return Character vector of axis names.
 #' @keywords internal
-cp_axis_names <- function(nom) {
+mm_axis_names <- function(nom) {
   keep <- !vapply(nom, function(el) {
     nm <- names(el)
     identical(nm, "x") || all(c("x", "x.real") %in% nm)
@@ -130,11 +130,11 @@ cp_axis_names <- function(nom) {
 #' of them all.
 #'
 #' @param nom An `rms` nomogram.
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @return A data frame of profiles.
 #' @keywords internal
-cp_tick_profiles <- function(nom, model) {
-  vals <- cp_axis_values(nom, model$project$predictors)
+mm_tick_profiles <- function(nom, model) {
+  vals <- mm_axis_values(nom, model$project$predictors)
   base <- lapply(vals, function(v) v[1])
   rows <- list()
   for (p in names(vals)) {
@@ -146,7 +146,7 @@ cp_tick_profiles <- function(nom, model) {
   }
   frame <- do.call(rbind, lapply(rows, function(r)
     as.data.frame(r, stringsAsFactors = FALSE)))
-  cp_restore_levels(frame, model$schema)
+  mm_restore_levels(frame, model$schema)
 }
 
 #' Give profile columns the factor levels the model was fitted with
@@ -154,7 +154,7 @@ cp_tick_profiles <- function(nom, model) {
 #' @param schema A prediction schema.
 #' @return The frame, with factors restored.
 #' @keywords internal
-cp_restore_levels <- function(frame, schema) {
+mm_restore_levels <- function(frame, schema) {
   for (p in names(schema$predictors)) {
     spec <- schema$predictors[[p]]
     if (identical(spec$type, "categorical") && p %in% names(frame)) {
@@ -178,7 +178,7 @@ cp_restore_levels <- function(frame, schema) {
 #' @param total Total points.
 #' @return The linear predictor.
 #' @keywords internal
-cp_total_to_lp <- function(nom, total) {
+mm_total_to_lp <- function(nom, total) {
   x <- nom$lp$x
   y <- nom$lp$x.real
   ok <- !is.na(x) & !is.na(y)
@@ -205,7 +205,7 @@ cp_total_to_lp <- function(nom, total) {
 #' @param total Total points.
 #' @return `TRUE` when the total is off the printed scale.
 #' @keywords internal
-cp_off_axis <- function(nom, total) {
+mm_off_axis <- function(nom, total) {
   rng <- range(nom$lp$x, na.rm = TRUE)
   total < rng[1] | total > rng[2]
 }
@@ -226,9 +226,9 @@ cp_off_axis <- function(nom, total) {
 #' @param profile One row.
 #' @return Predicted risk, or `NA_real_` if no axis applies.
 #' @keywords internal
-cp_nomogram_risk <- function(nom, profile) {
-  total <- cp_nomogram_points(nom, profile)
-  stats::plogis(cp_total_to_lp(nom, total))
+mm_nomogram_risk <- function(nom, profile) {
+  total <- mm_nomogram_points(nom, profile)
+  stats::plogis(mm_total_to_lp(nom, total))
 }
 
 #' Total points for one profile
@@ -236,9 +236,9 @@ cp_nomogram_risk <- function(nom, profile) {
 #' @param profile One row.
 #' @return Total points.
 #' @keywords internal
-cp_nomogram_points <- function(nom, profile) {
+mm_nomogram_points <- function(nom, profile) {
   total <- 0
-  for (ax in cp_axis_names(nom)) {
+  for (ax in mm_axis_names(nom)) {
     el <- nom[[ax]]
     vars <- intersect(setdiff(names(el), c("Xbeta", "points")),
                       names(profile))
@@ -272,11 +272,11 @@ cp_nomogram_points <- function(nom, profile) {
 #' linear interpolation across a curve.
 #'
 #' @param nom An `rms` nomogram.
-#' @param model A [cp_model()].
+#' @param model A [mm_model()].
 #' @return Largest absolute risk difference found between ticks.
 #' @keywords internal
-cp_reading_error <- function(nom, model) {
-  vals <- cp_axis_values(nom, model$project$predictors)
+mm_reading_error <- function(nom, model) {
+  vals <- mm_axis_values(nom, model$project$predictors)
   base <- lapply(vals, function(v) v[1])
   rows <- list()
   for (p in names(vals)) {
@@ -290,13 +290,13 @@ cp_reading_error <- function(nom, model) {
     }
   }
   if (!length(rows)) return(NA_real_)
-  frame <- cp_restore_levels(
+  frame <- mm_restore_levels(
     do.call(rbind, lapply(rows, function(r)
       as.data.frame(r, stringsAsFactors = FALSE))), model$schema)
   read <- vapply(seq_len(nrow(frame)),
-                 function(i) cp_nomogram_risk(nom, frame[i, , drop = FALSE]),
+                 function(i) mm_nomogram_risk(nom, frame[i, , drop = FALSE]),
                  numeric(1))
-  max(abs(read - cp_predict(model, frame)$.pred), na.rm = TRUE)
+  max(abs(read - mm_predict(model, frame)$.pred), na.rm = TRUE)
 }
 
 #' Export the nomogram as vector and raster files
@@ -306,7 +306,7 @@ cp_reading_error <- function(nom, model) {
 #' @param width,height Inches.
 #' @return The paths written.
 #' @keywords internal
-cp_nomogram_export <- function(nom, out_dir, slug, width, height) {
+mm_nomogram_export <- function(nom, out_dir, slug, width, height) {
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   stem <- file.path(out_dir, paste0(slug, "_nomogram"))
   draw <- function() {
@@ -340,12 +340,12 @@ cp_nomogram_export <- function(nom, out_dir, slug, width, height) {
 }
 
 #' @export
-print.cp_nomogram <- function(x, ...) {
-  cat("<cp_nomogram>\n")
+print.mm_nomogram <- function(x, ...) {
+  cat("<mm_nomogram>\n")
   cat("  axes            ", paste(x$axes, collapse = ", "), "\n", sep = "")
   cat("  profiles checked ", x$profiles_checked,
       " at tabulated ticks\n", sep = "")
-  cat("  worst gap vs cp_predict() ",
+  cat("  worst gap vs mm_predict() ",
       format(x$worst_disagreement, digits = 3), " (tolerance ",
       format(x$tolerance), ")\n", sep = "")
   if (x$off_axis > 0L) {
