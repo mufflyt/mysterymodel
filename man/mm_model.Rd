@@ -49,15 +49,28 @@ unless both of its main effects are in the project's predictors. The
 specification requires that an interaction only be usable with its
 constituent main effects, and a formula is the last place to find out.
 
-Every count on the returned object describes the rows the model was
-estimated on, read back off the fit, not the rows it was handed. \code{rms}
-drops a row with a missing model variable before fitting, so the two differ
-whenever the development data is incomplete, and the difference is reported
-as \code{n_incomplete} and warned about rather than absorbed. It matters most for
+Which rows are modelled is decided once, before anything is fitted, and the
+\code{datadist}, the fit and the prediction schema are all built from that one
+frame. \code{rms} would otherwise drop a row with a missing model variable at fit
+time, leaving three parts of the same object describing three different
+samples: the fit estimated on the complete rows, the schema taking its
+ranges and levels from the supplied ones, and the datadist taking the
+limits that set a nomogram's drawn axis. A value no fitted row carried then
+came back labelled as interpolation, and the printed nomogram reached
+values the model was never estimated on.
+
+The difference is reported rather than absorbed, as \code{n_supplied},
+\code{n_incomplete} and \code{incomplete_by}, and warned about. It matters most for
 the sample-size gate, which would otherwise judge a sample larger than the
-one that exists and so be most lenient exactly where it should be strictest.
-Deciding the analysis sample belongs in \code{\link[=mm_clean]{mm_clean()}}, where the exclusion
-reaches the flow diagram, not in \code{na.action}.
+one that exists and so be most lenient exactly where it should be
+strictest. Deciding the analysis sample belongs in \code{\link[=mm_clean]{mm_clean()}}, where the
+exclusion reaches the flow diagram, not in \code{na.action}.
+
+A factor level carried only by dropped rows is removed and named in
+\code{lost_levels}. It has no rows left to estimate it from, \code{rms} answers one
+with a singular Hessian whose message identifies neither the variable nor
+the level, and leaving it in the schema would let \code{\link[=mm_predict]{mm_predict()}} admit a
+level the model cannot score.
 }
 \examples{
 cohort <- mm_synthetic_cohort(n = 300, seed = 1)

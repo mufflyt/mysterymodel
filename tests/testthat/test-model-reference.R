@@ -156,3 +156,94 @@ test_that("a split row with a missing split variable is not dropped", {
   broken$year[1] <- NA
   expect_error(mm_model(f$project, broken), "neither side of the split")
 })
+
+# One decision about which rows are modelled. Before this, `rms` fitted the
+# complete rows while the datadist and the schema described the supplied ones,
+# so three parts of the same object disagreed about the sample.
+
+edge_cohort <- function(seed = 1978) {
+  cohort <- mm_synthetic_cohort(n = 300, seed = seed)
+  # The only rows carrying an age above 95, and the reason they are dropped.
+  cohort$age[1:6] <- c(96, 97, 98, 99, 100, 101)
+  cohort$bmi[1:6] <- NA
+  cohort
+}
+
+test_that("the schema describes the rows fitted, not the rows supplied", {
+  cohort <- edge_cohort()
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"),
+                        positive_class = 1, seed = 1978)
+  model <- suppressWarnings(mm_model(project, cohort, nonlinear = "age"))
+
+  fitted_age <- cohort$age[stats::complete.cases(
+    cohort[, c("event", "age", "bmi", "sex")])]
+  expect_equal(model$schema$predictors$age$range, range(fitted_age))
+  expect_lt(model$schema$predictors$age$range[2], max(cohort$age))
+
+  # The consequence the schema exists for. An age no fitted row carried is
+  # extrapolation, and mm_predict() documents that it says so.
+  beyond <- data.frame(age = 99, bmi = 28,
+                       sex = factor("female", levels = c("female", "male")))
+  expect_true(mm_predict(model, beyond)$.extrapolated)
+})
+
+test_that("the datadist takes its limits from the rows fitted", {
+  cohort <- edge_cohort()
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"),
+                        positive_class = 1, seed = 1978)
+  model <- suppressWarnings(mm_model(project, cohort, nonlinear = "age"))
+
+  # The datadist sets the drawn nomogram's axis, so a limit from a row the
+  # model never saw prints an instrument reaching values it cannot support.
+  high <- unname(unlist(model$datadist$limits["High", "age"]))
+  expect_equal(high, model$schema$predictors$age$range[2])
+  expect_lt(high, max(cohort$age))
+})
+
+test_that("a level carried only by dropped rows is named, not a crash", {
+  cohort <- mm_synthetic_cohort(n = 300, seed = 1978)
+  cohort$indication <- as.character(cohort$indication)
+  cohort$indication[1:6] <- "urgency"
+  cohort$indication <- factor(cohort$indication)
+  cohort$bmi[1:6] <- NA
+  project <- mm_project("uds", "event",
+                        c("age", "bmi", "sex", "indication"),
+                        positive_class = 1, seed = 1978)
+
+  said <- character(0)
+  model <- withCallingHandlers(
+    mm_model(project, cohort, nonlinear = "age"),
+    warning = function(cond) {
+      said <<- c(said, conditionMessage(cond))
+      invokeRestart("muffleWarning")
+    })
+
+  # It used to be a singular Hessian, after which mm_adequacy() failed on the
+  # missing likelihood ratio with a message naming neither the variable nor
+  # the level nor the reason.
+  expect_s3_class(model, "mm_model")
+  expect_equal(model$lost_levels, list(indication = "urgency"))
+  expect_true(any(grepl("cannot be estimated", said)))
+  expect_true(any(grepl("urgency", said)))
+
+  # And the level is absent from the schema, so it is refused rather than
+  # scored by a model that has no coefficient for it.
+  expect_false("urgency" %in% model$schema$predictors$indication$levels)
+  unscorable <- data.frame(
+    age = 70, bmi = 28,
+    sex = factor("female", levels = c("female", "male")),
+    indication = "urgency")
+  expect_error(mm_predict(model, unscorable), "never saw: urgency")
+})
+
+test_that("an outcome that stops varying once rows drop says which", {
+  cohort <- mm_synthetic_cohort(n = 300, seed = 1978)
+  cohort$event <- 0L
+  cohort$event[1:5] <- 1L
+  cohort$bmi[1:5] <- NA          # every event is in an incomplete row
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"),
+                        positive_class = 1, seed = 1978)
+  expect_error(
+    suppressWarnings(mm_model(project, cohort)),
+    "does not vary among the 295 complete development row")
+})

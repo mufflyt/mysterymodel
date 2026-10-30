@@ -158,3 +158,14 @@ test_that("complete development data is unaffected", {
   expect_equal(model$n_supplied, nrow(cohort))
   expect_no_warning(capture.output(print(model)))
 })
+
+test_that("a likelihood ratio rms never computed is reported, not raised", {
+  # A fit that did not converge has no `Model L.R.` in its stats at all, so
+  # the gate receives a length-zero value rather than NA. `||` on that raises
+  # "missing value where TRUE/FALSE needed", which names nothing.
+  for (absent in list(NULL, numeric(0))) {
+    a <- mm_adequacy(n = 300, events = 30, parameters = 5,
+                     nagelkerke = 0.1, likelihood_ratio = absent)
+    expect_true(is.na(a$heuristic_shrinkage))
+  }
+})

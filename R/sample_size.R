@@ -37,7 +37,11 @@ mm_adequacy <- function(n, events, parameters, nagelkerke,
   # model's apparent signal that is not explained by its own degrees of
   # freedom. Below about 0.9 the coefficients are expected to be overfitted
   # by more than a tenth.
-  heuristic <- if (is.na(likelihood_ratio) || likelihood_ratio <= 0) {
+  # Length-zero as well as NA: a fit that did not converge has no
+  # `Model L.R.` in its stats at all, and `||` on that gives an error whose
+  # message names nothing. An uncomputable shrinkage is reported, not raised.
+  heuristic <- if (length(likelihood_ratio) != 1L ||
+                   is.na(likelihood_ratio) || likelihood_ratio <= 0) {
     NA_real_
   } else {
     (likelihood_ratio - parameters) / likelihood_ratio
