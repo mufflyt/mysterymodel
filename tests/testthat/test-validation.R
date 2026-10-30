@@ -98,7 +98,8 @@ test_that("discrimination comes with an interval where it is estimable", {
   expect_true(all(scored$c_stat < scored$c_upper))
 })
 
-test_that("B must be a positive number of resamples", {
+test_that("B must be a whole number of at least one resample", {
   f <- val_fixture()
-  expect_error(mm_validate(f$model, f$cohort, B = 0), "positive")
+  expect_error(mm_validate(f$model, f$cohort, B = 0),
+               "At least one resample")
 })

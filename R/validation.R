@@ -1,3 +1,60 @@
+#' Check a resample count before anything is drawn
+#'
+#' One contract, read by every entry point that resamples, so a public
+#' function cannot validate what a lower-level one then truncates.
+#'
+#' `as.integer(2.7)` is 2. A caller who asked for 2.7 resamples asked for
+#' something that does not exist, and silently giving them 2 answers a
+#' question they did not pose. The same reasoning covers `NA`, `NaN`, the
+#' infinities, a vector, and a string that looks like a number: each is
+#' refused by name rather than coerced into whatever `as.integer()` makes of
+#' it. An integer-valued double such as `200.0` is accepted, because it is a
+#' count written with a decimal point.
+#'
+#' The floor is 1 rather than something larger. One resample is computable and
+#' useless, and the useful threshold is already enforced elsewhere: the
+#' full-process bootstrap reports itself inadequate below four fifths of `B`,
+#' and so now does the fixed-model row. An arbitrary floor here would duplicate
+#' that judgement in a worse place.
+#'
+#' Validation happens before any seed is set or any resample drawn, so a
+#' refused call leaves the random-number state exactly as it found it.
+#'
+#' @param B The count to check.
+#' @param what The argument's name, for the message.
+#'
+#' @return `B` as a whole number, invisibly.
+#' @keywords internal
+mm_check_resamples <- function(B, what = "B") {
+  if (!is.numeric(B)) {
+    stop("`", what, "` must be a single whole number of resamples, and is ",
+         if (!length(B)) "empty" else paste0("of class ", class(B)[1]),
+         ".", call. = FALSE)
+  }
+  if (length(B) != 1L) {
+    stop("`", what, "` must be a single whole number of resamples, and has ",
+         "length ", length(B), ".", call. = FALSE)
+  }
+  if (is.na(B)) {
+    stop("`", what, "` is ", if (is.nan(B)) "NaN" else "NA",
+         ", which is not a number of resamples.", call. = FALSE)
+  }
+  if (!is.finite(B)) {
+    stop("`", what, "` is ", format(B), ". A bootstrap cannot be run an ",
+         "infinite number of times.", call. = FALSE)
+  }
+  if (B != trunc(B)) {
+    stop("`", what, "` is ", format(B), ", which is not a whole number of ",
+         "resamples. Truncating it to ", trunc(B), " would answer a question ",
+         "that was not asked.", call. = FALSE)
+  }
+  if (B < 1) {
+    stop("`", what, "` is ", format(B), ". At least one resample is needed ",
+         "to estimate optimism.", call. = FALSE)
+  }
+  invisible(as.integer(B))
+}
+
 #' Validate the model, on a stated basis
 #'
 #' Returns one row per basis, because the three numbers a clinical prediction
@@ -82,11 +139,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
   }
-  if (length(B) != 1L || !is.numeric(B) || B < 1) {
-    stop("`B` must be a single positive number of resamples.",
-         call. = FALSE)
-  }
-  B <- as.integer(B)
+  B <- mm_check_resamples(B)
   project <- model$project
   parts <- mm_split(project, cohort)
 

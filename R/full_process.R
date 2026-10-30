@@ -25,7 +25,8 @@
 #'
 #' @param model A [mm_model()].
 #' @param cohort The cohort.
-#' @param B Resamples.
+#' @param B Resamples, checked by [mm_check_resamples()] before anything is
+#'   drawn.
 #' @param min_valid Fewest successful resamples for the result to be
 #'   reported as adequate.
 #'
@@ -34,6 +35,7 @@
 #' @keywords internal
 mm_full_process <- function(model, cohort, B = 200L,
                             min_valid = ceiling(0.8 * B)) {
+  B <- mm_check_resamples(B)
   project <- model$project
   # The rows the model was fitted on, not the rows it was handed. Resampling
   # the supplied frame would draw rows no refit can use, so a resample's

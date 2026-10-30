@@ -11,7 +11,8 @@ mm_full_process(model, cohort, B = 200L, min_valid = ceiling(0.8 * B))
 
 \item{cohort}{The cohort.}
 
-\item{B}{Resamples.}
+\item{B}{Resamples, checked by \code{\link[=mm_check_resamples]{mm_check_resamples()}} before anything is
+drawn.}
 
 \item{min_valid}{Fewest successful resamples for the result to be
 reported as adequate.}
