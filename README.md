@@ -174,6 +174,8 @@ They are different estimators with their own Monte Carlo error, so a small gap b
 
 Resampling is by whole patient when the project declares a cluster. Resampling rows would treat two visits by one person as two independent facts, which narrows every interval it touches.
 
+**Invalid input is refused, not corrected.** A predictor that reproduces the outcome under another name used to fit happily and report an apparent c-statistic of 1.0000; `B = 2.7` ran two resamples; a predicted probability of 1.5 was clamped into a plausible Brier score. Each is now an error, because each silent correction produced a number a reader would believe ([DEC-004](inst/decisions.md)). Perfect separation is the deliberate exception: with four events it is as likely to be a small sample as a mistake, so it warns and the model still fits.
+
 **The nomogram is checked against the model, not assumed to match it.** `mm_nomogram()` reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with `mm_predict()`. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.
 
 **The reading error between ticks is measured and reported.** A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis's own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.

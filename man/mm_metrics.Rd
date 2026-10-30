@@ -7,9 +7,14 @@
 mm_metrics(p, y, basis, note = "", reference = NULL)
 }
 \arguments{
-\item{p}{Predicted probabilities.}
+\item{p}{Predicted probabilities. Must be numeric, the same length as \code{y},
+and within \verb{[0, 1]} where observed. A value outside that interval is
+refused rather than clamped, because clamping turns an upstream fault into
+a plausible score. \code{NA} and \code{NaN} are missing and are dropped pairwise,
+which is the package's one missing-value policy; a missing prediction is
+never read as a probability of zero.}
 
-\item{y}{0/1 outcome.}
+\item{y}{0/1 outcome, dropped pairwise with \code{p} where either is missing.}
 
 \item{basis}{Label for the row.}
 

@@ -4,7 +4,14 @@
 \alias{mm_model}
 \title{Fit the declared model with rms}
 \usage{
-mm_model(project, cohort, nonlinear = NULL, interactions = NULL, knots = 4L)
+mm_model(
+  project,
+  cohort,
+  nonlinear = NULL,
+  interactions = NULL,
+  knots = 4L,
+  check_leakage = TRUE
+)
 }
 \arguments{
 \item{project}{A \code{\link[=mm_project]{mm_project()}} configuration.}
@@ -20,6 +27,13 @@ restricted cubic splines.}
 prespecified interactions. Exploratory discovery is not this argument.}
 
 \item{knots}{Knots for each spline term.}
+
+\item{check_leakage}{Scan the development predictors for duplication of the
+outcome. \code{TRUE} for a declared model. \code{\link[=mm_full_process]{mm_full_process()}} passes \code{FALSE}
+when refitting inside a resample, because the declared cohort has already
+been scanned and a resample is a subset of it, so a match there is a
+property of the draw rather than of the analysis. It is not an override:
+there is no way to reach it with a cohort that has not been scanned.}
 }
 \value{
 An object of class \code{mm_model}.
@@ -43,6 +57,13 @@ frame would hold the cohort, the development rows and the split. The
 identifier column in particular is in none of them, so a saved model cannot
 carry patient identifiers into a place the data was never meant to go. The
 formula is built in \code{baseenv()} to keep that true.
+
+A predictor that reproduces the outcome is refused. A model given its own
+outcome under another name reports near-perfect discrimination, which reads
+as success, and the by-name check that \code{outcome} is not among \code{predictors}
+cannot see a renamed copy. Separation that is not duplication is reported
+instead of refused, because in a small cohort it can be real. See
+\code{\link[=mm_leakage]{mm_leakage()}}, including what it cannot tell you.
 
 Strong hierarchy is enforced rather than assumed: an interaction is refused
 unless both of its main effects are in the project's predictors. The

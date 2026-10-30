@@ -18,6 +18,13 @@
 #' carry patient identifiers into a place the data was never meant to go. The
 #' formula is built in `baseenv()` to keep that true.
 #'
+#' A predictor that reproduces the outcome is refused. A model given its own
+#' outcome under another name reports near-perfect discrimination, which reads
+#' as success, and the by-name check that `outcome` is not among `predictors`
+#' cannot see a renamed copy. Separation that is not duplication is reported
+#' instead of refused, because in a small cohort it can be real. See
+#' [mm_leakage()], including what it cannot tell you.
+#'
 #' Strong hierarchy is enforced rather than assumed: an interaction is refused
 #' unless both of its main effects are in the project's predictors. The
 #' specification requires that an interaction only be usable with its
@@ -55,6 +62,12 @@
 #' @param interactions List of length-two character vectors naming
 #'   prespecified interactions. Exploratory discovery is not this argument.
 #' @param knots Knots for each spline term.
+#' @param check_leakage Scan the development predictors for duplication of the
+#'   outcome. `TRUE` for a declared model. [mm_full_process()] passes `FALSE`
+#'   when refitting inside a resample, because the declared cohort has already
+#'   been scanned and a resample is a subset of it, so a match there is a
+#'   property of the draw rather than of the analysis. It is not an override:
+#'   there is no way to reach it with a cohort that has not been scanned.
 #'
 #' @return An object of class `mm_model`.
 #'
@@ -68,7 +81,8 @@
 #' fit
 #' @export
 mm_model <- function(project, cohort, nonlinear = NULL,
-                     interactions = NULL, knots = 4L) {
+                     interactions = NULL, knots = 4L,
+                     check_leakage = TRUE) {
   if (!inherits(project, "mm_project")) {
     stop("`project` must come from mm_project().", call. = FALSE)
   }
@@ -182,6 +196,17 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   }
   dev[[".mm_y"]] <- y
 
+  # Leakage is checked here and not in mm_project(), because here is the first
+  # point at which the effective development frame exists: after the split,
+  # after the complete-case eligibility DEC-003 settled, and after a level
+  # carried only by excluded rows has gone. Checking the supplied cohort would
+  # answer a question about rows the model will not see.
+  leakage <- if (isTRUE(check_leakage)) {
+    found <- mm_leakage(project, dev, y = y)
+    mm_report_leakage(found, project$outcome)
+    found
+  } else list()
+
   term_of <- function(p) {
     if (p %in% (nonlinear %||% character(0))) {
       sprintf("rms::rcs(%s, %d)", p, as.integer(knots))
@@ -247,6 +272,7 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
          lost_levels = lost,
+         leakage = leakage,
          eligibility = eligible[setdiff(names(eligible),
                                         c("usable", "predictable"))],
          n_held     = nrow(parts$held),
