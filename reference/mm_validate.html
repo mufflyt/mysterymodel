@@ -89,7 +89,10 @@ the <em>same formula</em>, which corrects the optimism of estimating
 coefficients. It does <strong>not</strong> repeat imputation, selection, tuning or
 interaction screening, so it is not validation of a modelling strategy
 that includes those steps. The specification requires that distinction be
-made rather than assumed, and this column is where it is made.</p></li>
+made rather than assumed, and this column is where it is made. It does
+draw whole clusters when the project declares one, by passing <code>cluster</code>
+through to <code><a href="https://rdrr.io/pkg/rms/man/predab.resample.html" class="external-link">rms::predab.resample()</a></code>, and it reports how many resamples
+actually fitted, because rms keeps only those and says so only when asked.</p></li>
 <li><p><strong>held out</strong>, rows the project's split reserved. Scored once.</p></li>
 <li><p><strong>bootstrap, full process</strong>, with <code>full_process = TRUE</code>. Refits the
 whole strategy inside every resample, so the optimism corrected includes

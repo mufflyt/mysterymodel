@@ -420,7 +420,7 @@ unless the caller says what to do with it:</p>
 <span><span class="va">validation</span></span>
 <span><span class="co">#&gt; &lt;mm_validation&gt;  full-process: TRUE</span></span>
 <span><span class="co">#&gt;   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)  slope=1.0000</span></span>
-<span><span class="co">#&gt;   bootstrap, fixed model   n=317   events=32   C=0.6950  slope=0.6799</span></span>
+<span><span class="co">#&gt;   bootstrap, fixed model   n=317   events=32   C=0.6908  slope=0.6302</span></span>
 <span><span class="co">#&gt;   bootstrap, full process  n=317   events=32   C=0.6913  slope=0.6511</span></span>
 <span><span class="co">#&gt;   held out                 n=153   events=18   C=0.5798 (0.4153-0.7444)  slope=0.3765</span></span>
 <span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 100 of 100 valid.</span></span></code></pre></div>
@@ -439,7 +439,7 @@ the table so that nobody has to take the point estimate on its own.</p>
 <code class="sourceCode R"><span><span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basis"</span>, <span class="st">"n"</span>, <span class="st">"events"</span>, <span class="st">"c_stat"</span>, <span class="st">"cal_slope"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                     basis   n events    c_stat cal_slope</span></span>
 <span><span class="co">#&gt; 1                apparent 317     32 0.7552632 1.0000000</span></span>
-<span><span class="co">#&gt; 2  bootstrap, fixed model 317     32 0.6950233 0.6799262</span></span>
+<span><span class="co">#&gt; 2  bootstrap, fixed model 317     32 0.6908499 0.6301615</span></span>
 <span><span class="co">#&gt; 3 bootstrap, full process 317     32 0.6913094 0.6511136</span></span>
 <span><span class="co">#&gt; 4                held out 153     18 0.5798354 0.3765198</span></span></code></pre></div>
 <p>The <code>note</code> column is where each row says what produced
@@ -448,7 +448,7 @@ it:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"* "</span>, <span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">basis</span>, <span class="st">": "</span>,</span>
 <span>           <span class="va">validation</span><span class="op">$</span><span class="va">metrics</span><span class="op">$</span><span class="va">note</span>, collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; * apparent: scored on the development rows</span></span>
-<span><span class="co">#&gt; * bootstrap, fixed model: rms::validate, B = 100. Refits the same formula; does not re-derive knots or levels, and resamples rows even when a cluster is declared</span></span>
+<span><span class="co">#&gt; * bootstrap, fixed model: rms::validate, 100 of 100 resample(s) fitted. Refits the same formula; does not re-derive knots or levels. Resampled by whole pid</span></span>
 <span><span class="co">#&gt; * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid</span></span>
 <span><span class="co">#&gt; * held out: year &gt;= 2023, scored once</span></span></code></pre></div>
 <p>The next article takes these four rows apart.</p>

@@ -50,7 +50,11 @@ The bases are:
   tuning or interaction screening, so it is not validation of a
   modelling strategy that includes those steps. The specification
   requires that distinction be made rather than assumed, and this column
-  is where it is made.
+  is where it is made. It does draw whole clusters when the project
+  declares one, by passing `cluster` through to
+  [`rms::predab.resample()`](https://rdrr.io/pkg/rms/man/predab.resample.html),
+  and it reports how many resamples actually fitted, because rms keeps
+  only those and says so only when asked.
 
 - **held out**, rows the project's split reserved. Scored once.
 

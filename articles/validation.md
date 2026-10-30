@@ -32,7 +32,7 @@ validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope",
                        "brier")]
 #>                     basis   n events    c_stat cal_slope      brier
 #> 1                apparent 404     45 0.6647478 1.0000000 0.09391697
-#> 2  bootstrap, fixed model 404     45 0.5989899 0.6841341         NA
+#> 2  bootstrap, fixed model 404     45 0.6067696 0.7126282         NA
 #> 3 bootstrap, full process 404     45 0.6065333 0.7074585 0.09828239
 #> 4                held out 196     22 0.7857889 1.7369817 0.08482979
 ```
@@ -187,25 +187,41 @@ visit is ever separated from its sibling, which is what makes the
 resample a draw of patients rather than a draw of rows wearing patient
 labels.
 
-The project declares `cluster_id = "pid"`, so the full-process bootstrap
-drew patients:
+The project declares `cluster_id = "pid"`, so both bootstraps draw
+patients:
 
 ``` r
 
 validation$clustered_by
 #> [1] "pid"
+validation$fixed_model$clustered_by
+#> [1] "pid"
 ```
 
-[`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html) does not
-take that declaration, which is why the fixed-model row says so in its
-own note rather than leaving a reader to assume otherwise.
+That second one was this package’s own omission for a while, and the
+note used to blame `rms` for it.
+[`rms::validate()`](https://rdrr.io/pkg/rms/man/validate.html) passes
+its extra arguments through to
+[`rms::predab.resample()`](https://rdrr.io/pkg/rms/man/predab.resample.html),
+which takes a `cluster` and draws whole units when it is given one, so
+nothing but the missing argument was stopping it.
 
 ``` r
 
-cat(validation$metrics$note[validation$metrics$basis ==
-                            "bootstrap, fixed model"], "\n")
-#> rms::validate, B = 100. Refits the same formula; does not re-derive knots or levels, and resamples rows even when a cluster is declared
+cat(strwrap(validation$metrics$note[validation$metrics$basis ==
+                                    "bootstrap, fixed model"], 72), sep = "\n")
+#> rms::validate, 100 of 100 resample(s) fitted. Refits the same formula;
+#> does not re-derive knots or levels. Resampled by whole pid
 ```
+
+The resample count in that note is the number `rms` actually fitted, not
+the number asked for. `predab.resample()` keeps only the resamples that
+converged and mentions the shortfall only when `pr = TRUE`, which
+`validate.lrm` leaves off, so a corrected index can be an average over
+the resamples that happened to work with nothing on the object to say
+so. The count comes back as the `n` column, and falling below four
+fifths of `B` is reported as inadequate, the same threshold the
+full-process row uses.
 
 ## Scoring any set of predictions
 
@@ -273,7 +289,7 @@ holey_validation <- suppressWarnings(
 holey_validation
 #> <mm_validation>  full-process: TRUE
 #>   apparent                 n=389   events=43   C=0.6605 (0.5669-0.7541)  slope=1.0000
-#>   bootstrap, fixed model   n=389   events=43   C=0.5986  slope=0.6775
+#>   bootstrap, fixed model   n=389   events=43   C=0.5894  slope=0.6522
 #>   bootstrap, full process  n=389   events=43   C=0.5971  slope=0.6921
 #>   held out                 n=175   events=19   C=0.7702 (0.6491-0.8914)  slope=1.6426
 #>   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both

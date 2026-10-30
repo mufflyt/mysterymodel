@@ -425,7 +425,7 @@ validation <- mm_validate(model, cohort$data, B = 100, full_process = TRUE)
 validation
 #> <mm_validation>  full-process: TRUE
 #>   apparent                 n=317   events=32   C=0.7553 (0.6691-0.8415)  slope=1.0000
-#>   bootstrap, fixed model   n=317   events=32   C=0.6950  slope=0.6799
+#>   bootstrap, fixed model   n=317   events=32   C=0.6908  slope=0.6302
 #>   bootstrap, full process  n=317   events=32   C=0.6913  slope=0.6511
 #>   held out                 n=153   events=18   C=0.5798 (0.4153-0.7444)  slope=0.3765
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 100 of 100 valid.
@@ -449,7 +449,7 @@ the table so that nobody has to take the point estimate on its own.
 validation$metrics[, c("basis", "n", "events", "c_stat", "cal_slope")]
 #>                     basis   n events    c_stat cal_slope
 #> 1                apparent 317     32 0.7552632 1.0000000
-#> 2  bootstrap, fixed model 317     32 0.6950233 0.6799262
+#> 2  bootstrap, fixed model 317     32 0.6908499 0.6301615
 #> 3 bootstrap, full process 317     32 0.6913094 0.6511136
 #> 4                held out 153     18 0.5798354 0.3765198
 ```
@@ -461,7 +461,7 @@ The `note` column is where each row says what produced it:
 cat(paste0("* ", validation$metrics$basis, ": ",
            validation$metrics$note, collapse = "\n"))
 #> * apparent: scored on the development rows
-#> * bootstrap, fixed model: rms::validate, B = 100. Refits the same formula; does not re-derive knots or levels, and resamples rows even when a cluster is declared
+#> * bootstrap, fixed model: rms::validate, 100 of 100 resample(s) fitted. Refits the same formula; does not re-derive knots or levels. Resampled by whole pid
 #> * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid
 #> * held out: year >= 2023, scored once
 ```
