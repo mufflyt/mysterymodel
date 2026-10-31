@@ -343,6 +343,12 @@ mm_interactions <- function(project, cohort, candidates,
   for (p in project$predictors) {
     if (is.factor(frame[[p]])) frame[[p]] <- droplevels(frame[[p]])
   }
+  # An invariant, not a filter. `frame` is derived by the procedure mm_model()
+  # uses, so in every reachable state the digests agree and this cannot fire:
+  # disabling it fails no test, which is the honest result of mutating it.
+  # It is kept because the two derivations are separate code, and the day one
+  # changes without the other is the day the design matrices below stop
+  # describing the sample the statistics are computed on.
   mm_same_development(base, frame, "every interaction test below")
   y <- mm_event_indicator(frame[[project$outcome]], project$positive_class)
   base_deviance <- unname(base$fit$deviance[length(base$fit$deviance)])
@@ -413,6 +419,10 @@ mm_interactions <- function(project, cohort, candidates,
     hit <- mm_anova_block(table, pair)
 
     blank$converged <- isFALSE(fitted$fit$fail)
+    # The measured rank, which at this point equals the added columns because
+    # that equality is what `identifiable` means. Writing the measured one is
+    # deliberate rather than defensive: the claim under test is the dimension
+    # the design matrix gained, and no mutation can tell the two apart here.
     blank$degrees_freedom <- rank$added_rank
     if (test == "LR") {
       # From the deviances, on rows whose digest has just been checked twice.
