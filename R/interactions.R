@@ -226,6 +226,58 @@ mm_interaction_support <- function(frame, pair, y) {
        note = note)
 }
 
+#' Whether a fitted block has an estimate at all
+#'
+#' Rank says whether the block is identifiable in the design matrix. This asks
+#' the separate question of whether the likelihood has an interior maximum,
+#' which it does not when the fitted values separate the outcome completely:
+#' the coefficient then grows without bound as iteration continues, and the
+#' statistic computed from where iteration happened to stop is not a test of
+#' anything.
+#'
+#' The test is exact rather than a tolerance. Complete separation of the
+#' fitted values means every non-event is given less risk than every event,
+#' so `max(p among non-events) < min(p among events)`. A model that is merely
+#' very good does not satisfy it: some non-event always outranks some event.
+#'
+#' Quasi-separation, where only part of the sample is at the boundary, is
+#' reported and not withheld. It makes an estimate fragile rather than
+#' absent, and the counts say so.
+#'
+#' @param fitted An [mm_model()].
+#' @param y The 0/1 outcome of the rows it was fitted on.
+#' @return A list: `converged`, `at_boundary`, `max_abs_coef`,
+#'   `complete_separation`, and a `note` describing what was found.
+#' @keywords internal
+mm_interaction_health <- function(fitted, y) {
+  risk <- stats::plogis(as.numeric(fitted$fit$linear.predictors))
+  coefficients <- abs(stats::coef(fitted$fit))
+  edge <- sum(risk < 1e-6 | risk > 1 - 1e-6)
+  events <- risk[y == 1L]
+  non_events <- risk[y == 0L]
+  separated <- length(events) > 0L && length(non_events) > 0L &&
+    max(non_events) < min(events)
+
+  note <- if (separated) {
+    sprintf(paste("the fitted values separate the outcome completely: every",
+                  "one of the %d non-event(s) is given less risk than every",
+                  "one of the %d event(s). The likelihood has no interior",
+                  "maximum, so the coefficient marks where iteration stopped",
+                  "and no statistic computed from it is a test"),
+            length(non_events), length(events))
+  } else if (edge > 0L) {
+    sprintf(paste("%d of %d fitted value(s) sit within 1e-6 of 0 or 1 and the",
+                  "largest coefficient is %.3g. The estimate is near the edge",
+                  "of the likelihood, which makes it fragile rather than",
+                  "absent, so the test is reported"),
+            edge, length(risk), max(coefficients))
+  } else ""
+
+  list(converged = isFALSE(fitted$fit$fail), at_boundary = edge,
+       max_abs_coef = max(coefficients), complete_separation = separated,
+       note = note)
+}
+
 #' The row of an rms anova table belonging to one interaction block
 #' @param table An [rms::anova.rms()] result.
 #' @param pair The two predictor names.
@@ -353,6 +405,7 @@ mm_interactions <- function(project, cohort, candidates,
   y <- mm_event_indicator(frame[[project$outcome]], project$positive_class)
   base_deviance <- unname(base$fit$deviance[length(base$fit$deviance)])
   base_df <- unname(base$fit$stats[["d.f."]])
+  base_parameters <- length(stats::coef(base$fit)) - 1L
 
   rows <- lapply(parsed, function(candidate) {
     pair <- candidate$pair
@@ -366,9 +419,17 @@ mm_interactions <- function(project, cohort, candidates,
       nonevents = length(y) - sum(y),
       added_parameters = rank$added_columns, added_rank = rank$added_rank,
       base_rank = rank$base_rank, base_columns = rank$base_columns,
+      base_parameters = base_parameters,
+      total_parameters = base_parameters + rank$added_columns,
+      events_per_parameter =
+        sum(y) / (base_parameters + rank$added_columns),
       cells = support$cells, smallest_cell = support$smallest_cell,
+      empty_cells = support$empty_cells,
       cells_without_events = support$cells_without_events,
-      converged = NA, estimable = rank$identifiable,
+      cells_without_non_events = support$cells_without_non_events,
+      converged = NA, at_boundary = NA_integer_,
+      max_abs_coef = NA_real_, complete_separation = NA,
+      estimable = rank$identifiable,
       lr_reference = NA_real_, lr_agrees = NA,
       status = NA_character_, reason = NA_character_,
       stringsAsFactors = FALSE)
@@ -387,11 +448,26 @@ mm_interactions <- function(project, cohort, candidates,
     if (is.character(fitted)) {
       blank$status <- "fit_failed"
       blank$converged <- FALSE
-      blank$reason <- paste0("the model with this block could not be fitted: ",
-                             fitted, ". ", support$counts)
+      # rms's own message, or this package's wrapping of it, already says the
+      # fit failed, so it is not prefixed with a second announcement.
+      blank$reason <- paste0(sub("\\.$", "", fitted), ". ", support$counts)
       return(blank)
     }
     mm_same_development(fitted, frame, paste("the test of", candidate$label))
+
+    health <- mm_interaction_health(fitted, y)
+    blank$at_boundary <- health$at_boundary
+    blank$max_abs_coef <- health$max_abs_coef
+    blank$complete_separation <- health$complete_separation
+    if (isTRUE(health$complete_separation)) {
+      # Identifiable in the design matrix and still without an estimate: the
+      # two failures are separate, which is why rank does not decide this one.
+      blank$status <- "separated"
+      blank$converged <- health$converged
+      blank$reason <- paste0(sub("\\.$", "", health$note), ". ",
+                             support$counts)
+      return(blank)
+    }
 
     added_df <- unname(fitted$fit$stats[["d.f."]]) - base_df
     if (added_df != rank$added_rank) {
@@ -447,7 +523,9 @@ mm_interactions <- function(project, cohort, candidates,
     blank$p_value <- stats::pchisq(blank$statistic, rank$added_rank,
                                    lower.tail = FALSE)
     blank$status <- "tested"
-    blank$reason <- support$note
+    blank$reason <- if (nzchar(health$note)) {
+      paste0(support$note, ". ", health$note)
+    } else support$note
     if (nzchar(rank$reason)) {
       blank$reason <- paste0(rank$reason, ". ", blank$reason)
     }
@@ -474,15 +552,19 @@ mm_interactions <- function(project, cohort, candidates,
                        "test_method", "statistic", "degrees_freedom",
                        "p_value", "p_adjusted", "n_evaluable", "events",
                        "nonevents", "added_parameters", "added_rank",
-                       "base_columns", "base_rank", "cells",
-                       "smallest_cell", "cells_without_events", "converged",
-                       "estimable", "lr_reference", "lr_agrees", "status",
-                       "reason")]
+                       "base_columns", "base_rank", "base_parameters",
+                       "total_parameters", "events_per_parameter",
+                       "cells", "smallest_cell", "empty_cells",
+                       "cells_without_events", "cells_without_non_events",
+                       "converged", "at_boundary", "max_abs_coef",
+                       "complete_separation", "estimable", "lr_reference",
+                       "lr_agrees", "status", "reason")]
 
   structure(
     list(screen = screen, mode = "prespecified", test = test,
          adjustment = adjustment, n_candidates = length(parsed),
          candidate_parameters = sum(screen$added_parameters),
+         base_parameters = base_parameters,
          base = list(n_dev = base$n_dev, events = base$events_dev,
                      parameters = length(stats::coef(base$fit)) - 1L,
                      fingerprint = base$fingerprint,
@@ -502,6 +584,11 @@ print.mm_interaction_screen <- function(x, ...) {
   cat("  candidates  ", x$n_candidates, " block(s) considered, ",
       x$candidate_parameters,
       " parameter(s) of candidate complexity in total\n", sep = "")
+  cat("              a model taking every one of them would spend ",
+      x$base_parameters + x$candidate_parameters, " parameter(s) on ",
+      x$base$events, " event(s), ", sprintf("%.1f", x$base$events /
+        (x$base_parameters + x$candidate_parameters)),
+      " each\n", sep = "")
   for (i in seq_len(nrow(s))) {
     cat(sprintf("  %-22s %s", s$interaction[i], s$status[i]))
     if (identical(s$status[i], "tested")) {

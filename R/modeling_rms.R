@@ -299,6 +299,23 @@ mm_model <- function(project, cohort, nonlinear = NULL,
 
   fit <- rms::lrm(form, data = dev, x = TRUE, y = TRUE)
 
+  # Convergence first. A fit that failed leaves no usable `y` on the object,
+  # so the row-count guard below would fire and blame a silent row drop for
+  # what is really a likelihood with no interior maximum, which is the
+  # commonest way a small cohort refuses an interaction.
+  if (isTRUE(fit$fail)) {
+    stop("rms could not fit this model: ", if (length(pairs))
+      paste0("the design includes ",
+             paste(vapply(pairs, paste, character(1), collapse = ":"),
+                   collapse = ", "), ", and ") else "",
+      "the estimate did not converge, which a singular Hessian usually ",
+      "means: some combination of the terms separates the outcome, so the ",
+      "likelihood has no interior maximum and there is no estimate to ",
+      "report. Fewer terms, or a cohort in which every combination carries ",
+      "both outcomes, is what fixes it. mm_interactions() reports this per ",
+      "block rather than raising it.", call. = FALSE)
+  }
+
   # `dev` is already complete on every model variable, so this should never
   # fire. It is here because a silent further drop would put the fit and the
   # counts back out of step, which is the whole defect this ordering fixes.
