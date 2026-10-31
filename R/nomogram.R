@@ -432,7 +432,20 @@ mm_nomogram_points <- function(nom, profile) {
 #' @keywords internal
 mm_reading_error <- function(nom, model, per_gap = 5L) {
   vals <- mm_axis_values(nom, model$project$predictors)
-  continuous <- names(vals)[vapply(vals, is.numeric, logical(1)) &
+  # Continuous according to the schema, which records what the model was
+  # fitted with, and not according to the axis values. `rms` tabulates an
+  # ordered factor's levels as the numbers it scores them by, so an axis
+  # reading 1, 2, 3, 4 looks continuous and is not: interpolating it gives
+  # 1.5, mm_restore_levels() makes that NA because it is not a level, and
+  # mm_predict() then refuses the whole profile. Before this, a model with
+  # an ordered-factor predictor could not be drawn at all.
+  numeric_predictor <- function(p) {
+    spec <- model$schema$predictors[[p]]
+    !is.null(spec) && identical(spec$type, "numeric")
+  }
+  continuous <- names(vals)[vapply(names(vals), numeric_predictor,
+                                   logical(1)) &
+                              vapply(vals, is.numeric, logical(1)) &
                               lengths(vals) > 1L]
   if (!length(continuous)) {
     return(list(bound = NA_real_, lp = NA_real_, by_axis = NULL))

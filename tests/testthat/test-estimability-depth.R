@@ -211,6 +211,10 @@ test_that("a singular Hessian names the design or the data, whichever it is", {
   # 48 dimensions and 13 coefficients are not identified. The message used to
   # blame separation for both causes, and the fix differs: drop a level, or
   # reduce the model.
+  # caret is a Suggests, so it may not be there. The invariance this test
+  # asserts is also covered on synthetic data above; what caret adds is a
+  # published cohort that really is encoded this way.
+  skip_if_not_installed("caret")
   data(GermanCredit, package = "caret", envir = environment())
   credit <- GermanCredit
   credit$bad <- as.integer(credit$Class == "Bad")
@@ -250,6 +254,7 @@ test_that("a singular Hessian names the design or the data, whichever it is", {
 test_that("the event of a Bad/Good outcome must be declared", {
   # German Credit again. Sort puts Bad first, so an inferred event would be
   # Good: a model of creditworthiness reported as a model of default.
+  skip_if_not_installed("caret")
   data(GermanCredit, package = "caret", envir = environment())
   expect_error(mm_project("gc", "Class", c("Duration", "Amount"),
                           cohort = GermanCredit),
@@ -257,4 +262,39 @@ test_that("the event of a Bad/Good outcome must be declared", {
   expect_no_error(mm_project("gc", "Class", c("Duration", "Amount"),
                              positive_class = "Bad",
                              cohort = GermanCredit))
+})
+
+test_that("a rank-deficient design is named without needing caret", {
+  # The same property as the German Credit test above, on indicator columns
+  # built here, so the check does not depend on an optional package.
+  set.seed(1978)
+  n <- 400
+  group <- sample(c("a", "b", "c"), n, TRUE)
+  cohort <- data.frame(
+    x = stats::rnorm(n),
+    is_a = as.integer(group == "a"),
+    is_b = as.integer(group == "b"),
+    is_c = as.integer(group == "c"),
+    y = stats::rbinom(n, 1L, 0.3))
+  # Every level kept, so the three indicators sum to one on every row.
+  expect_true(all(cohort$is_a + cohort$is_b + cohort$is_c == 1L))
+
+  project <- mm_project("ind", "y", c("x", "is_a", "is_b", "is_c"),
+                        positive_class = 1, cohort = cohort, seed = 1978)
+  design <- stats::model.matrix(~ x + is_a + is_b + is_c, data = cohort)
+  design <- design[, colnames(design) != "(Intercept)", drop = FALSE]
+  expect_equal(ncol(design), 4L)
+  expect_equal(mysterymodel:::mm_matrix_rank(design), 3L)
+
+  raised <- tryCatch(suppressWarnings(mm_model(project, cohort)),
+                     error = function(e) conditionMessage(e))
+  expect_true(is.character(raised))
+  expect_match(raised, "the reason is the design and not the data")
+  expect_match(raised, "4 column\\(s\\) span only 3 dimension\\(s\\)")
+  expect_match(raised, "sum to the intercept")
+
+  # Dropping one indicator makes it estimable, which is the advice given.
+  fixed <- mm_project("ind", "y", c("x", "is_b", "is_c"),
+                      positive_class = 1, cohort = cohort, seed = 1978)
+  expect_s3_class(suppressWarnings(mm_model(fixed, cohort)), "mm_model")
 })

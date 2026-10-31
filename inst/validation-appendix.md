@@ -18,7 +18,7 @@ why most of the defects listed at the end were found there.
 
 ## 1. The test suite
 
-`testthat`, 24 files, **268 test blocks containing 1059 assertions**, zero
+`testthat`, 24 files, **271 test blocks containing 1079 assertions**, zero
 failures and zero skips. The package has 10 exported functions, 9 registered
 print methods and 45 internal `mm_` functions across 15 source files.
 
@@ -102,11 +102,11 @@ aliasing, when `model.matrix()` drops incomplete rows itself.
 
 ## 4. External validation
 
-Twelve cohorts from outside this package. Provenance, licences and checksums
+Fourteen cohorts and reference examples from outside this package. Provenance, licences and checksums
 are in `benchmarks.md`; the runnable comparison is
 `data-raw/external_benchmark.R`.
 
-Twelve cohorts, and one distinction among them: `GermanCredit` arrives with
+Fourteen, and one distinction among them: `GermanCredit` arrives with
 `caret`, which can be a declared `Suggests`, so its checks run on every build.
 Everything else needs a network fetch or an undeclared package, so for those
 the invariance runs on synthetic data and the external comparison is recorded
@@ -128,6 +128,9 @@ here instead.
 | `rms` `?validate.lrm` | the author's spline-by-factor example | 12 terms, coefficients, probabilities, deviance all **0**; corrected C, slope and intercept exact |
 | `pminternal` | optimism correction by an independent implementation | corrected C, slope and intercept to **six decimals** given the same resamples |
 | `caret::GermanCredit` | a one-hot design with every level kept | 61 columns spanning 48 dimensions, refused with the deficiency named |
+| `NHANES::NHANES` | missingness and repeated subjects at scale | ledger reconciles with `complete.cases` on three predictor sets; `glm` to 5.7e-14 |
+| `MASS::birthwt` nomogram | points read back against prediction | **2.22e-16** over 29 tick profiles; bound exactly 0 with no spline |
+| `rms` `?nomogram` | a spline by a factor, and a spline by a spline | the first drawn and read back to **2.22e-16**; the second refused, and rms draws it only with `interact=` |
 
 ### Tolerances, and why they differ
 
@@ -146,6 +149,35 @@ here instead.
   ordered against nominal, and a moved baseline all span the same space and
   must agree on everything except the coefficients.
 
+### Nomogram-specific evidence
+
+A nomogram is the one artifact a clinician reads by hand, so the checks are
+about the printed instrument and not only the fit behind it.
+
+* **Points consistency.** `mm_nomogram()` reconstructs risk by summing axis
+  points and interpolating the printed linear-predictor axis, consulting no
+  model object, and refuses to return if the result disagrees with
+  `mm_predict()`. Measured at 2.22e-16 on `birthwt`, 2.22e-16 on Harrell's
+  spline-by-factor example and about 1.7e-16 on three encodings of one
+  predictor.
+* **Two parameterisations, one sheet.** A nominal and an ordered encoding of
+  the same four-level predictor allocate points identical to twelve decimal
+  places, 100.000000000, 56.464148145, 13.616803512 and 0, while their
+  coefficients differ entirely. This is why the comparison is on points and
+  fitted probabilities rather than on coefficient names.
+* **What cannot be drawn.** A block crossing two continuous predictors is
+  refused before drawing. `rms`'s own example takes the route the refusal
+  describes, `interact = list(age = c(20, 40, 60))`, and produces one axis per
+  setting: `cholesterol (age=20)`, `cholesterol (age=40)`,
+  `cholesterol (age=60)`.
+* **Save and reload.** A fitted model written to disk and read back predicts
+  identically to ten decimal places, in 6.1 KB, carrying no copy of the
+  cohort.
+* **Unsupported shapes.** `lsp()`, a piecewise-linear term, and `pol()`, a
+  polynomial, are not expressible here; only `rcs()`. Harrell's published
+  examples use both, so those terms entered linearly when his models were
+  reproduced, and the difference is stated rather than absorbed.
+
 ### A trap worth naming
 
 Four coefficient comparisons in this work were made **by position** across
@@ -159,7 +191,7 @@ checked before anything is compared.**
 
 ## 5. What the external cohorts found
 
-Seven defects, none reachable from this package's own fixtures. Each is
+Eight defects, none reachable from this package's own fixtures. Each is
 recorded in `decisions.md` with its reasoning.
 
 | found on | defect | why the fixtures missed it |
@@ -170,9 +202,10 @@ recorded in `decisions.md` with its reasoning.
 | `ISLR2::Default` | the event inferred as `sort(labels)[2]`, reversing every coefficient while the c-statistic stayed identical | the synthetic outcome is 0/1, where 1 is unambiguously the event |
 | IBM Telco | an identifier accepted as a predictor; a rank-deficient baseline reported as a block failure | no fixture carried an identifier or structurally nested categories |
 | `caret::GermanCredit` | a singular Hessian blamed on separation when the cause was a rank-deficient design, which has a different fix | no fixture was one-hot encoded with its reference levels retained |
+| three encodings of one predictor, drawn | a model with an ordered predictor could not be drawn at all: the between-tick scan read the axis values rather than the schema, and `rms` tabulates an ordered factor's levels as the numbers it scores them by, so 1, 2, 3, 4 looked continuous and was interpolated to 1.5 | ordered factors had only just been permitted, and no fixture drew one |
 | `pminternal` | corrected figures printed to eight digits with their Monte Carlo error hidden by a fixed seed | the seed is pinned by design, so no run of the suite could show the variation |
 
-The pattern is worth stating: four of the seven were cases where a *default*
+The pattern is worth stating: four of the eight were cases where a *default*
 was doing the deciding — a plan inherited through `NULL`, a sort order, a
 pinned seed — and a fixture that never exercised the default could not see
 it. The other three were shapes of data the fixtures do not contain: an

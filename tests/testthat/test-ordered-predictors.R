@@ -147,3 +147,57 @@ test_that("an ordered factor whose labels are not numbers is refused", {
                           positive_class = 1, cohort = cohort),
                "judgement about spacing")
 })
+
+test_that("a model with an ordered predictor can be drawn at all", {
+  # Found by drawing nomograms from the three encodings of one predictor.
+  # mm_reading_error() decided which axes were continuous from the axis
+  # values, and rms tabulates an ordered factor's levels as the numbers it
+  # scores them by. An axis reading 1, 2, 3, 4 therefore looked continuous,
+  # was interpolated to 1.5, which is not a level, and mm_restore_levels()
+  # turned it into NA: three gaps at five interior points each gave fifteen
+  # unscoreable profiles and mm_predict() refused the lot, so the nomogram
+  # could not be drawn at all.
+  cohort <- ord_cohort()
+  for (predictor in c("rank_nominal", "rank_ordered", "rank_score")) {
+    fitted <- ord_fit(cohort, predictor)
+    nom <- mm_nomogram(fitted, out_dir = NULL)
+    expect_lt(nom$worst_disagreement, 1e-6)
+    expect_s3_class(nom, "mm_nomogram")
+  }
+
+  # The bound is taken over the continuous axes only, which for the ordered
+  # encoding means gre and gpa and not the ordinal term.
+  ordered_fit <- ord_fit(cohort, "rank_ordered")
+  nom <- mm_nomogram(ordered_fit, out_dir = NULL)
+  expect_false("rank_ordered" %in% rownames(nom$reading_error_by_axis))
+  expect_setequal(rownames(nom$reading_error_by_axis), c("gre", "gpa"))
+})
+
+test_that("nominal and ordered encodings draw the same nomogram", {
+  # The property a clinician depends on and the coefficients hide: two
+  # parameterisations of one model allocate the same points. Compared on the
+  # points themselves, because the coefficients differ by construction.
+  cohort <- ord_cohort()
+  nominal <- ord_fit(cohort, "rank_nominal")
+  ordered_fit <- ord_fit(cohort, "rank_ordered")
+  nom_a <- mm_nomogram(nominal, out_dir = NULL)
+  nom_b <- mm_nomogram(ordered_fit, out_dir = NULL)
+
+  points_of <- function(nom, predictor) {
+    element <- nom$nomogram[[predictor]]
+    stats::setNames(element$points, as.character(element[[predictor]]))
+  }
+  a <- points_of(nom_a, "rank_nominal")
+  b <- points_of(nom_b, "rank_ordered")
+  expect_setequal(names(a), names(b))
+  expect_equal(unname(a[names(b)]), unname(b), tolerance = 1e-8)
+
+  # And the coefficients do not match, which is why the points are compared.
+  expect_false(identical(names(stats::coef(nominal$fit)),
+                         names(stats::coef(ordered_fit$fit))))
+
+  # A numeric score is a different model and may draw a different sheet.
+  scored <- ord_fit(cohort, "rank_score")
+  expect_lt(length(stats::coef(scored$fit)),
+            length(stats::coef(nominal$fit)))
+})
