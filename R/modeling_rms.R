@@ -65,6 +65,9 @@
 #'   detail.
 #' @param interactions Prespecified interaction blocks. `NULL` takes the
 #'   project's, with departures recorded the same way.
+#' @param reference Comparison categories for categorical predictors. `NULL`
+#'   takes the project's. Applied before the `datadist`, the fit and the
+#'   schema, so every one of them agrees about which level is the baseline.
 #' @param knots Knots for each spline term. `NULL` takes the project's.
 #' @param check_leakage Scan the development predictors for duplication of the
 #'   outcome. `TRUE` for a declared model. [mm_full_process()] passes `FALSE`
@@ -85,7 +88,7 @@
 #' fit
 #' @export
 mm_model <- function(project, cohort, nonlinear = NULL,
-                     interactions = NULL, knots = NULL,
+                     interactions = NULL, reference = NULL, knots = NULL,
                      check_leakage = TRUE) {
   if (!inherits(project, "mm_project")) {
     stop("`project` must come from mm_project().", call. = FALSE)
@@ -119,6 +122,18 @@ mm_model <- function(project, cohort, nonlinear = NULL,
     if (!identical(label(interactions), label(project$interactions))) {
       departures <- c(departures, note_departure(
         "interactions", label(project$interactions), label(interactions)))
+    }
+  }
+  if (is.null(reference)) {
+    reference <- project$reference
+  } else if (!is.null(project$reference)) {
+    flat <- function(r) {
+      if (!length(r)) return(character(0))
+      sort(sprintf("%s=%s", names(r), unlist(r)))
+    }
+    if (!identical(flat(reference), flat(project$reference))) {
+      departures <- c(departures, note_departure(
+        "reference", flat(project$reference), flat(reference)))
     }
   }
   if (is.null(knots)) {
@@ -188,6 +203,22 @@ mm_model <- function(project, cohort, nonlinear = NULL,
     }
   }
 
+  # Checked here too, because a project may have been written without a
+  # cohort to check it against, and rms answers an ordered factor from inside
+  # Design() with advice about a global option the analyst never set.
+  ordered_predictors <- Filter(function(p) is.ordered(cohort[[p]]) &&
+                                 !is.numeric(levels(cohort[[p]])),
+                               project$predictors)
+  if (length(ordered_predictors)) {
+    stop("ordered factor(s) among the predictors: ",
+         paste(ordered_predictors, collapse = ", "),
+         ". `rms::lrm()` refuses one with non-numeric levels. Drop the ",
+         "ordering with `factor(x, ordered = FALSE)` for one parameter per ",
+         "level, or score the levels and enter the column as numeric for a ",
+         "trend. See mm_project() for why the choice is not made here.",
+         call. = FALSE)
+  }
+
   parts <- mm_split(project, cohort)
   supplied <- parts$dev
 
@@ -238,12 +269,44 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # named. Removing it is also what makes mm_predict() refuse it later: a
   # level the model cannot score must not be in the schema that admits it.
   lost <- list()
+  # A factor's first level is the baseline every other coefficient for it is
+  # measured against. Dropping a level that happens to be first moves that
+  # baseline, and the coefficient names do not change, so two fits of the
+  # same declared model can report `indication=prolapse` against two
+  # different comparison categories. The level loss was already reported; the
+  # consequence was not.
+  reference_moved <- list()
   for (p in project$predictors) {
     if (!is.factor(supplied[[p]]) && !is.character(supplied[[p]])) next
-    gone <- setdiff(levels(factor(supplied[[p]])),
-                    levels(factor(dev[[p]])))
+    was <- levels(factor(supplied[[p]]))
+    gone <- setdiff(was, levels(factor(dev[[p]])))
     if (length(gone)) lost[[p]] <- gone
     if (is.factor(dev[[p]])) dev[[p]] <- droplevels(dev[[p]])
+    now <- levels(factor(dev[[p]]))
+    # A declared baseline is applied here, before the datadist, the fit and
+    # the schema, so all three agree about which level is first. A declared
+    # one that no eligible row carries is refused rather than quietly
+    # replaced by the next level along, which is the whole reason for
+    # declaring it.
+    wanted <- reference[[p]]
+    if (!is.null(wanted)) {
+      if (!as.character(wanted) %in% now) {
+        stop("`reference$", p, "` declares the baseline \"", wanted,
+             "\", and no row that survived eligibility carries it",
+             if (length(gone) && as.character(wanted) %in% gone)
+               ": it left with the rows dropped for incompleteness" else "",
+             ". The levels left are ", paste(now, collapse = ", "),
+             ". A declared baseline is refused rather than replaced, ",
+             "because every coefficient for this predictor is measured ",
+             "against it.", call. = FALSE)
+      }
+      dev[[p]] <- stats::relevel(factor(dev[[p]]), ref = as.character(wanted))
+      now <- levels(dev[[p]])
+    }
+    if (length(now) && !identical(was[1], now[1]) && is.null(wanted)) {
+      # Only an undeclared move is a finding. A declared one is the plan.
+      reference_moved[[p]] <- c(from = was[1], to = now[1])
+    }
   }
   if (length(lost)) {
     warning("level(s) carried only by the dropped rows cannot be estimated ",
@@ -253,6 +316,16 @@ mm_model <- function(project, cohort, nonlinear = NULL,
                                  collapse = "/")),
                   collapse = "; "),
             ". mm_predict() will refuse them by name rather than score them.",
+            if (length(reference_moved))
+              paste0(" The comparison category moved with them: ",
+                     paste(vapply(names(reference_moved), function(v)
+                       sprintf("%s is now measured against %s and not %s", v,
+                               reference_moved[[v]][["to"]],
+                               reference_moved[[v]][["from"]]),
+                       character(1)), collapse = "; "),
+                     ". Every other coefficient for that predictor means ",
+                     "something different from a fit where the level ",
+                     "survived, under the same name."),
             call. = FALSE)
   }
 
@@ -360,6 +433,8 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
          lost_levels = lost,
+         reference_moved = reference_moved,
+         reference = reference,
          leakage = leakage,
          eligibility = eligible[setdiff(names(eligible), "usable")],
          n_held     = nrow(parts$held),
@@ -394,6 +469,12 @@ print.mm_model <- function(x, ...) {
         " supplied row(s), incomplete on ",
         paste(names(x$incomplete_by), collapse = ", "),
         "\n", sep = "")
+  }
+  for (v in names(x$reference_moved)) {
+    cat("  BASELINE   ", v, " is measured against ",
+        x$reference_moved[[v]][["to"]], ", not ",
+        x$reference_moved[[v]][["from"]], ", which left with the dropped ",
+        "rows\n", sep = "")
   }
   if (x$n_held > 0L) {
     cat("  held out   ", x$n_held, " rows\n", sep = "")

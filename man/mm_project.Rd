@@ -15,6 +15,7 @@ mm_project(
   cluster_id = NULL,
   nonlinear = NULL,
   interactions = NULL,
+  reference = NULL,
   knots = 4L,
   seed = 1978L
 )
@@ -60,6 +61,17 @@ choice is worth before it is written down.}
 \item{interactions}{Optional list of length-two character vectors naming
 prespecified interaction blocks. Exploratory discovery is not this
 argument; \code{\link[=mm_interactions]{mm_interactions()}} reports evidence and selects nothing.}
+
+\item{reference}{Optional named list giving the comparison category for
+categorical predictors, as \code{list(sex = "male")}. Under treatment
+contrasts the first level is the baseline every other coefficient for
+that predictor is measured against, and \code{factor()} makes it the
+alphabetically first value unless someone says otherwise. That is a
+reporting decision taken by a sort order, so it belongs in the plan
+beside the spline and interaction terms. Declaring it also fixes the
+baseline against a level being lost: \code{\link[=mm_model]{mm_model()}} refuses a declared
+reference that no eligible row carries, rather than quietly measuring
+against the next level along.}
 
 \item{knots}{Knots for each spline term.}
 

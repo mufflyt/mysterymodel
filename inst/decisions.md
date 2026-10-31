@@ -565,3 +565,72 @@ which the reader must choose, and the axis and predictor counts beside it.
 Nothing numerical moved: coefficients, predictions, every validation basis,
 nomogram readings, adequacy, ledgers and random-number state are identical at
 tolerance zero. The printed output of three objects changed.
+
+## DEC-010: how a categorical predictor enters the model is part of the plan
+
+**Settles:** which level a categorical predictor is measured against, and the
+two kinds of data this package refuses rather than mis-fits.
+**Date:** 2026-10-31.
+
+### The baseline was set by a sort order
+
+Under treatment contrasts a factor's first level is the comparison category
+every other coefficient for that predictor is measured against. `factor()`
+makes it the alphabetically first value, so in this package's own fixtures
+`sex` was measured against `female` and `indication` against `incontinence`
+because of the alphabet. That is a reporting decision, and it was being taken
+by `sort()`.
+
+Worse, it could move. [mm_model()] droplevels a level carried only by rows
+eligibility excluded, and if that level happened to be first the baseline
+shifted while the coefficient names did not: `indication=prolapse` read
+-0.3533 in one fit and -0.3337 in another, the same term against two
+different comparison categories. The level loss was already reported in
+`lost_levels`; its consequence was not.
+
+`reference` is now a field of [mm_project()], validated against the cohort
+when the plan is written, and applied before the `datadist`, the fit and the
+prediction schema so that all three agree which level leads. A nomogram axis
+and `mm_predict()`'s refusal of an unseen level both read those, which is why
+one place had to decide it.
+
+It reparameterises the report and not the model. Every prediction, the
+apparent discrimination and the deviance are identical with and without a
+declared baseline, and a test asserts all three, because that equality is
+what makes the feature safe to use.
+
+A declared baseline that no eligible row carries is **refused, not replaced**.
+Replacing it would measure every coefficient for that predictor against a
+level nobody chose, under the names the plan asked for. An undeclared move is
+still possible and is now reported, in the warning, in `reference_moved` and
+on a `BASELINE` line when the model prints.
+
+### Two kinds of data this package cannot model
+
+Both were found by comparing against rms on datasets outside the package's
+own fixtures, and both used to fail late or misleadingly.
+
+**A tabulation is not an outcome.** `mm_project()` accepted `ncases` from
+`datasets::esoph`, a column of event counts per group, because the column
+takes more than one distinct value. `mm_model()` then advised setting
+`positive_class`, and that advice would have **worked**: it would have fitted
+a model of exactly that many events per group. A column with more than two
+distinct non-missing values and no declared positive class is now refused when
+the plan is written, and the message names the tabulation case specifically,
+because expanding to one row per patient is the fix.
+
+**An ordered factor cannot be fitted.** `rms::lrm()` refuses one with
+non-numeric levels from inside `Design()`, advising a change to the global
+contrast option, which rms's own documentation warns against relying on. The
+refusal is now this package's, naming the predictor and the two routes that
+work: drop the ordering for one parameter per level, or score the levels and
+enter the column as numeric for a trend. Both are defensible and they answer
+different questions, so neither is chosen here.
+
+`rms::scored()` is rms's own machinery for an ordinal predictor and fits,
+tests its own departure from linearity, draws a nomogram axis and validates,
+but only when the ordered factor's levels are numeric; `esoph`'s "25-34" is
+refused by `scored()` too. Supporting it would mean an `ordinal` field beside
+`nonlinear`, and the scores for labelled categories are a clinical judgement
+rather than a coercion. It is not implemented, and the refusal above will need
+the third route added to it when it is.

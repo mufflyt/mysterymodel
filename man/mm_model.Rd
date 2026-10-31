@@ -9,6 +9,7 @@ mm_model(
   cohort,
   nonlinear = NULL,
   interactions = NULL,
+  reference = NULL,
   knots = NULL,
   check_leakage = TRUE
 )
@@ -29,6 +30,10 @@ detail.}
 
 \item{interactions}{Prespecified interaction blocks. \code{NULL} takes the
 project's, with departures recorded the same way.}
+
+\item{reference}{Comparison categories for categorical predictors. \code{NULL}
+takes the project's. Applied before the \code{datadist}, the fit and the
+schema, so every one of them agrees about which level is the baseline.}
 
 \item{knots}{Knots for each spline term. \code{NULL} takes the project's.}
 
