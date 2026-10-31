@@ -151,7 +151,7 @@ that:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>intercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, offset <span class="op">=</span> <span class="va">lp</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>  slope     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">lp</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    intercept        slope </span></span>
-<span><span class="co">#&gt; 4.971539e-16 1.000000e+00</span></span></code></pre></div>
+<span><span class="co">#&gt; 8.172466e-17 1.000000e+00</span></span></code></pre></div>
 <p>The package detects the identity rather than assuming it, so a
 fitting method that does not force it, a penalized fit for instance,
 would have its apparent calibration reported as the estimate it would
@@ -180,7 +180,7 @@ detail object names what was actually repeated:</p>
 <span><span class="va">detail</span><span class="op">$</span><span class="va">covers</span></span>
 <span><span class="co">#&gt; [1] "knot placement" "datadist"       "factor levels"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">detail</span><span class="op">$</span><span class="va">note</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid</span></span></code></pre></div>
+<span><span class="co">#&gt; full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid. The correction is a mean over resamples and carries a Monte Carlo standard error of 0.00441 on the c-statistic and 0.02021 on the slope, so these figures are determined to about 2 decimal place(s) and not to as many as they print with</span></span></code></pre></div>
 <p><code>covers</code> is a list that will grow. Imputation, selection,
 tuning and interaction screening are not re-executed, because the
 package does not do them yet. A strategy including any of them is not
@@ -473,7 +473,10 @@ two ways it is incomplete are not the same thing.</p>
 <span><span class="co">#&gt;   held out                 n=175   19/156 C=0.7702 (0.6491-0.8914)  slope=1.6426</span></span>
 <span><span class="co">#&gt;   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both</span></span>
 <span><span class="co">#&gt;   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both</span></span>
-<span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.</span></span></code></pre></div>
+<span><span class="co">#&gt;   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.</span></span>
+<span><span class="co">#&gt;   Its correction carries a Monte Carlo standard error of 0.00632 on C; rms does not return</span></span>
+<span><span class="co">#&gt;   the per-resample values its own row is averaged over, so the</span></span>
+<span><span class="co">#&gt;   same figure cannot be given for the fixed-model row.</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">holey_validation</span><span class="op">$</span><span class="va">eligibility</span><span class="op">$</span><span class="va">held_out</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 7</span></span>
@@ -578,7 +581,7 @@ so a table cannot drift from its model without the pairing changing:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "0c5c1900a0dbb975"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "92df44fff5c5dae3"</span></span></code></pre></div>
 <p>Report the held-out row when a split exists, the full-process row
 when it does not, the apparent row beside either so the optimism is
 visible, and the <code>note</code> column verbatim in the

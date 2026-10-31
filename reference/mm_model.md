@@ -14,6 +14,7 @@ mm_model(
   cohort,
   nonlinear = NULL,
   interactions = NULL,
+  reference = NULL,
   knots = NULL,
   check_leakage = TRUE
 )
@@ -46,6 +47,12 @@ mm_model(
 
   Prespecified interaction blocks. `NULL` takes the project's, with
   departures recorded the same way.
+
+- reference:
+
+  Comparison categories for categorical predictors. `NULL` takes the
+  project's. Applied before the `datadist`, the fit and the schema, so
+  every one of them agrees about which level is the baseline.
 
 - knots:
 
@@ -140,5 +147,5 @@ fit
 #>   developed  300 rows, 28 events
 #>   parameters 7 non-intercept, 1097 short of the sample they need
 #>   apparent C 0.7126
-#>   fingerprint fba075b46006604c
+#>   fingerprint 44e69196a06c13b7
 ```

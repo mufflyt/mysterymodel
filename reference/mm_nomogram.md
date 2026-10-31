@@ -83,7 +83,7 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex
 #>   profiles checked 20 at tabulated ticks
-#>   worst gap vs mm_predict() 4.16e-17 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
 #>   between-tick reading      0.00881 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
 ```

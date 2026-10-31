@@ -67,6 +67,7 @@ quietly disagree.</p>
 <span>  cluster_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nonlinear <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  interactions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  knots <span class="op">=</span> <span class="fl">4L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1978L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -135,6 +136,19 @@ choice is worth before it is written down.</p></dd>
 <dd><p>Optional list of length-two character vectors naming
 prespecified interaction blocks. Exploratory discovery is not this
 argument; <code><a href="mm_interactions.html">mm_interactions()</a></code> reports evidence and selects nothing.</p></dd>
+
+
+<dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
+<dd><p>Optional named list giving the comparison category for
+categorical predictors, as <code>list(sex = "male")</code>. Under treatment
+contrasts the first level is the baseline every other coefficient for
+that predictor is measured against, and <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code> makes it the
+alphabetically first value unless someone says otherwise. That is a
+reporting decision taken by a sort order, so it belongs in the plan
+beside the spline and interaction terms. Declaring it also fixes the
+baseline against a level being lost: <code><a href="mm_model.html">mm_model()</a></code> refuses a declared
+reference that no eligible row carries, rather than quietly measuring
+against the next level along.</p></dd>
 
 
 <dt id="arg-knots">knots<a class="anchor" aria-label="anchor" href="#arg-knots"></a></dt>

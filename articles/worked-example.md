@@ -431,7 +431,7 @@ fits$D
 #>   held out   190 rows
 #>   parameters 9 non-intercept, 710 short of the sample they need
 #>   apparent C 0.7116
-#>   fingerprint 13f51cd9f4ad63da
+#>   fingerprint 3b00d7880d0bada1
 ```
 
 ``` r
@@ -445,10 +445,10 @@ do.call(rbind, lapply(names(fits), function(k) {
              fingerprint = substr(m$fingerprint, 1, 10))
 }))
 #>   analysis n_supplied n_dev events n_held parameters apparent_C fingerprint
-#> 1        A        741   741     83      0          6     0.6425  2f3503a21a
-#> 2        B        741   741     83      0          8     0.6584  bc5b60c005
-#> 3        C        741   741     83      0          9     0.6695  173aa6c379
-#> 4        D        551   551     64    190          9     0.7116  13f51cd9f4
+#> 1        A        741   741     83      0          6     0.6425  20486eeb8c
+#> 2        B        741   741     83      0          8     0.6584  b40edbe891
+#> 3        C        741   741     83      0          9     0.6695  93ca893c56
+#> 4        D        551   551     64    190          9     0.7116  3b00d7880d
 ```
 
 The sample-size gate is reported per analysis, and it is the honest
@@ -664,6 +664,7 @@ blocks
 #> <mm_interaction_screen>  prespecified, LR test
 #>   development 741 rows, 83 events, 8 parameter(s) before any block
 #>   candidates  2 block(s) considered, 3 parameter(s) of candidate complexity in total
+#>               a model taking every one of them would spend 11 parameter(s) on 83 event(s), 7.5 each
 #>   prior_uti x sex        tested  chi2=4.353 df=1 p=0.0369 p.adj=0.0739
 #>   sex x indication       tested  chi2=1.664 df=2 p=0.4351 p.adj=0.4351
 #>   Evidence about blocks, not a model. Nothing here has been added to
@@ -726,6 +727,9 @@ checked$D
 #>   bootstrap, full process  n=551   64/487 C=0.6752 no interval, see note  slope=0.8446
 #>   held out                 n=190   19/171 C=0.4974 (0.3275-0.6673)  slope=0.2950
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 60 of 60 valid.
+#>   Its correction carries a Monte Carlo standard error of 0.00429 on C; rms does not return
+#>   the per-resample values its own row is averaged over, so the
+#>   same figure cannot be given for the fixed-model row.
 ```
 
 ``` r
@@ -827,7 +831,7 @@ rbind(computed = c(intercept = apparent$cal_intercept,
                    slope = apparent$cal_slope),
       reported = c(withheld$cal_intercept, withheld$cal_slope))
 #>             intercept slope
-#> computed -1.26181e-15     1
+#> computed -1.40273e-15     1
 #> reported           NA    NA
 ```
 
@@ -904,12 +908,12 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.pdf, /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.svg, /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.pdf, /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.svg, /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
 #>   between-tick reading      0.00484 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
 #>   mutually exclusive: exactly one axis of each group below applies
@@ -1060,9 +1064,9 @@ ticks, so the extremes of the sum are the sums of the extremes.
 ``` r
 
 nom$reading_error_by_axis
-#>                lo           hi
-#> age -2.220446e-16 1.936783e-02
-#> bmi -2.220446e-16 4.440892e-16
+#>                lo         hi
+#> age -6.661338e-16 0.01936783
+#> bmi -6.661338e-16 0.00000000
 ```
 
 Which says where the coarseness is, and so which axis would need more
@@ -1088,14 +1092,14 @@ direct <- mysterymodel:::mm_reading_error(nom$nomogram, fits$D)
 c(between_ticks = direct$bound, lp_scale = direct$lp,
   reported = nom$reading_error, at_ticks = nom$worst_disagreement)
 #> between_ticks      lp_scale      reported      at_ticks 
-#>  4.841919e-03  1.936783e-02  4.841919e-03  1.110223e-16
+#>  4.841919e-03  1.936783e-02  4.841919e-03  5.551115e-17
 ```
 
 ``` r
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.pdf, /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.svg, /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.pdf, /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.svg, /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -1158,10 +1162,10 @@ do.call(rbind, lapply(names(fits), function(k) data.frame(
   validation_matches = identical(checked[[k]]$fingerprint,
                                  fits[[k]]$fingerprint))))
 #>   analysis coefficients  development validation_matches
-#> 1        A 2f3503a21a4a c9552f752ad9               TRUE
-#> 2        B bc5b60c005ba c9552f752ad9               TRUE
-#> 3        C 173aa6c379e8 d3e0c5b952e9               TRUE
-#> 4        D 13f51cd9f4ad a97f8dd9ff7e               TRUE
+#> 1        A 20486eeb8ce2 c9552f752ad9               TRUE
+#> 2        B b40edbe891b8 c9552f752ad9               TRUE
+#> 3        C 93ca893c5644 d3e0c5b952e9               TRUE
+#> 4        D 3b00d7880d0b a97f8dd9ff7e               TRUE
 ```
 
 A and B share a development sample and differ in shape, so their
@@ -1185,14 +1189,16 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        52        10        40
+#>        55        10        40
 sort(everything[!used])
 #>  [1] "mm_anova_block"           "mm_candidate_pairs"      
 #>  [3] "mm_draw_splines"          "mm_exclusive_axes"       
-#>  [5] "mm_interaction_rank"      "mm_interaction_support"  
-#>  [7] "mm_matrix_rank"           "mm_min_resamples"        
-#>  [9] "mm_no_corrected_interval" "mm_no_information"       
-#> [11] "mm_reference_profile"     "mm_undrawable_blocks"
+#>  [5] "mm_interaction_health"    "mm_interaction_rank"     
+#>  [7] "mm_interaction_support"   "mm_matrix_rank"          
+#>  [9] "mm_min_resamples"         "mm_no_corrected_interval"
+#> [11] "mm_no_information"        "mm_parameter_budget"     
+#> [13] "mm_reference_profile"     "mm_undrawable_blocks"    
+#> [15] "mm_unfittable_ordered"
 ```
 
 The ones it does not reach are helpers whose results are already on the

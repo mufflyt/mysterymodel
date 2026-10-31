@@ -302,7 +302,7 @@ model
 #>   held out   153 rows
 #>   parameters 9 non-intercept, 663 short of the sample they need
 #>   apparent C 0.7553
-#>   fingerprint 7d79bc4fadb8d51f
+#>   fingerprint 7855ae820d29b8c6
 ```
 
 The warning is the sample-size gate, and it is the honest answer for a
@@ -357,7 +357,7 @@ model$schema$predictors$age
 #> $range
 #> [1] 40.2 95.0
 model$fingerprint
-#> [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"
+#> [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"
 ```
 
 ## Preventing outcome leakage in clinical prediction models
@@ -542,6 +542,9 @@ validation
 #>   bootstrap, full process  n=317   32/285 C=0.6913 no interval, see note  slope=0.6511
 #>   held out                 n=153   18/135 C=0.5798 (0.4153-0.7444)  slope=0.3765
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 100 of 100 valid.
+#>   Its correction carries a Monte Carlo standard error of 0.00435 on C; rms does not return
+#>   the per-resample values its own row is averaged over, so the
+#>   same figure cannot be given for the fixed-model row.
 ```
 
 One row per basis, because the three numbers a clinical prediction paper
@@ -581,7 +584,7 @@ cat(paste0("* ", validation$metrics$basis, ": ",
            validation$metrics$note, collapse = "\n"))
 #> * apparent: scored on the development rows. 95% DeLong interval, from 32 event(s) and 285 non-event(s). Calibration is withheld here rather than reported as 0 and 1: scoring the fit on its own rows forces both, so they describe the estimator and not the model. The bootstrap and held-out rows carry the calibration that can be estimated
 #> * bootstrap, fixed model: rms::validate, 100 of 100 resample(s) fitted. Refits the same formula; does not re-derive knots or levels. Resampled by whole pid. No interval: DeLong describes an apparent c-statistic, not a corrected one, and an interval for the corrected index needs a nested bootstrap that is not implemented here
-#> * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid. No interval: DeLong describes an apparent c-statistic, not a corrected one, and an interval for the corrected index needs a nested bootstrap that is not implemented here
+#> * bootstrap, full process: full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid. The correction is a mean over resamples and carries a Monte Carlo standard error of 0.00435 on the c-statistic and 0.02388 on the slope, so these figures are determined to about 2 decimal place(s) and not to as many as they print with. No interval: DeLong describes an apparent c-statistic, not a corrected one, and an interval for the corrected index needs a nested bootstrap that is not implemented here
 #> * held out: year >= 2023, scored once. 95% DeLong interval, from 18 event(s) and 135 non-event(s). the scaled Brier is taken against the reference 0.09076, not this sample's own 0.10381, so the column compares like with like; against its own it would read 0.0047
 ```
 
@@ -596,7 +599,7 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)
 #>   between-tick reading      0.00969 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
 #>   mutually exclusive: exactly one axis of each group below applies

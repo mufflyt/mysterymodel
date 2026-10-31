@@ -18,6 +18,7 @@ mm_project(
   cluster_id = NULL,
   nonlinear = NULL,
   interactions = NULL,
+  reference = NULL,
   knots = 4L,
   seed = 1978L
 )
@@ -89,6 +90,21 @@ mm_project(
   interaction blocks. Exploratory discovery is not this argument;
   [`mm_interactions()`](https://mufflyt.github.io/mysterymodel/reference/mm_interactions.md)
   reports evidence and selects nothing.
+
+- reference:
+
+  Optional named list giving the comparison category for categorical
+  predictors, as `list(sex = "male")`. Under treatment contrasts the
+  first level is the baseline every other coefficient for that predictor
+  is measured against, and
+  [`factor()`](https://rdrr.io/r/base/factor.html) makes it the
+  alphabetically first value unless someone says otherwise. That is a
+  reporting decision taken by a sort order, so it belongs in the plan
+  beside the spline and interaction terms. Declaring it also fixes the
+  baseline against a level being lost:
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  refuses a declared reference that no eligible row carries, rather than
+  quietly measuring against the next level along.
 
 - knots:
 

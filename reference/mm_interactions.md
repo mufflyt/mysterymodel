@@ -123,6 +123,7 @@ mm_interactions(project, cohort,
 #> <mm_interaction_screen>  prespecified, LR test
 #>   development 600 rows, 95 events, 4 parameter(s) before any block
 #>   candidates  2 block(s) considered, 2 parameter(s) of candidate complexity in total
+#>               a model taking every one of them would spend 6 parameter(s) on 95 event(s), 15.8 each
 #>   prior_uti x sex        tested  chi2=3.917 df=1 p=0.0478
 #>   age x bmi              tested  chi2=0.002 df=1 p=0.9645
 #>   Evidence about blocks, not a model. Nothing here has been added to

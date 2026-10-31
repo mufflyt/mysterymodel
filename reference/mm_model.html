@@ -61,6 +61,7 @@ actually given, a prediction schema and a fingerprint of the coefficients.</p>
 <span>  <span class="va">cohort</span>,</span>
 <span>  nonlinear <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  interactions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  knots <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  check_leakage <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -92,6 +93,12 @@ detail.</p></dd>
 <dt id="arg-interactions">interactions<a class="anchor" aria-label="anchor" href="#arg-interactions"></a></dt>
 <dd><p>Prespecified interaction blocks. <code>NULL</code> takes the
 project's, with departures recorded the same way.</p></dd>
+
+
+<dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
+<dd><p>Comparison categories for categorical predictors. <code>NULL</code>
+takes the project's. Applied before the <code>datadist</code>, the fit and the
+schema, so every one of them agrees about which level is the baseline.</p></dd>
 
 
 <dt id="arg-knots">knots<a class="anchor" aria-label="anchor" href="#arg-knots"></a></dt>
@@ -172,7 +179,7 @@ level the model cannot score.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   developed  300 rows, 28 events</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameters 7 non-intercept, 1097 short of the sample they need</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   apparent C 0.7126</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   fingerprint fba075b46006604c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   fingerprint 44e69196a06c13b7</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
