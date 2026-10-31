@@ -275,6 +275,13 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # different comparison categories. The level loss was already reported; the
   # consequence was not.
   reference_moved <- list()
+  # Hmisc labels are what `rms` prints on a nomogram axis and what the
+  # calculator prints above an input, and `droplevels()`, `factor()` and
+  # `relevel()` all drop the attribute they live in. Without this a cohort
+  # labelled throughout produces a sheet whose continuous axes read as
+  # English and whose categorical ones read as column names.
+  labels <- lapply(project$predictors, function(p) attr(dev[[p]], "label"))
+  names(labels) <- project$predictors
   for (p in project$predictors) {
     if (!is.factor(supplied[[p]]) && !is.character(supplied[[p]])) next
     was <- levels(factor(supplied[[p]]))
@@ -307,6 +314,9 @@ mm_model <- function(project, cohort, nonlinear = NULL,
       reference_moved[[p]] <- c(from = was[1], to = now[1])
     }
   }
+  for (p in project$predictors) {
+    if (!is.null(labels[[p]])) attr(dev[[p]], "label") <- labels[[p]]
+  }
   if (length(lost)) {
     warning("level(s) carried only by the dropped rows cannot be estimated ",
             "and are not in this model: ",
@@ -326,6 +336,40 @@ mm_model <- function(project, cohort, nonlinear = NULL,
                      "something different from a fit where the level ",
                      "survived, under the same name."),
             call. = FALSE)
+  }
+
+  # A predictor that does not vary among the rows the model can be fitted to
+  # carries no information and cannot be estimated. `rms` reaches one inside
+  # Design() and stops with "has <2 category levels", which names neither the
+  # reason nor, for a constant continuous column, anything at all. The
+  # commonest cause is a predictor recorded only over part of the cohort: a
+  # scoring system that changed, or a field added part-way through, leaves the
+  # development period holding one value while the held-out period holds the
+  # rest. That is worth being told, because the predictor is not useless, it
+  # is unusable on this side of the split.
+  constant <- character(0)
+  for (p in project$predictors) {
+    if (length(unique(stats::na.omit(dev[[p]]))) < 2L) {
+      constant <- c(constant, p)
+    }
+  }
+  if (length(constant)) {
+    detail <- vapply(constant, function(p) {
+      only <- unique(stats::na.omit(dev[[p]]))[1]
+      across <- length(unique(stats::na.omit(supplied[[p]])))
+      sprintf("`%s` is %s in every one of them%s", p,
+              paste(format(only), collapse = ""),
+              if (across > 1L)
+                sprintf(", though it takes %d value(s) across the %d row(s) supplied",
+                        across, nrow(supplied))
+              else "")
+    }, character(1))
+    stop(length(constant), " predictor(s) do not vary among the ", nrow(dev),
+         " row(s) this model can be fitted to: ",
+         paste(detail, collapse = "; "),
+         ". A predictor with one value cannot be estimated and tells the ",
+         "model nothing about a patient. Drop it from the project, or change ",
+         "the rows the model is fitted to.", call. = FALSE)
   }
 
   if (length(unique(y)) < 2L) {
@@ -650,11 +694,17 @@ mm_event_indicator <- function(values, positive_class = NULL) {
 mm_schema <- function(project, dev) {
   cols <- lapply(project$predictors, function(p) {
     v <- dev[[p]]
+    # The printed name travels with the schema, so the calculator's form, the
+    # nomogram's axes and any later rendering all read the same words. An
+    # unlabelled predictor keeps its column name.
+    label <- attr(v, "label")
+    label <- if (is.character(label) && length(label) == 1L && nzchar(label))
+      label else p
     if (is.factor(v) || is.character(v)) {
-      list(type = "categorical", levels = levels(factor(v)))
+      list(type = "categorical", levels = levels(factor(v)), label = label)
     } else {
       list(type = "numeric",
-           range = unname(range(v, na.rm = TRUE)))
+           range = unname(range(v, na.rm = TRUE)), label = label)
     }
   })
   names(cols) <- project$predictors

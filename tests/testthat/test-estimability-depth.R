@@ -226,10 +226,25 @@ test_that("a singular Hessian names the design or the data, whichever it is", {
   design <- design[, colnames(design) != "(Intercept)", drop = FALSE]
   expect_lt(mysterymodel:::mm_matrix_rank(design), ncol(design))
 
-  deficient <- tryCatch(suppressWarnings(mm_model(
-    mm_project("gc", "bad", predictors, positive_class = 1,
+  fit_it <- function(p) tryCatch(suppressWarnings(mm_model(
+    mm_project("gc", "bad", p, positive_class = 1,
                cohort = credit, seed = 1978), credit)),
     error = function(e) conditionMessage(e))
+
+  # Two of this cohort's indicator columns are zero for every one of the 1000
+  # rows. That is the more specific cause and it is reported first, by name,
+  # because dropping a column nobody can estimate is a smaller change than
+  # reducing the model.
+  constant <- fit_it(predictors)
+  expect_true(is.character(constant))
+  expect_match(constant, "do not vary among the 1000 row")
+  expect_match(constant, "`Purpose.Vacation` is 0 in every one of them")
+  expect_match(constant, "`Personal.Female.Single` is 0 in every one of them")
+
+  # With those gone the design is still deficient, for the other reason, and
+  # gets the other message.
+  deficient <- fit_it(setdiff(predictors,
+                              c("Purpose.Vacation", "Personal.Female.Single")))
   expect_true(is.character(deficient))
   expect_match(deficient, "the reason is the design and not the data")
   expect_match(deficient, "exact combinations of the others")

@@ -236,3 +236,38 @@ test_that("eligibility always requires the outcome, and says which rows", {
   expect_false(e2$usable[1])
   expect_gte(e2$missing_outcome, 1L)
 })
+
+test_that("a predictor constant among the fittable rows is refused by name", {
+  # Found on the ENT applicant cohort. Step 1 moved from a graded score to
+  # pass/fail part-way through the application cycles, so in the development
+  # years the field is one value for all but a single applicant, and that one
+  # is incomplete elsewhere. Complete-case selection then leaves a constant
+  # column. rms stopped inside Design() with "has <2 category levels", which
+  # names the variable but not the reason, and says nothing at all for a
+  # constant continuous column.
+  cohort <- mm_synthetic_cohort(n = 400, seed = 11)
+  cohort$era <- factor(ifelse(seq_len(nrow(cohort)) > 300, "new", "old"))
+  cohort$bmi[cohort$era == "new"] <- NA_real_
+
+  project <- mm_project("uds", "event", c("age", "bmi", "era"),
+                        cohort = cohort)
+  expect_error(
+    suppressWarnings(mm_model(project, cohort)),
+    "do not vary among")
+  expect_error(
+    suppressWarnings(mm_model(project, cohort)),
+    "`era` is old in every one of them")
+  # It is named as unusable here, not as useless: the message says it does
+  # vary across the rows that were supplied.
+  expect_error(
+    suppressWarnings(mm_model(project, cohort)),
+    "takes 2 value\\(s\\) across the 400 row\\(s\\) supplied")
+})
+
+test_that("a constant continuous predictor is refused the same way", {
+  cohort <- mm_synthetic_cohort(n = 300, seed = 12)
+  cohort$site_beds <- 400
+  project <- mm_project("uds", "event", c("age", "site_beds"), cohort = cohort)
+  expect_error(suppressWarnings(mm_model(project, cohort)),
+               "`site_beds` is 400 in every one of them")
+})
