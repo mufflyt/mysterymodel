@@ -105,12 +105,22 @@ implemented, the record in `inst/decisions.md` that settled it.
 * `mm_predict()` requires `newdata`, so no patient-level original is retained
   and no stored copy can drift from the data the caller has (#3).
 
-## Tests
+## Tests and validation
 
-* 617 tests across 16 files, including 20 saboteurs that were each verified to
-  fire against a deliberately disabled guard (#12), a leakage suite (#13), and
-  a discrimination-interval suite that checks every degenerate case against an
-  independent `pROC` call rather than a recorded number (#19).
+* 266 test blocks carrying 1047 assertions across 24 files, including 41
+  saboteurs verified to fire against deliberately disabled guards (#12, #26),
+  a leakage suite (#13), and a discrimination-interval suite that checks every
+  degenerate case against an independent `pROC` call rather than a recorded
+  number (#19).
+* Validated against eleven cohorts from outside the package, with every
+  reported number traced to the engine or the hand calculation that owns it.
+  How, against what and to what tolerance is in
+  `inst/validation-appendix.md`; provenance, licences and checksums are in
+  `inst/benchmarks.md`.
+* Six defects were found there that the package's own fixtures could not
+  reach, four of them cases where a default was doing the deciding: a plan
+  inherited through `NULL` (#26), a factor level chosen by sort order (#26),
+  and a bootstrap seed pinned by design (#26).
 
 ## Simplification
 

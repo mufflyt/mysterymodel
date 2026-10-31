@@ -14,7 +14,9 @@ An opinionated workflow for building clinical prediction models that survive pee
 Early, and deliberately so. The [implementation specification](inst/implementation-spec.md) is the contract of record, kept as received; settled questions are amended in the [decision log](inst/decisions.md). Section 14 requires a capability spike before any production module, and that spike is done:
 [**capability matrix for `rms` objects**](inst/capability-matrix.md).
 
-The whole §15 starting milestone now runs on synthetic data: `mm_project()` → `mm_clean()` → `mm_eda()` → `mm_model()` → `mm_predict()` → `mm_validate()` → `mm_nomogram()`, eight exported functions, 617 tests across 16 files, `R CMD check` clean. What is still missing is named in the roadmap below and in the [changelog](NEWS.md): imputation inside resampling is the largest gap, and the reporting end is not built at all.
+How the package is tested, against what, and to what tolerance is written down in the [**technical appendix**](inst/validation-appendix.md), with the provenance of every external cohort in the [benchmark registry](inst/benchmarks.md).
+
+The whole §15 starting milestone now runs on synthetic data: `mm_project()` → `mm_clean()` → `mm_eda()` → `mm_model()` → `mm_predict()` → `mm_validate()` → `mm_nomogram()`, plus `mm_interactions()` and `mm_splines()` for the shape decisions: ten exported functions, 266 test blocks carrying 1047 assertions across 24 files, `R CMD check` clean. What is still missing is named in the roadmap below and in the [changelog](NEWS.md): imputation inside resampling is the largest gap, and the reporting end is not built at all.
 
 ## Articles
 
