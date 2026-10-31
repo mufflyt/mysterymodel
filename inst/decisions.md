@@ -772,3 +772,37 @@ variant, 8.5e-02 on the Pima spline. Coefficients must be matched by name.
 `esoph` also lost its factor `class` to an attribute-stripping line, which
 turned `pclass` into a bare integer and made a three-level predictor spend one
 degree of freedom, agreeing exactly with rms on the corrupted column.
+
+## DEC-013: which level is the event is declared, never sorted for
+
+**Settles:** how the positive class is determined for a non-numeric outcome.
+**Date:** 2026-10-31.
+
+[mm_project()] documented that "an inverted positive class silently inverts
+every reported risk", checked `positive_class` against the observed values
+when one was given, and then, when none was given, inferred one by taking
+`sort(labels)[2]`.
+
+That is right for `No` and `Yes`, and for `alive` and `dead`. It is wrong
+whenever the event sorts first, which covers `survived`/`died`,
+`control`/`case` and `remission`/`relapse` — most of the labellings a
+clinical dataset actually uses.
+
+On a case/control cohort of 600 it fitted **521 events instead of 79**,
+reversed the sign of every coefficient, and reported **the same
+c-statistic**: 0.5266 either way. Concordance does not change when the
+outcome and the predictions are flipped together, so no figure in the
+performance table can reveal the mistake. Nothing warned.
+
+A two-level non-numeric outcome with no declared positive class is now
+refused when the plan is written, with the sort-order rule and its failure
+spelled out in the message. A 0/1 numeric column still needs no declaration,
+because 1 is the event and there is nothing to infer. Where a project was
+written without a cohort to check against, the fit warns and names the level
+it took and how many events that leaves.
+
+Found on `ISLR2::Default`, whose outcome is a `No`/`Yes` factor and whose
+published coefficients this package reproduces exactly: -10.869045 for the
+intercept, 0.005737 for balance, 3.03e-06 for income and -0.646776 for
+student, with `glm`, `rms` and this package agreeing on every fitted
+probability to 6.7e-10 and on the deviance at 1571.544828.

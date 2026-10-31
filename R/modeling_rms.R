@@ -528,9 +528,22 @@ mm_event_indicator <- function(values, positive_class = NULL) {
   lev <- sort(unique(as.character(stats::na.omit(values))))
   if (length(lev) != 2L) {
     stop("cannot infer the event level from ", length(lev),
-         " distinct values. Set `positive_class` in mm_project().",
-         call. = FALSE)
+         " distinct value(s). Set `positive_class` in mm_project(). A ",
+         "column of counts per group is not a patient-level outcome and ",
+         "naming one count as the event would fit a model of exactly that ",
+         "many.", call. = FALSE)
   }
+  # Reached only when mm_project() was given no cohort to check against, so
+  # it could not refuse this at plan time. The choice is sort order and
+  # nothing else, and it is wrong for "case" and "control".
+  warning("the event level of this outcome was not declared, so it has ",
+          "been taken as \"", lev[2], "\", the second of \"", lev[1],
+          "\" and \"", lev[2], "\" in sort order, leaving ",
+          sum(as.character(values) == lev[2], na.rm = TRUE), " event(s). ",
+          "Set `positive_class` in mm_project() if that is the wrong way ",
+          "round: it reverses every coefficient and leaves the ",
+          "c-statistic unchanged, so no performance figure will show it.",
+          call. = FALSE)
   as.integer(as.character(values) == lev[2])
 }
 

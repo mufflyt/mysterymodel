@@ -214,6 +214,23 @@ mm_project <- function(slug, outcome, predictors, positive_class = NULL,
            "value(s) in `cohort`. An outcome that does not vary cannot be ",
            "modelled.", call. = FALSE)
     }
+    numeric_binary <- is.numeric(cohort[[outcome]]) &&
+      all(as.numeric(seen) %in% c(0, 1))
+    if (length(seen) == 2L && is.null(positive_class) && !numeric_binary) {
+      stop("`", outcome, "` takes the two values ",
+           paste(sprintf("\"%s\"", sort(as.character(seen))),
+                 collapse = " and "),
+           ", and neither of them says which is the event. Set ",
+           "`positive_class`. Inferring it would mean taking the ",
+           "alphabetically second value, which is \"",
+           sort(as.character(seen))[2],
+           "\" here: that is right for \"No\" and \"Yes\" and wrong for ",
+           "\"case\" and \"control\", and a model fitted the wrong way ",
+           "round reverses every coefficient while reporting the same ",
+           "c-statistic, because concordance does not change when the ",
+           "outcome and the predictions are flipped together. A 0/1 column ",
+           "needs no declaration, because 1 is the event.", call. = FALSE)
+    }
     if (length(seen) > 2L && is.null(positive_class)) {
       stop("`", outcome, "` takes ", length(seen), " distinct non-missing ",
            "values in `cohort`, and this package models a binary outcome. ",

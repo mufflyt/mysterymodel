@@ -208,3 +208,69 @@ test_that("an ordered factor is refused with both routes that work", {
                         positive_class = 1, cohort = scored, seed = 1978),
              scored)))
 })
+
+test_that("which level is the event must be declared, not sorted for", {
+  # Found on ISLR's Default, whose outcome is a No/Yes factor. The event was
+  # inferred as sort(labels)[2]: right for No/Yes and alive/dead, wrong for
+  # case/control, survived/died and remission/relapse, which is every
+  # labelling where the clinically meaningful event sorts first.
+  set.seed(1978)
+  n <- 400
+  cohort <- data.frame(
+    age = stats::rnorm(n, 62, 11),
+    group = factor(sample(c("case", "control"), n, TRUE),
+                   levels = c("case", "control")))
+  expect_error(mm_project("x", "group", "age", cohort = cohort),
+               "neither of them says which is the event")
+  expect_error(mm_project("x", "group", "age", cohort = cohort),
+               "wrong for")
+  expect_no_error(mm_project("x", "group", "age", positive_class = "case",
+                             cohort = cohort))
+
+  # A 0/1 column is unambiguous and needs no declaration.
+  numeric_outcome <- data.frame(age = cohort$age,
+                                event = stats::rbinom(n, 1L, 0.2))
+  expect_no_error(mm_project("x", "event", "age", cohort = numeric_outcome))
+
+  # Where the project was written without a cohort it cannot refuse at plan
+  # time, so the fit says which way round it went.
+  blind <- mm_project("x", "group", "age", seed = 1978)
+  said <- character(0)
+  invisible(withCallingHandlers(
+    try(mm_model(blind, cohort), silent = TRUE),
+    warning = function(w) {
+      said <<- c(said, conditionMessage(w)); invokeRestart("muffleWarning")
+    }))
+  expect_true(any(grepl("event level of this outcome was not declared",
+                        said)))
+  expect_true(any(grepl("sort order", said)))
+})
+
+test_that("an inverted event reverses every coefficient and no performance figure shows it", {
+  # Why the declaration is refused rather than guessed: the c-statistic is
+  # invariant when the outcome and the predictions are flipped together, so
+  # the discrimination column cannot reveal the mistake.
+  set.seed(1978)
+  n <- 600
+  cohort <- data.frame(age = stats::rnorm(n, 62, 11),
+                       bmi = stats::rnorm(n, 29, 5))
+  ill <- stats::rbinom(n, 1L, stats::plogis(-2 + 0.05 * (cohort$age - 62)))
+  cohort$group <- factor(ifelse(ill == 1L, "case", "control"),
+                         levels = c("case", "control"))
+  as_case <- suppressWarnings(mm_model(
+    mm_project("x", "group", c("age", "bmi"), positive_class = "case",
+               cohort = cohort, seed = 1978), cohort))
+  as_control <- suppressWarnings(mm_model(
+    mm_project("x", "group", c("age", "bmi"), positive_class = "control",
+               cohort = cohort, seed = 1978), cohort))
+
+  expect_equal(as_case$events_dev + as_control$events_dev, as_case$n_dev)
+  expect_equal(stats::coef(as_case$fit)[["age"]],
+               -stats::coef(as_control$fit)[["age"]], tolerance = 1e-8)
+  # The one thing that does not move, which is the point.
+  expect_equal(unname(as_case$fit$stats["C"]),
+               unname(as_control$fit$stats["C"]), tolerance = 1e-10)
+  expect_equal(mm_predict(as_case, cohort)$.pred +
+                 mm_predict(as_control, cohort)$.pred,
+               rep(1, nrow(cohort)), tolerance = 1e-10)
+})
