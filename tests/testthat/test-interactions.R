@@ -306,3 +306,42 @@ test_that("penalization and imputation stay out of reach rather than guarded", {
   expect_false(any(grepl("impute|imputation",
                          names(getNamespaceExports("mysterymodel")))))
 })
+
+test_that("the reduced model is main effects even when the plan declares blocks", {
+  # Found by comparing against rms on titanic3. DEC-009 made mm_model() take
+  # the project's prespecified interactions when its argument is NULL, and
+  # mm_interactions() built its reduced model with exactly that call, so the
+  # blocks under test were already in the model they were tested against.
+  # Each then added no dimension and was refused as inestimable. Every test
+  # in this file used a project that declared nothing, so none of them saw it.
+  cohort <- ia_cohort()
+  declared <- mm_project("uds", "event",
+                         c("age", "bmi", "sex", "prior_uti", "indication"),
+                         positive_class = 1, cohort = cohort,
+                         interactions = list(c("prior_uti", "sex"),
+                                             c("sex", "indication")),
+                         seed = 1978)
+  screen <- suppressMessages(mm_interactions(
+    declared, cohort, list(c("prior_uti", "sex"), c("sex", "indication"))))
+
+  expect_true(all(screen$screen$status == "tested"))
+  expect_true(all(!is.na(screen$screen$p_value)))
+  expect_true(all(screen$screen$added_rank > 0L))
+
+  # And the statistic is the one a main-effects baseline gives, computed here
+  # from two fits that contain no block but the one under test.
+  bare <- declared
+  bare$interactions <- NULL
+  for (i in seq_len(nrow(screen$screen))) {
+    pair <- c(screen$screen$predictor_1[i], screen$screen$predictor_2[i])
+    reference <- reference_lr(bare, cohort, pair)
+    expect_equal(screen$screen$statistic[i], reference$statistic,
+                 tolerance = 1e-8)
+    expect_equal(screen$screen$degrees_freedom[i], reference$df)
+  }
+
+  # The declared plan is untouched by having been screened.
+  expect_equal(declared$interactions,
+               list(c("prior_uti", "sex"), c("sex", "indication")))
+  expect_length(suppressWarnings(mm_model(declared, cohort))$departures, 0L)
+})

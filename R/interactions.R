@@ -384,11 +384,17 @@ mm_interactions <- function(project, cohort, candidates,
   message("mm_interactions(): ", length(parsed), " prespecified block(s), ",
           test, " test, multiplicity ", adjustment)
 
-  # The rows the main-effects model will be fitted on, derived the same way
-  # mm_model() derives them and then checked against it, so the design
-  # matrices below describe the sample the tests are computed on.
+  # The reduced model is the project's MAIN EFFECTS, with no block in it.
+  # A project may prespecify its own interactions, and mm_model() takes them
+  # when its argument is NULL, so passing the project unchanged put the very
+  # blocks under test into the model they are tested against: each one then
+  # added no dimension and was refused as inestimable. The blocks are stripped
+  # here rather than overridden at the call, because overriding a declared
+  # plan is a departure and this is not one.
+  bare <- project
+  bare$interactions <- NULL
   base <- suppressWarnings(
-    mm_model(project, cohort, nonlinear = nonlinear, knots = knots))
+    mm_model(bare, cohort, nonlinear = nonlinear, knots = knots))
   parts <- mm_split(project, cohort)
   eligible <- mm_evaluable(project, parts$dev, require_cluster = TRUE)
   frame <- parts$dev[eligible$usable, , drop = FALSE]
@@ -441,7 +447,7 @@ mm_interactions <- function(project, cohort, candidates,
     }
 
     fitted <- tryCatch(
-      suppressWarnings(mm_model(project, cohort, nonlinear = nonlinear,
+      suppressWarnings(mm_model(bare, cohort, nonlinear = nonlinear,
                                 knots = knots,
                                 interactions = list(pair))),
       error = function(e) conditionMessage(e))
