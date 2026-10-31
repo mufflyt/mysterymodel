@@ -398,3 +398,100 @@ by the simplification audit to serve both, had one caller left and has been
 folded back into [mm_tick_profiles()]. The audit's reasoning was right when it
 was written: the two callers then built the same shape and had to agree. They
 no longer build the same shape.
+
+## DEC-008: an interaction screen reports evidence and changes no model
+
+**Settles:** what `mm_interactions()` does, how estimability is decided, and
+which inferential claims it refuses to make.
+**Date:** 2026-10-30.
+
+Three activities are kept apart in the API because conflating them is how an
+exploratory association becomes a clinical prediction rule: testing
+prespecified blocks, screening for blocks, and validating a model that
+contains one. This release implements only the first. Nothing it returns is a
+model, no term is added to one, and a small p-value is not a reason to add it.
+
+### Estimability is decided by rank, and never by a contingency table
+
+The required invariant is structural and runs before anything is fitted. For
+each candidate, the reduced and full design matrices are built with
+[stats::model.matrix()] and their ranks taken from the singular values with a
+relative tolerance, after scaling, so that a column in years and a column in
+kilograms do not let units decide rank. A block is tested only when the rank
+it adds equals the columns it adds. A block adding no dimension is reported
+`not_estimable` with `NA` for the statistic and the p-value.
+
+That the check cannot read the design matrix off a fitted object is the point.
+Where a factor level occurs under only one level of its partner, the block is
+a copy of a main effect, and `rms::lrm()` answers with a singular Hessian and
+convergence code 2. The fit dies, so the candidate that most needs the check
+is exactly the one a fit-based check never reaches.
+
+The reduced model's own rank is reported beside each candidate. A reduced
+model that is already deficient makes every difference taken against it
+unreliable however healthy the increment looks, and a populated contingency
+table does not prevent it: a relabelled factor leaves all cells occupied and
+six columns spanning four dimensions.
+
+### Sparsity is reported and is never decisive
+
+An earlier draft of this work proposed refusing a block when a cell carried no
+events. That was wrong, and measuring it showed why. A combination of twelve
+rows and no events leaves the design matrix at **full rank**: the interaction
+is identifiable, the likelihood is close to flat in that direction, and the
+test returns a statistic of 5.3e-08 with a p-value of 0.9998. Refusing it
+would refuse every cohort in which an interaction is real and small, which is
+the regime this package is for. So the test is reported, with the counts
+beside it and a note that a near-null result on these counts describes the
+sparsity rather than the absence of an interaction.
+
+The two failures are therefore separated: rank decides whether a test is
+reported, and separation describes what a reported test rests on. Convergence
+decides neither. `fit$fail` was `FALSE` for the sparse block above.
+
+### The likelihood ratio is computed twice and checked
+
+`rms::anova.rms()` has supported `test = "LR"` since before this package, and
+the fits already retain `x` and `y`. The statistic is taken from the
+difference in deviance between two fits whose development digests are checked
+to match, and cross-checked against rms's own LR table on every call, with
+`lr_agrees` recording the result. Agreement was exact on binary by binary
+(3.107269 on 1 df), three-level by binary (6.732767 on 2 df) and spline by
+binary (1.934498 on 3 df). A disagreement is reported as `disagreement` and
+neither number is presented as the answer.
+
+`test = "Wald"` is the joint test of the whole block from the same table,
+which is two degrees of freedom for a three-level factor and three for a
+spline. It is never the test of a single dummy coefficient, and it is labelled
+as Wald rather than as a likelihood ratio, which is the error this corrects in
+the README.
+
+### What the interface deliberately omits
+
+`mode`, `validation`, `B` and `seed` are not arguments. In a prespecified
+release they would do nothing, and an argument that does nothing is the
+speculative generalisation this package's audit removed elsewhere. They belong
+with the screening and resampling that need them.
+
+`minimum_support` is not an argument either. A threshold on events would be
+invented here and quoted back as though the package had evidence for it, which
+is the reasoning of DEC-006. The support diagnostics are always reported
+instead, and estimability is structural.
+
+### Penalization and multiple imputation
+
+Both are refused by being unreachable rather than by a guard. `mm_model()` has
+no penalty argument and the package has no imputation, so `mm_interactions()`
+cannot meet either. A test pins both assumptions and fails if they change,
+which is when the inferential restrictions have to be built: a nested
+chi-square reference test does not apply to a penalized fit whose penalty was
+chosen on the same data, and a single completed dataset is not an imputation
+analysis.
+
+### Fixed at the root
+
+`mm_model()` accepted `c("age", "age")` and the same pair listed twice in
+either order. A formula reduces the first to a main effect and keeps one copy
+of the second, so both added no term while the parameter budget counted a
+block the model did not contain. Both are now refused where every caller
+routes through, not only in the new function.

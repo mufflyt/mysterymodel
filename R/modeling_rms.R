@@ -104,11 +104,29 @@ mm_model <- function(project, cohort, nonlinear = NULL,
 
   # Strong hierarchy, checked before a formula exists.
   pairs <- interactions %||% list()
+  asked <- character(0)
   for (ia in pairs) {
     if (length(ia) != 2L) {
       stop("each interaction must name exactly two predictors.",
            call. = FALSE)
     }
+    # A formula reduces `a:a` to `a` and collapses a block asked for twice,
+    # so both used to be accepted and add no term. The parameter budget then
+    # counted a block the model does not contain.
+    if (identical(ia[1], ia[2])) {
+      stop("interaction ", ia[1], ":", ia[2], " crosses a predictor with ",
+           "itself, which a formula reduces to the main effect, so the model ",
+           "would not contain the block it reports. Curvature belongs in ",
+           "`nonlinear`.", call. = FALSE)
+    }
+    key <- paste(sort(ia), collapse = ":")
+    if (key %in% asked) {
+      stop("interaction ", key, " is listed more than once. Reversing a ",
+           "pair does not make a different interaction, and a formula keeps ",
+           "one copy, so the model would not contain the two blocks it ",
+           "reports.", call. = FALSE)
+    }
+    asked <- c(asked, key)
     missing_main <- setdiff(ia, project$predictors)
     if (length(missing_main)) {
       stop("interaction ", paste(ia, collapse = ":"), " needs its main ",
