@@ -104,3 +104,104 @@ test_that("the tick profiles move one predictor at a time", {
     integer(1))
   expect_true(all(moved <= 1L))
 })
+
+test_that("the sheet grows with the model instead of crushing it", {
+  cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"), cohort = cohort)
+  small <- suppressWarnings(mm_model(project, cohort))
+  drawn <- suppressMessages(mm_nomogram(small, out_dir = NULL))
+
+  # A small model keeps the shape the specification asks for.
+  expect_equal(drawn$width, 13)
+  expect_equal(drawn$height, 9)
+
+  # A row does not get shorter when there are more of them, so the page grows.
+  # Found on the ENT applicant model: 27 axes on the 9 inches that suited 3
+  # printed row labels across their own tick marks, and the sheet was drawn,
+  # verified and unreadable.
+  many <- structure(as.list(seq_len(30)), names = paste0("v", 1:30))
+  expect_gt(mm_nomogram_page(many)$height, 16)
+  expect_equal(mm_nomogram_page(many, height = 9)$height, 9)
+
+  # Width follows the longest printed name, which shares the left margin with
+  # every row's leftmost tick label.
+  long <- stats::setNames(list(1, 2), c("x", strrep("a", 60)))
+  expect_gt(mm_nomogram_page(long)$width, 13)
+})
+
+test_that("risk ticks are evenly spaced on the drawn axis, not in probability", {
+  # The sheet is linear in the linear predictor, so equal steps of
+  # probability are not equal steps on paper. Over a wide linear predictor
+  # the default ticks bunched into a seventh of the axis and overprinted.
+  ticks <- mm_risk_ticks(c(-8, 7))
+  expect_gte(length(ticks), 3)
+  expect_true(all(ticks > 0 & ticks < 1))
+  expect_false(is.unsorted(ticks))
+  # Rounded to figures a reader would write down: a round number near zero,
+  # a round complement near one, or two decimals in between.
+  readable <- vapply(ticks, function(x)
+    isTRUE(all.equal(x, signif(x, 1))) ||
+      isTRUE(all.equal(1 - x, signif(1 - x, 1))) ||
+      isTRUE(all.equal(x, round(x, 2))), logical(1))
+  expect_true(all(readable))
+
+  lp <- stats::qlogis(ticks)
+  gaps <- diff(lp)
+  expect_lt(max(gaps) / min(gaps), 1.6)
+
+  # A degenerate axis asks for nothing rather than returning a single tick.
+  expect_length(mm_risk_ticks(c(2, 2)), 0)
+  expect_length(mm_risk_ticks(c(NA_real_, NA_real_)), 0)
+})
+
+test_that("choosing the ticks cannot change what the sheet agrees with", {
+  cohort <- mm_synthetic_cohort(n = 300, seed = 1)
+  project <- mm_project("uds", "event", c("age", "bmi", "sex"), cohort = cohort)
+  fit <- suppressWarnings(mm_model(project, cohort, nonlinear = "age"))
+
+  spaced <- suppressMessages(mm_nomogram(fit, out_dir = NULL))
+  fixed <- suppressMessages(
+    mm_nomogram(fit, out_dir = NULL, fun_at = c(0.05, 0.1, 0.2, 0.3)))
+
+  # Both are checked against mm_predict() and both pass; the ticks decide
+  # which profiles are checked, not whether the sheet is allowed out.
+  expect_lt(spaced$worst_disagreement, spaced$tolerance)
+  expect_lt(fixed$worst_disagreement, fixed$tolerance)
+  expect_equal(spaced$n_axes, fixed$n_axes)
+})
+
+test_that("printed level text is title cased without touching the fit's levels", {
+  cohort <- mm_synthetic_cohort(n = 400, seed = 7)
+  cohort$aoa <- factor(sample(c("member", "no AOA at school", "No response"),
+                              nrow(cohort), replace = TRUE))
+  project <- mm_project("uds", "event", c("age", "aoa"), cohort = cohort)
+  fit <- suppressWarnings(mm_model(project, cohort))
+
+  titled <- suppressMessages(mm_nomogram(fit, out_dir = NULL))
+  asis <- suppressMessages(mm_nomogram(fit, out_dir = NULL,
+                                       level_case = "asis"))
+
+  expect_equal(sort(titled$drawn$aoa$aoa),
+               sort(c("Member", "No AOA at School", "No Response")))
+  expect_equal(sort(asis$drawn$aoa$aoa),
+               sort(c("member", "no AOA at school", "No response")))
+
+  # `nomogram` is the sheet that was checked and keeps the fit's own levels,
+  # whichever way the printed copy is spelled. Anything computing from the
+  # sheet reads that one.
+  expect_equal(titled$nomogram$aoa$aoa, asis$nomogram$aoa$aoa)
+  expect_true(all(titled$nomogram$aoa$aoa %in%
+                    fit$schema$predictors$aoa$levels))
+
+  # The spelling is a caption. The levels the model scores are untouched, and
+  # the sheet is checked against mm_predict() before either is applied, so
+  # both forms carry the same verdict.
+  expect_equal(fit$schema$predictors$aoa$levels,
+               sort(c("member", "no AOA at school", "No response")))
+  expect_equal(titled$worst_disagreement, asis$worst_disagreement)
+  expect_equal(titled$profiles_checked, asis$profiles_checked)
+  expect_lt(titled$worst_disagreement, titled$tolerance)
+
+  # A continuous axis carries numbers and is left alone.
+  expect_true(is.numeric(titled$drawn$age$age))
+})

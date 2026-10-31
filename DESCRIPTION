@@ -35,9 +35,11 @@ Imports:
     utils
 Suggests: 
     caret,
+    Hmisc,
     knitr,
     ragg,
     rmarkdown,
+    shiny,
     svglite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

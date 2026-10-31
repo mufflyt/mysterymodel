@@ -61,9 +61,11 @@ reference:
       - mm_validate
   - title: Present
     desc: >
-      A nomogram that is checked against the model it was drawn from.
+      A nomogram that is checked against the model it was drawn from, and a
+      calculator built from the model's own prediction schema.
     contents:
       - mm_nomogram
+      - mm_calculator
   - title: Data
     contents:
       - mm_synthetic_cohort

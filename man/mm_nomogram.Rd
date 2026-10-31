@@ -8,9 +8,12 @@ mm_nomogram(
   model,
   out_dir = NULL,
   tolerance = 1e-06,
-  width = 13,
-  height = 9,
-  fun_at = NULL
+  width = NULL,
+  height = NULL,
+  fun_at = NULL,
+  funlabel = "Predicted risk",
+  labels = NULL,
+  level_case = c("title", "asis")
 )
 }
 \arguments{
@@ -21,13 +24,39 @@ mm_nomogram(
 \item{tolerance}{Largest absolute difference in predicted risk tolerated
 between the nomogram and \code{\link[=mm_predict]{mm_predict()}} at tabulated values.}
 
-\item{width, height}{Inches. The default is the landscape shape the
-specification asks for.}
+\item{width, height}{Inches. \code{NULL}, the default, sizes the sheet to the
+model: a nomogram's rows do not get shorter when there are more of them,
+so a page of fixed height crushes a model with many predictors into an
+unreadable sheet. The ENT applicant model, 27 axes on the 9 inches that
+suited 3, printed row labels across their own tick marks.}
 
 \item{fun_at}{Risk ticks for the printed risk axis.}
+
+\item{funlabel}{The printed risk axis's own label. Not every model this
+package fits predicts a risk: the same machinery drew a nomogram for the
+chance of matching into a residency, where "Predicted risk" is the wrong
+noun on a sheet handed to the person it is about.}
+
+\item{labels}{Printed names for the predictor axes, as a named character
+vector. The usual way to set these is \code{Hmisc::label()} on the cohort
+before fitting, which \code{rms} carries into the drawn sheet on its own; this
+argument is for relabelling a model that is already fitted. Renaming
+happens after the sheet has been checked against \code{\link[=mm_predict]{mm_predict()}} and never
+before, so the check matches axes to predictors by the names the fit gave
+them and a printed name cannot change what was verified.}
+
+\item{level_case}{What to do with the level text a categorical axis prints.
+Levels arrive as they were typed into a data-entry form, so a published
+sheet carries \verb{no AOA at school} down the middle of the page. \code{"title"},
+the default, title cases them for printing and leaves a word carrying a
+capital of its own alone, so \code{AOA} and \code{USMLE} survive. \code{"asis"} prints
+them exactly as the fit holds them. Like \code{labels}, this happens after the
+sheet has been checked and never before.}
 }
 \value{
-An object of class \code{mm_nomogram}.
+An object of class \code{mm_nomogram}. Its \code{nomogram} element is the
+sheet that was checked, carrying the levels the fit holds; \code{drawn} is the
+copy that was printed, with any renaming and title casing applied.
 }
 \description{
 Builds the canonical \code{\link[rms:nomogram]{rms::nomogram()}} from the exact fitted model, with the

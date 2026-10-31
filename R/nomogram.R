@@ -23,11 +23,34 @@
 #' @param out_dir Directory for the exported files. `NULL` draws nothing.
 #' @param tolerance Largest absolute difference in predicted risk tolerated
 #'   between the nomogram and [mm_predict()] at tabulated values.
-#' @param width,height Inches. The default is the landscape shape the
-#'   specification asks for.
+#' @param width,height Inches. `NULL`, the default, sizes the sheet to the
+#'   model: a nomogram's rows do not get shorter when there are more of them,
+#'   so a page of fixed height crushes a model with many predictors into an
+#'   unreadable sheet. The ENT applicant model, 27 axes on the 9 inches that
+#'   suited 3, printed row labels across their own tick marks.
 #' @param fun_at Risk ticks for the printed risk axis.
+#' @param funlabel The printed risk axis's own label. Not every model this
+#'   package fits predicts a risk: the same machinery drew a nomogram for the
+#'   chance of matching into a residency, where "Predicted risk" is the wrong
+#'   noun on a sheet handed to the person it is about.
+#' @param labels Printed names for the predictor axes, as a named character
+#'   vector. The usual way to set these is `Hmisc::label()` on the cohort
+#'   before fitting, which `rms` carries into the drawn sheet on its own; this
+#'   argument is for relabelling a model that is already fitted. Renaming
+#'   happens after the sheet has been checked against [mm_predict()] and never
+#'   before, so the check matches axes to predictors by the names the fit gave
+#'   them and a printed name cannot change what was verified.
+#' @param level_case What to do with the level text a categorical axis prints.
+#'   Levels arrive as they were typed into a data-entry form, so a published
+#'   sheet carries `no AOA at school` down the middle of the page. `"title"`,
+#'   the default, title cases them for printing and leaves a word carrying a
+#'   capital of its own alone, so `AOA` and `USMLE` survive. `"asis"` prints
+#'   them exactly as the fit holds them. Like `labels`, this happens after the
+#'   sheet has been checked and never before.
 #'
-#' @return An object of class `mm_nomogram`.
+#' @return An object of class `mm_nomogram`. Its `nomogram` element is the
+#'   sheet that was checked, carrying the levels the fit holds; `drawn` is the
+#'   copy that was printed, with any renaming and title casing applied.
 #'
 #' @examples
 #' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
@@ -38,7 +61,10 @@
 #' nom
 #' @export
 mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
-                        width = 13, height = 9, fun_at = NULL) {
+                        width = NULL, height = NULL, fun_at = NULL,
+                        funlabel = "Predicted risk", labels = NULL,
+                        level_case = c("title", "asis")) {
+  level_case <- match.arg(level_case)
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
   }
@@ -63,9 +89,24 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
   on.exit(options(old), add = TRUE)
 
   args <- list(fit = model$fit, fun = stats::plogis,
-               funlabel = "Predicted risk")
+               funlabel = funlabel)
   if (!is.null(fun_at)) args$fun.at <- fun_at
   nom <- do.call(rms::nomogram, args)
+
+  # The risk axis is the one a reader takes the answer off, and by default it
+  # is laid out in equal steps of probability. The sheet is drawn linear in
+  # the linear predictor, so equal steps of probability are not equal steps on
+  # paper: on the ENT model, nine ticks from 0.1 to 0.9 landed inside a
+  # seventh of the axis and printed over one another. Equal steps of the
+  # linear predictor are equal steps on paper, so the ticks are chosen there
+  # and converted.
+  if (is.null(fun_at) && !is.null(nom$lp$x.real)) {
+    spaced <- mm_risk_ticks(nom$lp$x.real)
+    if (length(spaced) >= 3L) {
+      args$fun.at <- spaced
+      nom <- do.call(rms::nomogram, args)
+    }
+  }
 
   axes <- mm_axis_names(nom)
   profiles <- mm_tick_profiles(nom, model)
@@ -90,14 +131,26 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
 
   reading <- mm_reading_error(nom, model)
 
+  # Renamed only now, with every check above already made against the names
+  # the fit gave the axes. A printed name is a caption, and a caption must not
+  # be able to alter what was verified.
+  drawn <- mm_relabel_axes(nom, labels)
+  if (identical(level_case, "title")) drawn <- mm_title_case_levels(drawn)
+  page <- mm_nomogram_page(drawn, width, height)
+
   files <- character(0)
   if (!is.null(out_dir)) {
-    files <- mm_nomogram_export(nom, out_dir, model$project$slug,
-                               width, height)
+    files <- mm_nomogram_export(drawn, out_dir, model$project$slug,
+                               page$width, page$height)
   }
 
   exclusive <- mm_exclusive_axes(nom, model)
-  structure(list(nomogram = nom, axes = axes,
+  # Two objects, deliberately. `nomogram` is what was checked, carrying the
+  # levels the fit holds, and is what anything computing from the sheet must
+  # read. `drawn` is what was printed, with the captions on. Returning only
+  # the drawn one would hand a caller a sheet whose levels mm_predict() would
+  # refuse.
+  structure(list(nomogram = nom, drawn = drawn, axes = axes,
                  profiles_checked = nrow(profiles),
                  worst_disagreement = worst, tolerance = tolerance,
                  off_axis = sum(mm_off_axis(nom, totals)),
@@ -107,8 +160,123 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
                  exclusive_axes = exclusive,
                  n_axes = length(axes),
                  n_predictors = length(model$project$predictors),
+                 width = page$width, height = page$height,
                  files = files, fingerprint = model$fingerprint),
             class = "mm_nomogram")
+}
+
+#' Risk ticks that are evenly spaced on the drawn axis
+#'
+#' Chosen in the linear predictor, where the sheet is linear, and converted to
+#' probabilities. Rounded to figures a reader would write down, which moves
+#' each tick slightly off its even spacing; that is the right trade, because a
+#' tick labelled 0.37 is not more useful than one labelled 0.35 and the point
+#' of the exercise is a label somebody can read.
+#'
+#' @param lp_real The linear-predictor values the lp axis carries.
+#' @param n How many ticks to aim for.
+#' @return A sorted vector of probabilities, possibly shorter than `n` after
+#'   rounding collapses neighbours.
+#' @keywords internal
+mm_risk_ticks <- function(lp_real, n = 7L) {
+  lp <- range(lp_real, na.rm = TRUE)
+  if (!all(is.finite(lp)) || lp[1] >= lp[2]) return(numeric(0))
+  p <- stats::plogis(seq(lp[1], lp[2], length.out = n))
+  # Readable, and still distinct: a round number near 0 needs a significant
+  # figure, one near 1 needs the same treatment of its complement, and the
+  # middle of the range needs neither.
+  nice <- vapply(p, function(x) {
+    if (x < 0.1) signif(x, 1)
+    else if (x > 0.9) 1 - signif(1 - x, 1)
+    else round(x, 2)
+  }, numeric(1))
+  nice <- sort(unique(nice[nice > 0 & nice < 1]))
+  nice
+}
+
+#' How large a sheet this nomogram needs
+#'
+#' A nomogram is a stack of rows and a row does not get shorter when there are
+#' more of them. A fixed page therefore degrades with the size of the model,
+#' and it degrades silently: the sheet is still drawn, still verified, and
+#' still wrong to hand to anyone, because the long value labels of adjacent
+#' rows overprint each other. Height is set from the row count instead, with
+#' the old default as the floor so a small model is unchanged.
+#'
+#' Rows are every axis the sheet carries, which is one per predictor plus the
+#' points scale, the total points scale, the linear predictor and the risk
+#' axis, and the header row above them.
+#'
+#' @param nom An [rms::nomogram()] object, after any relabelling.
+#' @param width,height Inches, or `NULL` to size to the model.
+#' @return A list with `width` and `height`.
+#' @keywords internal
+mm_nomogram_page <- function(nom, width = NULL, height = NULL) {
+  rows <- length(nom) + 1L
+  longest <- max(nchar(names(nom)), 0L)
+  list(
+    # Width follows the longest printed name, because the labels share the
+    # left margin with the leftmost tick labels of every row.
+    width = if (is.null(width)) max(13, 8 + 0.16 * longest) else width,
+    height = if (is.null(height)) max(9, 1.2 + 0.5 * rows) else height)
+}
+
+#' Title case the level text a categorical axis prints
+#'
+#' Applied to the drawn copy, beside the axis renaming and for the same
+#' reason: the verification reads the levels the fit holds, so a tidier
+#' spelling must not reach it. What is printed and what was checked are
+#' deliberately two objects here.
+#'
+#' Only a main-effect axis whose values are text is touched. A continuous
+#' axis carries numbers and an interaction axis is assembled from levels that
+#' are already named elsewhere on the sheet.
+#'
+#' @param nom An [rms::nomogram()] object.
+#' @return The nomogram, with printed level text title cased.
+#' @keywords internal
+mm_title_case_levels <- function(nom) {
+  for (i in seq_along(nom)) {
+    axis <- nom[[i]]
+    info <- attr(axis, "info")
+    if (!is.list(axis) || !length(axis)) next
+    if (is.null(info) || !identical(info$type, "main")) next
+    if (!is.character(axis[[1]])) next
+    nom[[i]][[1]] <- mm_title_case(axis[[1]])
+  }
+  nom
+}
+
+#' Put printed names on the drawn axes
+#'
+#' Applied to a copy at draw time. The verification above matches axes to
+#' predictors by the names `rms` gave them, so relabelling before the check
+#' would mean checking a different object from the one that was reasoned
+#' about.
+#'
+#' @param nom An [rms::nomogram()] object.
+#' @param labels A named character vector, or `NULL`.
+#' @return The nomogram, with the named axes renamed.
+#' @keywords internal
+mm_relabel_axes <- function(nom, labels) {
+  if (is.null(labels)) return(nom)
+  if (!is.character(labels) || is.null(names(labels)) ||
+      anyNA(labels) || !all(nzchar(labels))) {
+    stop("`labels` must be a named character vector of printed names.",
+         call. = FALSE)
+  }
+  absent <- setdiff(names(labels), names(nom))
+  if (length(absent)) {
+    stop("`labels` names axis/axes this nomogram does not have: ",
+         paste(absent, collapse = ", "), ". It has ",
+         paste(names(nom), collapse = ", "),
+         ". An axis is named for the predictor as the fit saw it, which is ",
+         "not the column name when the cohort carried an Hmisc label.",
+         call. = FALSE)
+  }
+  at <- match(names(labels), names(nom))
+  names(nom)[at] <- unname(labels)
+  nom
 }
 
 #' Interaction blocks a nomogram cannot represent
