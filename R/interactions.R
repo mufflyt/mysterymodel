@@ -393,8 +393,33 @@ mm_interactions <- function(project, cohort, candidates,
   # plan is a departure and this is not one.
   bare <- project
   bare$interactions <- NULL
-  base <- suppressWarnings(
-    mm_model(bare, cohort, nonlinear = nonlinear, knots = knots))
+  base <- tryCatch(
+    suppressWarnings(mm_model(bare, cohort, nonlinear = nonlinear,
+                              knots = knots)),
+    error = function(e) conditionMessage(e))
+  if (is.character(base)) {
+    # The reduced model is what every candidate is tested against, so if it
+    # cannot be fitted there is no screen to run. Saying so here, and naming
+    # the main effects as the problem, keeps a failure of the baseline from
+    # reading as a failure of the blocks: real cohorts carry nested
+    # categories, such as a service level whose detail columns take a
+    # "not applicable" level exactly when the service is absent, and those
+    # make the main-effects model rank deficient on their own.
+    frame <- mm_split(project, cohort)$dev
+    eligible <- mm_evaluable(project, frame, require_cluster = TRUE)
+    frame <- frame[eligible$usable, , drop = FALSE]
+    columns <- mm_interaction_rank(project, frame,
+                                   project$predictors[1:2], nonlinear,
+                                   knots)
+    stop("the main-effects model that every block would be tested against ",
+         "cannot be fitted, so there is no screen to run. ",
+         if (columns$base_deficient)
+           paste0("Its ", columns$base_columns, " column(s) span only ",
+                  columns$base_rank, " dimension(s), so some predictor is a ",
+                  "combination of the others: a category that is present ",
+                  "exactly when another is absent does this. ") else "",
+         "rms reported: ", base, call. = FALSE)
+  }
   parts <- mm_split(project, cohort)
   eligible <- mm_evaluable(project, parts$dev, require_cluster = TRUE)
   frame <- parts$dev[eligible$usable, , drop = FALSE]

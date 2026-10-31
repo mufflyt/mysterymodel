@@ -274,3 +274,76 @@ test_that("an inverted event reverses every coefficient and no performance figur
                  mm_predict(as_control, cohort)$.pred,
                rep(1, nrow(cohort)), tolerance = 1e-10)
 })
+
+test_that("a model with as many parameters as rows is refused before fitting", {
+  # Found on the Telco cohort by offering customerID, which has one distinct
+  # value per row. rms spent minutes grinding through a design matrix 7042
+  # columns wide before failing. The count is exact and costs nothing.
+  set.seed(1978)
+  n <- 200
+  cohort <- data.frame(
+    id = sprintf("p%04d", seq_len(n)),
+    x = stats::rnorm(n),
+    g = factor(sample(c("a", "b", "c"), n, TRUE)),
+    y = stats::rbinom(n, 1L, 0.3), stringsAsFactors = FALSE)
+
+  started <- Sys.time()
+  expect_error(suppressWarnings(mm_model(
+    mm_project("t", "y", c("id", "x"), positive_class = 1,
+               cohort = cohort, seed = 1978), cohort)),
+    "nothing left to estimate them with")
+  expect_lt(as.numeric(difftime(Sys.time(), started, units = "secs")), 10)
+
+  expect_error(suppressWarnings(mm_model(
+    mm_project("t", "y", c("id", "x"), positive_class = 1,
+               cohort = cohort, seed = 1978), cohort)),
+    "identifies the patient rather than describing them")
+
+  # The count agrees with what the fit actually spends on a model that fits.
+  fitted <- suppressWarnings(mm_model(
+    mm_project("t", "y", c("x", "g"), positive_class = 1, cohort = cohort,
+               seed = 1978), cohort))
+  expect_equal(fitted$parameter_budget,
+               length(stats::coef(fitted$fit)) - 1L)
+
+  # Splines and blocks are counted too, before anything is fitted.
+  budget <- mysterymodel:::mm_parameter_budget(
+    mm_project("t", "y", c("x", "g"), positive_class = 1, cohort = cohort,
+               seed = 1978),
+    cohort, nonlinear = "x", knots = 4L, pairs = list(c("x", "g")))
+  expect_equal(unname(budget$spent[["x"]]), 3L)
+  expect_equal(unname(budget$spent[["g"]]), 2L)
+  expect_equal(unname(budget$blocks[["x:g"]]), 6L)
+  expect_equal(budget$total, 11L)
+})
+
+test_that("a main-effects model that cannot be fitted is named as the problem", {
+  # Found on the Telco cohort, whose OnlineSecurity takes a "No internet
+  # service" level exactly when InternetService is "No". The main effects are
+  # then rank deficient on their own, and mm_interactions() used to let the
+  # convergence error escape, where it read as a failure of the block.
+  set.seed(1978)
+  n <- 400
+  service <- factor(sample(c("DSL", "Fibre", "None"), n, TRUE))
+  detail <- factor(ifelse(service == "None", "not applicable",
+                          sample(c("No", "Yes"), n, TRUE)))
+  cohort <- data.frame(tenure = stats::rnorm(n, 30, 15), service = service,
+                       detail = detail,
+                       churn = stats::rbinom(n, 1L, 0.3))
+  project <- mm_project("t", "churn", c("tenure", "service", "detail"),
+                        positive_class = 1, cohort = cohort, seed = 1978)
+
+  rank <- mysterymodel:::mm_interaction_rank(project, cohort,
+                                             c("service", "detail"))
+  expect_true(rank$base_deficient)
+  expect_lt(rank$base_rank, rank$base_columns)
+
+  raised <- tryCatch(
+    suppressMessages(mm_interactions(project, cohort,
+                                     list(c("service", "detail")))),
+    error = function(e) conditionMessage(e))
+  expect_true(is.character(raised))
+  expect_match(raised, "main-effects model")
+  expect_match(raised, "no screen to run")
+  expect_match(raised, "present exactly when another is absent")
+})

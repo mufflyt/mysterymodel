@@ -335,6 +335,26 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          "value are incomplete on ",
          paste(names(by_variable), collapse = ", "), ".", call. = FALSE)
   }
+  # Counted before anything is fitted. A model with as many parameters as
+  # rows cannot be estimated, and the commonest way to ask for one is to
+  # offer an identifier as a predictor: lrm() then grinds through a design
+  # matrix wider than the cohort is long before failing.
+  budget <- mm_parameter_budget(project, dev, nonlinear, knots, pairs)
+  if (budget$total >= nrow(dev)) {
+    worst <- names(budget$spent)[which.max(budget$spent)]
+    stop("this model would spend ", budget$total, " parameter(s) on ",
+         nrow(dev), " row(s), so there is nothing left to estimate them ",
+         "with. The largest single cost is `", worst, "` at ",
+         max(budget$spent), " parameter(s)",
+         if (max(budget$spent) >= nrow(dev) - 1L)
+           paste0(", which is one per row: a column with a distinct value ",
+                  "for every patient identifies the patient rather than ",
+                  "describing them, and cannot predict anything about a ",
+                  "patient it has not seen") else "",
+         ". Reduce the model, or group the levels, before fitting.",
+         call. = FALSE)
+  }
+
   dev[[".mm_y"]] <- y
 
   # Leakage is checked here and not in mm_project(), because here is the first
@@ -432,6 +452,7 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
          lost_levels = lost,
+         parameter_budget = budget$total,
          reference_moved = reference_moved,
          reference = reference,
          leakage = leakage,
@@ -489,6 +510,45 @@ print.mm_model <- function(x, ...) {
   invisible(x)
 }
 
+
+#' The parameters a declared model would spend, counted before it is fitted
+#'
+#' A categorical predictor spends one parameter per level after the first, a
+#' continuous one spends one, a spline spends `knots - 1`, and an interaction
+#' spends the product of what its two sides spend. Counting it beforehand is
+#' what makes it possible to refuse a model that cannot be estimated instead
+#' of waiting for `rms::lrm()` to grind through a design matrix wider than the
+#' cohort is long.
+#'
+#' The case this exists for is an identifier offered as a predictor. A column
+#' with one level per row spends `n - 1` parameters, saturates the model on its
+#' own, and takes a long time to fail. The rule here is exact rather than a
+#' threshold: a model whose parameters reach the number of rows has nothing
+#' left to estimate them with.
+#'
+#' @param project A [mm_project()].
+#' @param frame The rows that would be fitted.
+#' @param nonlinear,knots,pairs The shape, as [mm_model()] resolved it.
+#' @return A list with `total` and the per-predictor `spent`.
+#' @keywords internal
+mm_parameter_budget <- function(project, frame, nonlinear = NULL,
+                                knots = 4L, pairs = list()) {
+  spend <- function(p) {
+    column <- frame[[p]]
+    if (is.factor(column) || is.character(column) || is.logical(column)) {
+      max(0L, length(unique(stats::na.omit(as.character(column)))) - 1L)
+    } else if (p %in% (nonlinear %||% character(0))) {
+      max(1L, as.integer(knots) - 1L)
+    } else 1L
+  }
+  spent <- vapply(project$predictors, spend, integer(1))
+  blocks <- vapply(pairs, function(ia) spent[[ia[1]]] * spent[[ia[2]]],
+                   integer(1))
+  list(total = sum(spent) + sum(blocks), spent = spent,
+       blocks = if (length(blocks)) stats::setNames(
+         blocks, vapply(pairs, paste, character(1), collapse = ":")) else
+           integer(0))
+}
 
 #' Whether an ordered factor is one rms can fit
 #'

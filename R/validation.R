@@ -593,6 +593,14 @@ print.mm_validation <- function(x, ...) {
         paste(x$full_process_detail$covers, collapse = ", "),
         " per resample; ", x$full_process_detail$valid, " of ",
         x$full_process_detail$B, " valid.\n", sep = "")
+    se <- x$full_process_detail$monte_carlo_se
+    if (!is.null(se) && !is.na(se[["c_stat"]])) {
+      cat("  Its correction carries a Monte Carlo standard error of ",
+          sprintf("%.5f", se[["c_stat"]]), " on C; rms does not return\n",
+          "  the per-resample values its own row is averaged over, so the\n",
+          "  same figure cannot be given for the fixed-model row.\n",
+          sep = "")
+    }
     if (!isTRUE(x$full_process_detail$adequate)) {
       cat("  INADEQUATE: too few resamples fitted to trust the ",
           "correction.\n", sep = "")

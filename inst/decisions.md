@@ -806,3 +806,47 @@ published coefficients this package reproduces exactly: -10.869045 for the
 intercept, 0.005737 for balance, 3.03e-06 for income and -0.646776 for
 student, with `glm`, `rms` and this package agreeing on every fitted
 probability to 6.7e-10 and on the deviance at 1571.544828.
+
+## DEC-014: a resampled figure reports its own Monte Carlo error
+
+**Settles:** how much precision an optimism-corrected figure is entitled to.
+**Date:** 2026-10-31.
+
+`pminternal` is an independent implementation of optimism correction. Given
+the same bootstrap resamples it agrees with this package exactly: on its own
+worked example the corrected c-statistic, calibration slope and calibration
+intercept matched to six decimals, 0.776220, 0.989738 and -0.013474, and the
+apparent c-statistic and Brier matched to 0 and 2.1e-14. That is the first
+check of these numbers against something that is not `rms`.
+
+Run over eight seeds it also showed what this package was hiding. Its
+corrected c-statistic moved across a range of 0.0024 and its slope across
+0.012. This package's did not move at all, because [mm_validate()] reseeds
+from `project$seed` before resampling, so the figure is reproducible by
+construction. That is the intent, and it is worth keeping. What it is not is
+evidence of stability: the variation is real, and pinning the seed only makes
+it invisible.
+
+So a figure determined to about three decimals was being printed with eight.
+
+[mm_full_process()] already computed one optimism per resample and then
+discarded them. Their standard error is the Monte Carlo error of the
+correction, it costs nothing, and it is now reported: 0.00089 on the
+c-statistic, 0.00465 on the slope and 0.00035 on the Brier at B = 200 on that
+example, which is the same order as the spread `pminternal` showed across
+seeds. The note says how many decimal places that leaves.
+
+The same figure cannot be given for the fixed-model row. `rms::validate()`
+returns the corrected index and not the per-resample values it averaged, so
+there is nothing to take a standard error of, and the printed output says so
+rather than leaving the asymmetry to be noticed.
+
+### A disagreement, recorded as one
+
+`pminternal` reports the apparent calibration intercept as 0.0000 and the
+apparent slope as 1.0000. This package withholds both. The agreement is
+complete on what the numbers are, and the disagreement is about whether to
+print them: they are the score equations of an unpenalized fit scored on its
+own rows, and beside a corrected slope of 0.99 they read as a model that is
+perfectly calibrated. That an independent package prints them as exactly 0
+and 1 is the evidence for withholding them, not against it.
