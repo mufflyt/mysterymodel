@@ -14,7 +14,7 @@ mm_model(
   cohort,
   nonlinear = NULL,
   interactions = NULL,
-  knots = 4L,
+  knots = NULL,
   check_leakage = TRUE
 )
 ```
@@ -35,17 +35,21 @@ mm_model(
 
 - nonlinear:
 
-  Character vector of continuous predictors to fit with restricted cubic
-  splines.
+  Continuous predictors to fit with restricted cubic splines. `NULL`
+  takes the project's prespecified `nonlinear`, which is where the
+  choice belongs. Supplying it here overrides the plan and the departure
+  is recorded on the returned object and warned about, because a model
+  whose shape differs from the written plan is a finding and not a
+  detail.
 
 - interactions:
 
-  List of length-two character vectors naming prespecified interactions.
-  Exploratory discovery is not this argument.
+  Prespecified interaction blocks. `NULL` takes the project's, with
+  departures recorded the same way.
 
 - knots:
 
-  Knots for each spline term.
+  Knots for each spline term. `NULL` takes the project's.
 
 - check_leakage:
 
@@ -136,5 +140,5 @@ fit
 #>   developed  300 rows, 28 events
 #>   parameters 7 non-intercept, 1097 short of the sample they need
 #>   apparent C 0.7126
-#>   fingerprint 44e69196a06c13b7
+#>   fingerprint fba075b46006604c
 ```

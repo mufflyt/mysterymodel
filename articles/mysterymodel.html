@@ -286,6 +286,7 @@ lenient in exactly the case that most needs it strict.</p>
 <span><span class="co">#&gt;   predictors 5: age, bmi, sex, prior_uti, indication</span></span>
 <span><span class="co">#&gt;   split      year &lt; 2023 develops, the rest is held out</span></span>
 <span><span class="co">#&gt;   cluster    pid</span></span>
+<span><span class="co">#&gt;   shape      every continuous predictor linear</span></span>
 <span><span class="co">#&gt;   seed       1978</span></span></code></pre></div>
 <p>Nothing is fitted here. The point of the object is that a reviewer
 can check it against the protocol instead of reconstructing it
@@ -328,7 +329,7 @@ wrong.</p>
 <span><span class="co">#&gt;   held out   153 rows</span></span>
 <span><span class="co">#&gt;   parameters 9 non-intercept, 663 short of the sample they need</span></span>
 <span><span class="co">#&gt;   apparent C 0.7553</span></span>
-<span><span class="co">#&gt;   fingerprint 7855ae820d29b8c6</span></span></code></pre></div>
+<span><span class="co">#&gt;   fingerprint 7d79bc4fadb8d51f</span></span></code></pre></div>
 <p>The warning is the sample-size gate, and it is the honest answer for
 a cohort this size. The gate is the Riley requirement from
 <code>pmsampsize</code>, not the events-per-parameter rule, which is
@@ -371,7 +372,7 @@ receive:</p>
 <span><span class="co">#&gt; $range</span></span>
 <span><span class="co">#&gt; [1] 40.2 95.0</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="va">fingerprint</span></span>
-<span><span class="co">#&gt; [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="preventing-outcome-leakage-in-clinical-prediction-models">Preventing outcome leakage in clinical prediction models<a class="anchor" aria-label="anchor" href="#preventing-outcome-leakage-in-clinical-prediction-models"></a>
@@ -570,9 +571,15 @@ it:</p>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
-<span><span class="co">#&gt;   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)</span></span>
+<span><span class="co">#&gt;   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)</span></span>
 <span><span class="co">#&gt;   between-tick reading      0.00969 in risk at most, anywhere off the ticks</span></span>
-<span><span class="co">#&gt;                             age is the coarsest axis</span></span></code></pre></div>
+<span><span class="co">#&gt;                             age is the coarsest axis</span></span>
+<span><span class="co">#&gt;   mutually exclusive: exactly one axis of each group below applies</span></span>
+<span><span class="co">#&gt;     sex (prior_uti=no)  |  sex (prior_uti=yes)</span></span>
+<span><span class="co">#&gt;       read on sex, chosen by prior_uti</span></span>
+<span><span class="co">#&gt;   axes        5 drawn for 5 predictor(s). Scoring two axes of one group double-counts the</span></span>
+<span><span class="co">#&gt;               patient, which no check here can see because it</span></span>
+<span><span class="co">#&gt;               happens on the printed sheet</span></span></code></pre></div>
 <p><code><a href="../reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a
 clinician reads it, summing points across axes and interpolating the
 printed linear predictor scale, without consulting the fit. Then it

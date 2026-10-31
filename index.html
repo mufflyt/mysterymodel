@@ -225,17 +225,19 @@
 <p>These are the decisions that make the package opinionated. They are defaults, not locks. Where one is an intention rather than working code, it says so.</p>
 <ul>
 <li>
-<strong>Continuous predictors stay continuous.</strong> Nonlinearity is assessed, not assumed away by categorising.</li>
+<strong>Continuous predictors stay continuous.</strong> Nonlinearity is assessed, not assumed away by categorising. Which predictors get a spline is prespecified in <code><a href="reference/mm_project.html">mm_project()</a></code>, not discovered: fitting one as a straight line is as much a decision as fitting it with a curve, and <code><a href="reference/mm_splines.html">mm_splines()</a></code> draws both allocations with the degrees of freedom each costs so the choice is made with numbers rather than by default. It reports no p-value on purpose, because fitting a spline and dropping back when its nonlinear term is not significant makes the model’s shape a function of the outcome.</li>
 <li>
 <strong><code><a href="https://rdrr.io/pkg/rms/man/lrm.html" class="external-link">rms::lrm()</a></code> is the default binary-outcome model</strong>, with <code>glmnet</code> and <code>glinternet</code> as alternatives.</li>
 <li>
-<strong>Interactions are prespecified</strong> and tested by likelihood ratio. Data-driven interaction discovery is reported as exploratory, and labelled that way.</li>
+<strong>Interactions are prespecified</strong> in <code><a href="reference/mm_project.html">mm_project()</a></code>, alongside the spline terms, so the plan is in the object a reviewer checks against the protocol rather than in whichever <code><a href="reference/mm_model.html">mm_model()</a></code> call ran. A fit that overrides the plan records the departure and says so.</li>
+<li>
+<strong>Interactions are tested by likelihood ratio</strong> in <code><a href="reference/mm_interactions.html">mm_interactions()</a></code>, which reports evidence about a block and selects nothing: no term is added to a model because a p-value was small. The statistic comes from the deviance difference between two fits on verifiably the same rows and is cross-checked against <code>rms::anova(test = "LR")</code> on every call, because <code>rms</code>’s default is Wald and the two are different tests. A block that adds no dimension to the design matrix is reported as not estimable rather than given the near-null p-value that would read as evidence of no interaction. Data-driven interaction discovery is not implemented, and would be labelled exploratory if it were.</li>
 <li>
 <strong>Selection and imputation happen inside resampling</strong>, never once beforehand. Doing it once leaks, and the leak flatters every number downstream. <em>Not yet implemented, and the package says so where it matters</em>: <code><a href="reference/mm_full_process.html">mm_full_process()</a></code> names imputation, selection and tuning as steps it does not re-execute, so its correction is not presented as validating a strategy that includes them. Fitting is complete-case in the meantime, with every excluded row counted and attributed (<a href="inst/decisions.html">DEC-003</a>).</li>
 <li>
 <strong>Validation reports discrimination, calibration intercept and slope, Brier score, bootstrap optimism, and intervals.</strong> Not discrimination alone. Each row names the method behind its interval and the event and non-event counts the interval rests on, and a row that cannot have one says why rather than leaving a blank.</li>
 <li>
-<strong>Nomograms use the native <code>rms</code> machinery</strong>, with readable labels, configurable axes, and pagination when a model outgrows one page.</li>
+<strong>Nomograms use the native <code>rms</code> machinery</strong>, with readable labels, configurable axes, and pagination when a model outgrows one page. An interaction reaches the drawn sheet as one axis per level of its categorical partner, verified to agree with <code><a href="reference/mm_predict.html">mm_predict()</a></code> to machine precision, and the mutually exclusive groups are named because scoring two axes of one group double-counts the patient and no check inside the package can see that happen on paper. A block crossing two continuous predictors cannot be drawn at all and is refused by name, with the model left as fitted.</li>
 <li><strong>No model-selection decision is made for you, and none is hidden.</strong></li>
 </ul>
 <p>The reference is Frank Harrell’s <em>Regression Modeling Strategies</em>.</p>

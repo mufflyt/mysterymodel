@@ -61,7 +61,7 @@ actually given, a prediction schema and a fingerprint of the coefficients.</p>
 <span>  <span class="va">cohort</span>,</span>
 <span>  nonlinear <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  interactions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  knots <span class="op">=</span> <span class="fl">4L</span>,</span>
+<span>  knots <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  check_leakage <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -81,17 +81,21 @@ untouched for later scoring.</p></dd>
 
 
 <dt id="arg-nonlinear">nonlinear<a class="anchor" aria-label="anchor" href="#arg-nonlinear"></a></dt>
-<dd><p>Character vector of continuous predictors to fit with
-restricted cubic splines.</p></dd>
+<dd><p>Continuous predictors to fit with restricted cubic
+splines. <code>NULL</code> takes the project's prespecified <code>nonlinear</code>, which is
+where the choice belongs. Supplying it here overrides the plan and the
+departure is recorded on the returned object and warned about, because a
+model whose shape differs from the written plan is a finding and not a
+detail.</p></dd>
 
 
 <dt id="arg-interactions">interactions<a class="anchor" aria-label="anchor" href="#arg-interactions"></a></dt>
-<dd><p>List of length-two character vectors naming
-prespecified interactions. Exploratory discovery is not this argument.</p></dd>
+<dd><p>Prespecified interaction blocks. <code>NULL</code> takes the
+project's, with departures recorded the same way.</p></dd>
 
 
 <dt id="arg-knots">knots<a class="anchor" aria-label="anchor" href="#arg-knots"></a></dt>
-<dd><p>Knots for each spline term.</p></dd>
+<dd><p>Knots for each spline term. <code>NULL</code> takes the project's.</p></dd>
 
 
 <dt id="arg-check-leakage">check_leakage<a class="anchor" aria-label="anchor" href="#arg-check-leakage"></a></dt>
@@ -168,7 +172,7 @@ level the model cannot score.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   developed  300 rows, 28 events</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameters 7 non-intercept, 1097 short of the sample they need</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   apparent C 0.7126</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   fingerprint 44e69196a06c13b7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   fingerprint fba075b46006604c</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

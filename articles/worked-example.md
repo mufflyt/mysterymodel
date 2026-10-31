@@ -259,6 +259,7 @@ plan$D
 #>   predictors 5: age, bmi, sex, prior_uti, indication
 #>   split      year < 2023 develops, the rest is held out
 #>   cluster    pid
+#>   shape      every continuous predictor linear
 #>   seed       1978
 ```
 
@@ -430,7 +431,7 @@ fits$D
 #>   held out   190 rows
 #>   parameters 9 non-intercept, 710 short of the sample they need
 #>   apparent C 0.7116
-#>   fingerprint 3b00d7880d0bada1
+#>   fingerprint 13f51cd9f4ad63da
 ```
 
 ``` r
@@ -444,10 +445,10 @@ do.call(rbind, lapply(names(fits), function(k) {
              fingerprint = substr(m$fingerprint, 1, 10))
 }))
 #>   analysis n_supplied n_dev events n_held parameters apparent_C fingerprint
-#> 1        A        741   741     83      0          6     0.6425  20486eeb8c
-#> 2        B        741   741     83      0          8     0.6584  b40edbe891
-#> 3        C        741   741     83      0          9     0.6695  93ca893c56
-#> 4        D        551   551     64    190          9     0.7116  3b00d7880d
+#> 1        A        741   741     83      0          6     0.6425  2f3503a21a
+#> 2        B        741   741     83      0          8     0.6584  bc5b60c005
+#> 3        C        741   741     83      0          9     0.6695  173aa6c379
+#> 4        D        551   551     64    190          9     0.7116  13f51cd9f4
 ```
 
 The sample-size gate is reported per analysis, and it is the honest
@@ -826,7 +827,7 @@ rbind(computed = c(intercept = apparent$cal_intercept,
                    slope = apparent$cal_slope),
       reported = c(withheld$cal_intercept, withheld$cal_slope))
 #>             intercept slope
-#> computed -1.40273e-15     1
+#> computed -1.26181e-15     1
 #> reported           NA    NA
 ```
 
@@ -903,14 +904,20 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.pdf, /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.svg, /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.pdf, /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.svg, /tmp/RtmpvR0Z9Z/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
 #>   between-tick reading      0.00484 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
+#>   mutually exclusive: exactly one axis of each group below applies
+#>     sex (prior_uti=no)  |  sex (prior_uti=yes)
+#>       read on sex, chosen by prior_uti
+#>   axes        5 drawn for 5 predictor(s). Scoring two axes of one group double-counts the
+#>               patient, which no check here can see because it
+#>               happens on the printed sheet
 #>   files           uds-d_nomogram.pdf, uds-d_nomogram.svg, uds-d_nomogram.png
 ```
 
@@ -1053,9 +1060,9 @@ ticks, so the extremes of the sum are the sums of the extremes.
 ``` r
 
 nom$reading_error_by_axis
-#>                lo         hi
-#> age -6.661338e-16 0.01936783
-#> bmi -6.661338e-16 0.00000000
+#>                lo           hi
+#> age -2.220446e-16 1.936783e-02
+#> bmi -2.220446e-16 4.440892e-16
 ```
 
 Which says where the coarseness is, and so which axis would need more
@@ -1081,14 +1088,14 @@ direct <- mysterymodel:::mm_reading_error(nom$nomogram, fits$D)
 c(between_ticks = direct$bound, lp_scale = direct$lp,
   reported = nom$reading_error, at_ticks = nom$worst_disagreement)
 #> between_ticks      lp_scale      reported      at_ticks 
-#>  4.841919e-03  1.936783e-02  4.841919e-03  5.551115e-17
+#>  4.841919e-03  1.936783e-02  4.841919e-03  1.110223e-16
 ```
 
 ``` r
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.pdf, /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.svg, /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.pdf, /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.svg, /tmp/RtmpvR0Z9Z/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -1151,10 +1158,10 @@ do.call(rbind, lapply(names(fits), function(k) data.frame(
   validation_matches = identical(checked[[k]]$fingerprint,
                                  fits[[k]]$fingerprint))))
 #>   analysis coefficients  development validation_matches
-#> 1        A 20486eeb8ce2 c9552f752ad9               TRUE
-#> 2        B b40edbe891b8 c9552f752ad9               TRUE
-#> 3        C 93ca893c5644 d3e0c5b952e9               TRUE
-#> 4        D 3b00d7880d0b a97f8dd9ff7e               TRUE
+#> 1        A 2f3503a21a4a c9552f752ad9               TRUE
+#> 2        B bc5b60c005ba c9552f752ad9               TRUE
+#> 3        C 173aa6c379e8 d3e0c5b952e9               TRUE
+#> 4        D 13f51cd9f4ad a97f8dd9ff7e               TRUE
 ```
 
 A and B share a development sample and differ in shape, so their
@@ -1178,13 +1185,14 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        50        10        40
+#>        52        10        40
 sort(everything[!used])
 #>  [1] "mm_anova_block"           "mm_candidate_pairs"      
-#>  [3] "mm_draw_splines"          "mm_interaction_rank"     
-#>  [5] "mm_interaction_support"   "mm_matrix_rank"          
-#>  [7] "mm_min_resamples"         "mm_no_corrected_interval"
-#>  [9] "mm_no_information"        "mm_reference_profile"
+#>  [3] "mm_draw_splines"          "mm_exclusive_axes"       
+#>  [5] "mm_interaction_rank"      "mm_interaction_support"  
+#>  [7] "mm_matrix_rank"           "mm_min_resamples"        
+#>  [9] "mm_no_corrected_interval" "mm_no_information"       
+#> [11] "mm_reference_profile"     "mm_undrawable_blocks"
 ```
 
 The ones it does not reach are helpers whose results are already on the

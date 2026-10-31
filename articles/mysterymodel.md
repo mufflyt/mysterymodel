@@ -254,6 +254,7 @@ project
 #>   predictors 5: age, bmi, sex, prior_uti, indication
 #>   split      year < 2023 develops, the rest is held out
 #>   cluster    pid
+#>   shape      every continuous predictor linear
 #>   seed       1978
 ```
 
@@ -301,7 +302,7 @@ model
 #>   held out   153 rows
 #>   parameters 9 non-intercept, 663 short of the sample they need
 #>   apparent C 0.7553
-#>   fingerprint 7855ae820d29b8c6
+#>   fingerprint 7d79bc4fadb8d51f
 ```
 
 The warning is the sample-size gate, and it is the honest answer for a
@@ -356,7 +357,7 @@ model$schema$predictors$age
 #> $range
 #> [1] 40.2 95.0
 model$fingerprint
-#> [1] "7855ae820d29b8c6ec468b1c8bac2f12128226a11b96a987c765886a9ccae54f"
+#> [1] "7d79bc4fadb8d51f2984d2673c40970d34248332482946aae7596d574ddce67c"
 ```
 
 ## Preventing outcome leakage in clinical prediction models
@@ -595,9 +596,15 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
-#>   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 4.44e-16 (tolerance 1e-06)
 #>   between-tick reading      0.00969 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
+#>   mutually exclusive: exactly one axis of each group below applies
+#>     sex (prior_uti=no)  |  sex (prior_uti=yes)
+#>       read on sex, chosen by prior_uti
+#>   axes        5 drawn for 5 predictor(s). Scoring two axes of one group double-counts the
+#>               patient, which no check here can see because it
+#>               happens on the printed sheet
 ```
 
 [`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md)

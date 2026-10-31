@@ -114,13 +114,38 @@ defaults, not locks. Where one is an intention rather than working code,
 it says so.
 
 - **Continuous predictors stay continuous.** Nonlinearity is assessed,
-  not assumed away by categorising.
+  not assumed away by categorising. Which predictors get a spline is
+  prespecified in
+  [`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md),
+  not discovered: fitting one as a straight line is as much a decision
+  as fitting it with a curve, and
+  [`mm_splines()`](https://mufflyt.github.io/mysterymodel/reference/mm_splines.md)
+  draws both allocations with the degrees of freedom each costs so the
+  choice is made with numbers rather than by default. It reports no
+  p-value on purpose, because fitting a spline and dropping back when
+  its nonlinear term is not significant makes the model’s shape a
+  function of the outcome.
 - **[`rms::lrm()`](https://rdrr.io/pkg/rms/man/lrm.html) is the default
   binary-outcome model**, with `glmnet` and `glinternet` as
   alternatives.
-- **Interactions are prespecified** and tested by likelihood ratio.
-  Data-driven interaction discovery is reported as exploratory, and
-  labelled that way.
+- **Interactions are prespecified** in
+  [`mm_project()`](https://mufflyt.github.io/mysterymodel/reference/mm_project.md),
+  alongside the spline terms, so the plan is in the object a reviewer
+  checks against the protocol rather than in whichever
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  call ran. A fit that overrides the plan records the departure and says
+  so.
+- **Interactions are tested by likelihood ratio** in
+  [`mm_interactions()`](https://mufflyt.github.io/mysterymodel/reference/mm_interactions.md),
+  which reports evidence about a block and selects nothing: no term is
+  added to a model because a p-value was small. The statistic comes from
+  the deviance difference between two fits on verifiably the same rows
+  and is cross-checked against `rms::anova(test = "LR")` on every call,
+  because `rms`’s default is Wald and the two are different tests. A
+  block that adds no dimension to the design matrix is reported as not
+  estimable rather than given the near-null p-value that would read as
+  evidence of no interaction. Data-driven interaction discovery is not
+  implemented, and would be labelled exploratory if it were.
 - **Selection and imputation happen inside resampling**, never once
   beforehand. Doing it once leaks, and the leak flatters every number
   downstream. *Not yet implemented, and the package says so where it
@@ -137,7 +162,15 @@ it says so.
   non-event counts the interval rests on, and a row that cannot have one
   says why rather than leaving a blank.
 - **Nomograms use the native `rms` machinery**, with readable labels,
-  configurable axes, and pagination when a model outgrows one page.
+  configurable axes, and pagination when a model outgrows one page. An
+  interaction reaches the drawn sheet as one axis per level of its
+  categorical partner, verified to agree with
+  [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+  to machine precision, and the mutually exclusive groups are named
+  because scoring two axes of one group double-counts the patient and no
+  check inside the package can see that happen on paper. A block
+  crossing two continuous predictors cannot be drawn at all and is
+  refused by name, with the model left as fitted.
 - **No model-selection decision is made for you, and none is hidden.**
 
 The reference is Frank Harrell’s *Regression Modeling Strategies*.

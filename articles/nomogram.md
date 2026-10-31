@@ -33,10 +33,16 @@ nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
 #>   profiles checked 21 at tabulated ticks
-#>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
+#>   worst gap vs mm_predict() 2.08e-16 (tolerance 1e-06)
 #>   off printed scale 8 tick profile(s) fall beyond the drawn axis
 #>   between-tick reading      0.016 in risk at most, anywhere off the ticks
 #>                             age is the coarsest axis
+#>   mutually exclusive: exactly one axis of each group below applies
+#>     sex (prior_uti=no)  |  sex (prior_uti=yes)
+#>       read on sex, chosen by prior_uti
+#>   axes        4 drawn for 4 predictor(s). Scoring two axes of one group double-counts the
+#>               patient, which no check here can see because it
+#>               happens on the printed sheet
 ```
 
 ``` r
@@ -137,7 +143,7 @@ the agreement evidence rather than a restatement.
 
 abs(unname(mysterymodel:::mm_nomogram_risk(nom$nomogram, patient)) -
     mm_predict(model, patient)$.pred)
-#> [1] 5.551115e-17
+#> [1] 1.94289e-16
 ```
 
 ## Every tick, not one patient
@@ -175,9 +181,9 @@ fitted <- mm_predict(model, profiles)$.pred
 
 summary(abs(read - fitted))
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> 0.000e+00 0.000e+00 8.674e-18 1.355e-17 1.388e-17 1.110e-16
+#> 0.000e+00 0.000e+00 8.674e-18 2.379e-17 2.082e-17 2.082e-16
 nom$worst_disagreement
-#> [1] 1.110223e-16
+#> [1] 2.081668e-16
 ```
 
 Machine precision, across a model with a spline and an interaction. If
@@ -189,7 +195,7 @@ would refuse to return at all:
 
 mm_nomogram(model, out_dir = NULL, tolerance = 1e-20)
 #> Error:
-#> ! the nomogram disagrees with mm_predict() by 1.11e-16 at a tabulated profile, over the tolerance of 1e-20. A nomogram that does not reproduce its own model must not be published.
+#> ! the nomogram disagrees with mm_predict() by 2.08e-16 at a tabulated profile, over the tolerance of 1e-20. A nomogram that does not reproduce its own model must not be published.
 ```
 
 That refusal is the whole design. An instrument that does not reproduce
@@ -370,7 +376,7 @@ mysterymodel:::mm_off_axis(nom$nomogram, c(min(totals), total, 500))
 
 out <- file.path(tempdir(), "nomogram-article")
 drawn <- mm_nomogram(model, out_dir = out, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpxDe9hE/nomogram-article/uds_nomogram.pdf, /tmp/RtmpxDe9hE/nomogram-article/uds_nomogram.svg, /tmp/RtmpxDe9hE/nomogram-article/uds_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmpq6G9xN/nomogram-article/uds_nomogram.pdf, /tmp/Rtmpq6G9xN/nomogram-article/uds_nomogram.svg, /tmp/Rtmpq6G9xN/nomogram-article/uds_nomogram.png
 basename(drawn$files)
 #> [1] "uds_nomogram.pdf" "uds_nomogram.svg" "uds_nomogram.png"
 ```

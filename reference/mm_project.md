@@ -16,6 +16,9 @@ mm_project(
   split_var = NULL,
   split_at = NULL,
   cluster_id = NULL,
+  nonlinear = NULL,
+  interactions = NULL,
+  knots = 4L,
   seed = 1978L
 )
 ```
@@ -62,6 +65,35 @@ mm_project(
   Optional length-one character naming the column that identifies
   repeated observations on one patient, for clustered resampling.
 
+- nonlinear:
+
+  Optional character vector of continuous predictors to fit with
+  restricted cubic splines. Part of the plan rather than of the fitting
+  call, because how many degrees of freedom a continuous predictor is
+  given is a prespecified choice: section 78 of the specification asks
+  the configuration to carry the spline and interaction terms, and a
+  plan that lives in whichever
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  call ran is not one a reviewer can check against a protocol. Left
+  `NULL` the project records no shape, which is not the same as
+  recording that every continuous predictor is straight:
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  then takes its own argument without calling it a departure, because
+  there is no plan to depart from.
+  [`mm_splines()`](https://mufflyt.github.io/mysterymodel/reference/mm_splines.md)
+  shows what the choice is worth before it is written down.
+
+- interactions:
+
+  Optional list of length-two character vectors naming prespecified
+  interaction blocks. Exploratory discovery is not this argument;
+  [`mm_interactions()`](https://mufflyt.github.io/mysterymodel/reference/mm_interactions.md)
+  reports evidence and selects nothing.
+
+- knots:
+
+  Knots for each spline term.
+
 - seed:
 
   Single whole number, recorded here so that a later resampling step
@@ -87,6 +119,7 @@ mm_project("uds", "event", c("age", "bmi", "sex"))
 #>   outcome    event
 #>   predictors 3: age, bmi, sex
 #>   split      none
+#>   shape      every continuous predictor linear
 #>   seed       1978
 
 # Temporal validation: develop before 2023, hold out 2023 onwards.
@@ -96,5 +129,6 @@ mm_project("uds", "event", c("age", "bmi"),
 #>   outcome    event
 #>   predictors 2: age, bmi
 #>   split      year < 2023 develops, the rest is held out
+#>   shape      every continuous predictor linear
 #>   seed       1978
 ```
