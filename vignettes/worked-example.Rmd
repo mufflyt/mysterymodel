@@ -304,6 +304,156 @@ str(schema$predictors[c("age", "indication")])
 identical(schema$predictors, fits$D$schema$predictors)
 ```
 
+### The shape plan B buys, and what it costs
+
+A and B differ in one declared decision: B gives `age` a restricted cubic
+spline. Both allocations were written down in section 4, so what follows is
+not a choice being made now; it is what the choice already made amounts to.
+`mm_splines()` fits each continuous predictor both ways and reports the
+difference, which is the arithmetic the contrast table below needs in order to
+mean anything.
+
+```{r splines}
+shapes <- mm_splines(plan$B, cohort, knots = 4)
+shapes$summary[, c("predictor", "parameters_linear", "parameters_spline",
+                   "largest_risk_gap", "at_value")]
+```
+
+Two continuous predictors and the same two extra parameters each. The
+generating model behind this cohort carries a quadratic age term and a linear
+`bmi` term:
+
+```{r splines-truth}
+attr(raw, "truth")$formula
+```
+
+The age gap is the larger of the two, which is the ordering the truth
+predicts. It is worth being careful about how much that ordering proves,
+because `bmi` is linear by construction and its gap is not small either, and
+both maxima sit at the very top of their observed ranges. A spline is least
+constrained where the data runs out, so `largest_risk_gap` is partly a
+statement about curvature and partly a statement about where this cohort
+stops. Reading it without the rug below would attribute all of it to the
+first.
+
+The curves are **adjusted**: every other predictor sits at the reference
+profile, which is returned because an adjusted curve means nothing without the
+values it was adjusted to.
+
+```{r splines-reference}
+shapes$reference
+```
+
+Standing somewhere else moves them. Here is the same comparison for a patient
+at the other end of both categorical axes, which is a different question and
+has a different answer:
+
+```{r splines-elsewhere}
+elsewhere <- mm_splines(plan$B, cohort, predictors = "age",
+                        at = list(sex = "male", prior_uti = "yes",
+                                  indication = "retention"),
+                        plot = FALSE)
+rbind(reference = shapes$summary[shapes$summary$predictor == "age",
+                                 c("largest_risk_gap", "at_value")],
+      elsewhere = elsewhere$summary[, c("largest_risk_gap", "at_value")])
+```
+
+```{r splines-plot, fig.width = 9, fig.height = 4}
+invisible(mm_splines(plan$B, cohort, knots = 4))
+```
+
+The dashed line is A's allocation and the solid line is B's. The rug is where
+the data actually is, and it is the part of the picture that explains the
+table above: both maxima are at the right-hand end of their panels, where the
+rug thins out and the spline has least holding it down. That is a real feature
+of the allocation rather than an artefact to be corrected, and it is the
+reason a clinician reading a nomogram built on plan B should be told which
+part of each axis the cohort actually covered.
+
+What the figure does **not** carry is a binned observed event rate, however
+natural it would look underneath two fitted curves. A marginal event rate and
+an adjusted curve are different quantities, and an eye given both will compare
+them anyway.
+
+Nor is there a p-value here, and that absence is deliberate. `rms` will give
+you one: the aggregate nonlinear term sits in the `anova` table immediately
+beside the interaction block.
+
+```{r splines-no-test}
+old <- options(datadist = fits$B$datadist)
+anova(fits$B$fit, test = "LR")[c("age", " Nonlinear"), ]
+options(old)
+```
+
+Fitting the spline, reading that row, and dropping back to a straight line
+when it is not significant would make the model's shape a function of the
+outcome. The optimism of that choice is corrected by nothing downstream, which
+is the same error as choosing an interaction on the development data and then
+validating the chosen model as though it had been prespecified. The allocation
+belonged in section 4, and that is where it was.
+
+The cost side is the parameter budget, which the sample-size gate was already
+unhappy about:
+
+```{r splines-budget}
+data.frame(
+  analysis = c("A", "B"),
+  parameters = c(fits$A$adequacy$parameters, fits$B$adequacy$parameters),
+  required_n = ceiling(c(fits$A$adequacy$required_n,
+                         fits$B$adequacy$required_n)),
+  short_by = ceiling(c(fits$A$adequacy$short_by,
+                       fits$B$adequacy$short_by)),
+  shrinkage = round(c(fits$A$adequacy$heuristic_shrinkage,
+                      fits$B$adequacy$heuristic_shrinkage), 3))
+```
+
+So B buys a shape worth a tenth or two of predicted risk towards the top of
+the age range, where this cohort is thinnest, and pays for it with two
+parameters the sample is already short of. Both halves of that sentence are
+reported, and neither is a recommendation.
+
+### The block plans C and D declare
+
+C and D add `prior_uti` by `sex`, prespecified in section 4 and planted in the
+generating model. `mm_interactions()` tests it as an addition to the
+main-effects model, and reports what the test rests on rather than only its
+p-value. A second candidate is included that nobody declared, to show that a
+screen of two blocks is reported as a screen of two blocks.
+
+```{r interactions}
+blocks <- mm_interactions(
+  plan$C, cohort,
+  candidates = list(c("prior_uti", "sex"), c("sex", "indication")),
+  nonlinear = "age", adjustment = "holm")
+blocks
+```
+
+```{r interactions-detail}
+blocks$screen[, c("interaction", "statistic", "degrees_freedom", "p_value",
+                  "p_adjusted", "added_rank", "smallest_cell", "lr_agrees")]
+```
+
+`added_rank` is the dimension each block actually adds to the design matrix,
+and no test is reported unless it equals the columns the block contributes:
+that is what stops a block which adds nothing from coming back with a p-value
+near one, which would read as evidence of no interaction. `lr_agrees` records
+that the deviance difference and `rms::anova(test = "LR")` agreed, checked on
+this call rather than once in a test file.
+
+The planted block is the one the plan declared. The other was included to be
+counted, and it is: the candidate budget is two blocks and three parameters
+whichever of them survives, which is the complexity the analysis spent even
+though plan C contains only one of them.
+
+```{r interactions-budget}
+c(candidates = blocks$n_candidates,
+  candidate_parameters = blocks$candidate_parameters,
+  parameters_in_plan_C = fits$C$adequacy$parameters)
+```
+
+Nothing above changed a model. Plan C contains the block because section 4
+said so, not because this table did.
+
 ## 8. Validating all four
 
 ```{r validate}
@@ -641,11 +791,13 @@ c(functions = length(everything),
 sort(everything[!used])
 ```
 
-The three it does not reach are one-line helpers whose results are already on
-the page: the four-fifths resample floor and the no-information Brier appear in
-the validation notes above, and the sentence explaining why a corrected
-c-statistic carries no interval is printed in those notes verbatim. Naming them
-is the point of the chunk.
+The ones it does not reach are helpers whose results are already on the page
+rather than capabilities going untested: the four-fifths resample floor and the
+no-information Brier appear in the validation notes above, the sentence about a
+corrected c-statistic's missing interval is printed in those notes verbatim,
+and the rank and support machinery behind the interaction screen is summarised
+in its own columns. Naming them is the point of the chunk, and the list is
+printed rather than described so it cannot quietly go stale.
 
 ```{r coverage-print}
 methods_used <- c("print.mm_project", "print.mm_cohort", "print.mm_eda",
