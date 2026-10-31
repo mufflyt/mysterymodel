@@ -879,11 +879,28 @@ deliberately empty. `emmeans` reports that it cannot reconstruct the data,
 after a local variable is not found, `sjPlot` that `.mm_y` is not in the
 data, and `DynNom` and `regplot` both that `form` is not found.
 
-`DynNom` has a workaround, because it takes a `data` argument, and given one
-its predictions agree exactly: linear predictors to 1.1e-16 and risks to zero
-across all 189 rows of a worked example. `regplot` has none, because
-`regplot()` has no such argument, so a model fitted here cannot be drawn by
-it at all without being refitted through `rms` directly.
+`DynNom` appears to have a workaround, because it takes a `data` argument,
+and given one its predictions agreed exactly on a worked example: linear
+predictors to 1.1e-16 and risks to zero across all 189 rows. That agreement
+does not mean what it looks like. `DynNom` calls
+
+```r
+model <- update(model, x = T, y = T, data = data)
+```
+
+so it re-estimates the model on the rows it was handed and discards the
+coefficients it was given. Adding 0.5 to the `age` coefficient of a fitted
+model left `DynNom`'s predictions unmoved at -1.142635, +0.770949 and
+-2.057913 while `rms` moved to +8.357365, +11.770949 and +12.942087. The
+exact agreement was therefore a coincidence of being handed back the same
+rows the model was fitted to, not a reading of the stored model. Handing it
+the whole cohort for a model developed on a temporal split, 404 of 600 rows,
+moved the linear predictor by 0.130 and the risk by 0.018 with nothing said.
+A renderer that silently refits is not a way to display a reported model.
+
+`regplot` has no workaround at all, because `regplot()` has no `data`
+argument, so a model fitted here cannot be drawn by it without being refitted
+through `rms` directly.
 
 `rms` is unaffected throughout, because it reads the stored `x` and `y` and
 the `datadist` rather than rebuilding a model frame from an environment. That
@@ -896,3 +913,131 @@ a saved model that cannot carry identifiers somewhere the data was never
 meant to go is worth more than an interactive renderer that reads them. What
 was wrong was that the cost had not been written down, and an analyst met it
 one package at a time as six unrelated errors.
+
+## DEC-016: the calculator is built here, over mm_predict()
+
+**Settles:** what renders a fitted model for a clinician, now that DEC-015
+has established that nothing in the surrounding ecosystem can.
+
+**Date:** 2026-10-31.
+
+[mm_calculator()] builds a Shiny front end from `model$schema`: one input per
+predictor, a dropdown for a categorical one offering the levels the model was
+developed on and no others, a number for a continuous one defaulting to the
+median the `datadist` recorded and stating the range it was developed on.
+Scoring goes through [mm_predict()].
+
+The alternative was an interactive renderer from another package, and DEC-015
+is the reason there is none to use. Six of them cannot read these fits at all.
+The one that can be made to produce numbers, `DynNom`, produces them by
+refitting, so what a clinician would read off the screen is a model
+re-estimated on whatever rows the app was handed rather than the model that
+was reported and validated. The failure is silent and it is not small: 0.130
+on the linear predictor in the temporal-split case measured in DEC-015.
+
+Routing the front end through [mm_predict()] rather than through a second
+scoring path is the whole point. [mm_predict()] already refuses an unseen
+level by name, already marks a row outside the development range as an
+extrapolation rather than letting it look like any other row, and already
+reads the stored coefficients without refitting. A calculator over it agrees
+with the reported model by construction, so there is nothing left to verify
+about the agreement. The `UTI_Calculator` application this is modelled on
+needed a startup schema validator precisely because its UI and its scoring
+were built separately and could drift; here they cannot, because both are read
+from the one schema the fit recorded.
+
+What the page shows beside the risk is the other half of the decision. A
+calculator that renders one number renders the least reliable part of a
+model's output on its own. So the screen carries the reference the band is
+taken relative to, the risk as a count out of a hundred, and the adequacy
+verdict with its reason in full. For a model short of the sample its shape
+requires, that verdict is a fact about every figure on the page, and putting
+it in a footnote would be a choice to let the figure be read without it.
+
+The bands are cut on the odds ratio against a reference that defaults to the
+development cohort's own event rate. That default is not a clinical threshold
+and is not offered as one. A decision threshold comes from a decision curve
+and the cost of each error, neither of which this package has, so the only
+threshold a fitted model carries is the rate at which the outcome occurred in
+the cohort it was developed on. A `threshold` argument takes a real one when
+there is a real one, and either way the page prints the number the band is
+relative to, because a band shown without it is not interpretable.
+
+The cut points are odds ratios rather than multiples of the probability
+because multiples read naturally and then fail on exactly the cohorts this
+package is used on. Running the calculator on the ENT applicant cohort, where
+769 of 1232 applicants in the development cycles matched, made it obvious:
+twice a 62.4% rate is not a probability, so every applicant above the
+reference fell in one band and the top two were unreachable. A logistic model
+is linear in the log odds, so a band taken on the odds ratio is a band on the
+scale the model works in. It is symmetric about the reference and all four
+bands are populated at a 9.3% event rate and at a 62.4% one alike.
+
+Which end of the colour ramp a band takes is the caller's to declare, through
+`higher_is`. A complication and a successful residency match are the same
+object to this package, a probability from a logistic fit, and a high value is
+bad in the first case and good in the second. Nothing in a fitted model says
+which, so painting a high chance of matching red would be the package
+guessing at the clinical meaning of its own output. The default is `"worse"`
+because this is a risk calculator, the label stays directional either way, and
+the colour is never the only carrier of the band.
+
+The gauge ends at four times the reference rather than at 100%. A needle
+rendering a low-prevalence outcome across a full 0 to 100% sweep puts every
+clinically distinct value inside the first few degrees and shows nothing.
+Both ends of the dial are printed under it so the sweep cannot be misread as
+a percentage scale.
+
+A value outside the development range raises an alert on the face of the page.
+The `UTI_Calculator` this is modelled on clamped such a value to the datadist
+limit instead, which returns a number from inside the range for a patient who
+is not, and says nothing.
+
+The nomogram is on the page rather than in a separate artifact, and
+[mm_nomogram()] draws it. The two renderings of a model that a reader is most
+likely to compare are the calculator and the sheet, and putting them on one
+page is only safe because [mm_nomogram()] refuses to return a sheet that
+disagrees with [mm_predict()] when read back. So the panel states the
+agreement it was granted on, the bound on reading between printed ticks, and
+the mutually exclusive axes, because an instrument shown without the check
+that licensed it is being offered on trust.
+
+[mm_nomogram()] gained `funlabel` for the same reason the page gained
+`subject`. Both were hardcoded to a clinical vocabulary, and the first model
+outside that vocabulary made it obvious: an applicant reading a sheet headed
+"Predicted risk" about their own chance of matching is reading someone else's
+instrument.
+
+The result column is sticky. This is a layout detail with a methodological
+edge: the ENT model has 27 predictors, so the form is far longer than its own
+result, and before the fix scrolling to the last predictor put the prediction,
+the band and the adequacy verdict off the top of the screen. A page that shows
+the caveats only when the reader is not looking at the number has not shown
+them.
+
+An interval is shown, and the page says what it covers. [mm_predict()]
+produces one on request from the standard error of the linear predictor,
+transformed, so it is asymmetric on the probability scale and cannot quote a
+negative risk. What it covers is the uncertainty in these coefficients. What
+it does not cover is how much people sharing a covariate pattern differ from
+one another, and the choices that produced the model: which predictors, which
+shape, which sample. On a model short of the size its shape requires the
+interval is too narrow for the same reason the coefficients are too extreme,
+and the adequacy panel is on the same screen so the two can be read together.
+
+The nomogram does not carry it. A nomogram maps total points to risk through
+one fixed scale, and the uncertainty is a different quantity for every
+covariate pattern, so there is no second axis that would be correct for more
+than one reader. `rms::nomogram(conf.int=)` draws confidence bars on the
+predictor point scales, which is a different thing that is routinely read as
+this one, and it is not enabled here.
+
+Kept rows are compared, which is taken from `DynNom`. It is the one thing
+that package does that this one did not, and it is worth taking because a
+prediction on its own answers nothing: the question a reader actually has is
+what the number would be if one value were different, and that question is
+only answerable side by side with the intervals in view. What is not taken is
+its sliders, because a slider bounded to the development range makes
+extrapolation unreachable and this package allows it and labels it instead,
+and its model-summary tab, because an `rms` summary dump is not what a reader
+should be acting on.
