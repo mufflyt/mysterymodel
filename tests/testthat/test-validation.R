@@ -163,3 +163,49 @@ test_that("the resample count is checked against its own name", {
   expect_error(mysterymodel:::mm_check_resamples(0))
   expect_identical(.Random.seed, before)
 })
+
+test_that("the correction reports its own Monte Carlo error", {
+  # Found by comparing against pminternal, an independent implementation of
+  # optimism correction. Its corrected c-statistic moved by 0.0024 across
+  # seeds at B = 200; this package's did not move at all, because
+  # mm_validate() reseeds from the project so the figure is reproducible by
+  # construction. The variation is real either way, and pinning the seed
+  # hides it: the figure was printed to eight digits and determined to about
+  # three. The resamples the correction averages are already in hand, so
+  # their standard error costs nothing.
+  f <- val_fixture(n = 500)
+  fp <- suppressWarnings(mysterymodel:::mm_full_process(f$model, f$cohort,
+                                                        B = 60))
+  se <- fp$monte_carlo_se
+  expect_true(all(c("c_stat", "cal_slope", "cal_intercept", "brier",
+                    "brier_scaled") %in% names(se)))
+  expect_true(all(se[c("c_stat", "cal_slope", "brier")] > 0))
+  expect_true(all(is.finite(se[c("c_stat", "cal_slope", "brier")])))
+
+  # It is the standard error of a mean over the valid resamples, so it falls
+  # as the square root of their number. Two runs at different B, with the
+  # ratio checked loosely because each is itself an estimate.
+  small <- suppressWarnings(mysterymodel:::mm_full_process(f$model,
+                                                           f$cohort, B = 40))
+  large <- suppressWarnings(mysterymodel:::mm_full_process(f$model,
+                                                           f$cohort,
+                                                           B = 160))
+  expect_lt(large$monte_carlo_se[["c_stat"]],
+            small$monte_carlo_se[["c_stat"]])
+
+  # The scaled Brier's error is the Brier's over the same fixed reference,
+  # because that is how the scaled value is derived.
+  expect_equal(se[["brier_scaled"]],
+               se[["brier"]] / fp$no_information_brier)
+
+  # And it is said, not merely stored.
+  expect_match(fp$note, "Monte Carlo standard error")
+  expect_match(fp$note, "determined to about")
+  v <- suppressWarnings(mm_validate(f$model, f$cohort, B = 60,
+                                    full_process = TRUE))
+  printed <- paste(capture.output(print(v)), collapse = " ")
+  expect_match(printed, "Monte Carlo standard error")
+  # rms returns no per-resample values, so the same cannot be given for its
+  # row, and the printed output says which row it applies to.
+  expect_match(printed, "cannot be given for the fixed-model row")
+})

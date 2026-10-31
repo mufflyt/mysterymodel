@@ -65,6 +65,9 @@
 #'   detail.
 #' @param interactions Prespecified interaction blocks. `NULL` takes the
 #'   project's, with departures recorded the same way.
+#' @param reference Comparison categories for categorical predictors. `NULL`
+#'   takes the project's. Applied before the `datadist`, the fit and the
+#'   schema, so every one of them agrees about which level is the baseline.
 #' @param knots Knots for each spline term. `NULL` takes the project's.
 #' @param check_leakage Scan the development predictors for duplication of the
 #'   outcome. `TRUE` for a declared model. [mm_full_process()] passes `FALSE`
@@ -85,7 +88,7 @@
 #' fit
 #' @export
 mm_model <- function(project, cohort, nonlinear = NULL,
-                     interactions = NULL, knots = NULL,
+                     interactions = NULL, reference = NULL, knots = NULL,
                      check_leakage = TRUE) {
   if (!inherits(project, "mm_project")) {
     stop("`project` must come from mm_project().", call. = FALSE)
@@ -119,6 +122,18 @@ mm_model <- function(project, cohort, nonlinear = NULL,
     if (!identical(label(interactions), label(project$interactions))) {
       departures <- c(departures, note_departure(
         "interactions", label(project$interactions), label(interactions)))
+    }
+  }
+  if (is.null(reference)) {
+    reference <- project$reference
+  } else if (!is.null(project$reference)) {
+    flat <- function(r) {
+      if (!length(r)) return(character(0))
+      sort(sprintf("%s=%s", names(r), unlist(r)))
+    }
+    if (!identical(flat(reference), flat(project$reference))) {
+      departures <- c(departures, note_departure(
+        "reference", flat(project$reference), flat(reference)))
     }
   }
   if (is.null(knots)) {
@@ -188,6 +203,21 @@ mm_model <- function(project, cohort, nonlinear = NULL,
     }
   }
 
+  # Checked here too, because a project may have been written without a
+  # cohort to check it against, and rms answers an ordered factor from inside
+  # Design() with advice about a global option the analyst never set.
+  ordered_predictors <- Filter(
+    function(p) mm_unfittable_ordered(cohort[[p]]), project$predictors)
+  if (length(ordered_predictors)) {
+    stop("ordered factor(s) among the predictors whose levels are not ",
+         "numbers: ", paste(ordered_predictors, collapse = ", "),
+         ". `rms::lrm()` fits an ordered factor whose level labels parse as ",
+         "numbers, and refuses one whose labels do not. Drop the ordering ",
+         "with `factor(x, ordered = FALSE)` for one parameter per level, or ",
+         "give the levels numbers for a linear term plus departures. See ",
+         "mm_project() for why the choice is not made here.", call. = FALSE)
+  }
+
   parts <- mm_split(project, cohort)
   supplied <- parts$dev
 
@@ -238,12 +268,44 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # named. Removing it is also what makes mm_predict() refuse it later: a
   # level the model cannot score must not be in the schema that admits it.
   lost <- list()
+  # A factor's first level is the baseline every other coefficient for it is
+  # measured against. Dropping a level that happens to be first moves that
+  # baseline, and the coefficient names do not change, so two fits of the
+  # same declared model can report `indication=prolapse` against two
+  # different comparison categories. The level loss was already reported; the
+  # consequence was not.
+  reference_moved <- list()
   for (p in project$predictors) {
     if (!is.factor(supplied[[p]]) && !is.character(supplied[[p]])) next
-    gone <- setdiff(levels(factor(supplied[[p]])),
-                    levels(factor(dev[[p]])))
+    was <- levels(factor(supplied[[p]]))
+    gone <- setdiff(was, levels(factor(dev[[p]])))
     if (length(gone)) lost[[p]] <- gone
     if (is.factor(dev[[p]])) dev[[p]] <- droplevels(dev[[p]])
+    now <- levels(factor(dev[[p]]))
+    # A declared baseline is applied here, before the datadist, the fit and
+    # the schema, so all three agree about which level is first. A declared
+    # one that no eligible row carries is refused rather than quietly
+    # replaced by the next level along, which is the whole reason for
+    # declaring it.
+    wanted <- reference[[p]]
+    if (!is.null(wanted)) {
+      if (!as.character(wanted) %in% now) {
+        stop("`reference$", p, "` declares the baseline \"", wanted,
+             "\", and no row that survived eligibility carries it",
+             if (length(gone) && as.character(wanted) %in% gone)
+               ": it left with the rows dropped for incompleteness" else "",
+             ". The levels left are ", paste(now, collapse = ", "),
+             ". A declared baseline is refused rather than replaced, ",
+             "because every coefficient for this predictor is measured ",
+             "against it.", call. = FALSE)
+      }
+      dev[[p]] <- stats::relevel(factor(dev[[p]]), ref = as.character(wanted))
+      now <- levels(dev[[p]])
+    }
+    if (length(now) && !identical(was[1], now[1]) && is.null(wanted)) {
+      # Only an undeclared move is a finding. A declared one is the plan.
+      reference_moved[[p]] <- c(from = was[1], to = now[1])
+    }
   }
   if (length(lost)) {
     warning("level(s) carried only by the dropped rows cannot be estimated ",
@@ -253,6 +315,16 @@ mm_model <- function(project, cohort, nonlinear = NULL,
                                  collapse = "/")),
                   collapse = "; "),
             ". mm_predict() will refuse them by name rather than score them.",
+            if (length(reference_moved))
+              paste0(" The comparison category moved with them: ",
+                     paste(vapply(names(reference_moved), function(v)
+                       sprintf("%s is now measured against %s and not %s", v,
+                               reference_moved[[v]][["to"]],
+                               reference_moved[[v]][["from"]]),
+                       character(1)), collapse = "; "),
+                     ". Every other coefficient for that predictor means ",
+                     "something different from a fit where the level ",
+                     "survived, under the same name."),
             call. = FALSE)
   }
 
@@ -263,6 +335,26 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          "value are incomplete on ",
          paste(names(by_variable), collapse = ", "), ".", call. = FALSE)
   }
+  # Counted before anything is fitted. A model with as many parameters as
+  # rows cannot be estimated, and the commonest way to ask for one is to
+  # offer an identifier as a predictor: lrm() then grinds through a design
+  # matrix wider than the cohort is long before failing.
+  budget <- mm_parameter_budget(project, dev, nonlinear, knots, pairs)
+  if (budget$total >= nrow(dev)) {
+    worst <- names(budget$spent)[which.max(budget$spent)]
+    stop("this model would spend ", budget$total, " parameter(s) on ",
+         nrow(dev), " row(s), so there is nothing left to estimate them ",
+         "with. The largest single cost is `", worst, "` at ",
+         max(budget$spent), " parameter(s)",
+         if (max(budget$spent) >= nrow(dev) - 1L)
+           paste0(", which is one per row: a column with a distinct value ",
+                  "for every patient identifies the patient rather than ",
+                  "describing them, and cannot predict anything about a ",
+                  "patient it has not seen") else "",
+         ". Reduce the model, or group the levels, before fitting.",
+         call. = FALSE)
+  }
+
   dev[[".mm_y"]] <- y
 
   # Leakage is checked here and not in mm_project(), because here is the first
@@ -298,6 +390,23 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   on.exit(options(old), add = TRUE)
 
   fit <- rms::lrm(form, data = dev, x = TRUE, y = TRUE)
+
+  # Convergence first. A fit that failed leaves no usable `y` on the object,
+  # so the row-count guard below would fire and blame a silent row drop for
+  # what is really a likelihood with no interior maximum, which is the
+  # commonest way a small cohort refuses an interaction.
+  if (isTRUE(fit$fail)) {
+    stop("rms could not fit this model: ", if (length(pairs))
+      paste0("the design includes ",
+             paste(vapply(pairs, paste, character(1), collapse = ":"),
+                   collapse = ", "), ", and ") else "",
+      "the estimate did not converge, which a singular Hessian usually ",
+      "means: some combination of the terms separates the outcome, so the ",
+      "likelihood has no interior maximum and there is no estimate to ",
+      "report. Fewer terms, or a cohort in which every combination carries ",
+      "both outcomes, is what fixes it. mm_interactions() reports this per ",
+      "block rather than raising it.", call. = FALSE)
+  }
 
   # `dev` is already complete on every model variable, so this should never
   # fire. It is here because a silent further drop would put the fit and the
@@ -343,6 +452,9 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          n_incomplete = n_incomplete,
          incomplete_by = by_variable,
          lost_levels = lost,
+         parameter_budget = budget$total,
+         reference_moved = reference_moved,
+         reference = reference,
          leakage = leakage,
          eligibility = eligible[setdiff(names(eligible), "usable")],
          n_held     = nrow(parts$held),
@@ -378,6 +490,12 @@ print.mm_model <- function(x, ...) {
         paste(names(x$incomplete_by), collapse = ", "),
         "\n", sep = "")
   }
+  for (v in names(x$reference_moved)) {
+    cat("  BASELINE   ", v, " is measured against ",
+        x$reference_moved[[v]][["to"]], ", not ",
+        x$reference_moved[[v]][["from"]], ", which left with the dropped ",
+        "rows\n", sep = "")
+  }
   if (x$n_held > 0L) {
     cat("  held out   ", x$n_held, " rows\n", sep = "")
   }
@@ -392,6 +510,67 @@ print.mm_model <- function(x, ...) {
   invisible(x)
 }
 
+
+#' The parameters a declared model would spend, counted before it is fitted
+#'
+#' A categorical predictor spends one parameter per level after the first, a
+#' continuous one spends one, a spline spends `knots - 1`, and an interaction
+#' spends the product of what its two sides spend. Counting it beforehand is
+#' what makes it possible to refuse a model that cannot be estimated instead
+#' of waiting for `rms::lrm()` to grind through a design matrix wider than the
+#' cohort is long.
+#'
+#' The case this exists for is an identifier offered as a predictor. A column
+#' with one level per row spends `n - 1` parameters, saturates the model on its
+#' own, and takes a long time to fail. The rule here is exact rather than a
+#' threshold: a model whose parameters reach the number of rows has nothing
+#' left to estimate them with.
+#'
+#' @param project A [mm_project()].
+#' @param frame The rows that would be fitted.
+#' @param nonlinear,knots,pairs The shape, as [mm_model()] resolved it.
+#' @return A list with `total` and the per-predictor `spent`.
+#' @keywords internal
+mm_parameter_budget <- function(project, frame, nonlinear = NULL,
+                                knots = 4L, pairs = list()) {
+  spend <- function(p) {
+    column <- frame[[p]]
+    if (is.factor(column) || is.character(column) || is.logical(column)) {
+      max(0L, length(unique(stats::na.omit(as.character(column)))) - 1L)
+    } else if (p %in% (nonlinear %||% character(0))) {
+      max(1L, as.integer(knots) - 1L)
+    } else 1L
+  }
+  spent <- vapply(project$predictors, spend, integer(1))
+  blocks <- vapply(pairs, function(ia) spent[[ia[1]]] * spent[[ia[2]]],
+                   integer(1))
+  list(total = sum(spent) + sum(blocks), spent = spent,
+       blocks = if (length(blocks)) stats::setNames(
+         blocks, vapply(pairs, paste, character(1), collapse = ":")) else
+           integer(0))
+}
+
+#' Whether an ordered factor is one rms can fit
+#'
+#' `rms::lrm()` accepts an ordered factor whose level *labels* parse as
+#' numbers, and handles it the way [rms::scored()] does: a linear term in the
+#' scores plus a departure per level above the second, so a four-level factor
+#' spends three degrees of freedom and its departure from linearity is
+#' testable. It refuses one whose labels do not parse, from inside `Design()`,
+#' with advice to change a global contrast option.
+#'
+#' `levels()` always returns character, so asking whether the levels are
+#' numeric has to mean asking whether they parse. An earlier version of this
+#' check asked `is.numeric(levels(x))`, which is always `FALSE`, and so
+#' refused every ordered factor including the ones rms fits perfectly well.
+#'
+#' @param column A column of the cohort.
+#' @return `TRUE` when the column is an ordered factor rms cannot fit.
+#' @keywords internal
+mm_unfittable_ordered <- function(column) {
+  if (!is.ordered(column)) return(FALSE)
+  anyNA(suppressWarnings(as.numeric(levels(column))))
+}
 
 #' Turn an outcome column into a 0/1 indicator
 #'
@@ -409,9 +588,22 @@ mm_event_indicator <- function(values, positive_class = NULL) {
   lev <- sort(unique(as.character(stats::na.omit(values))))
   if (length(lev) != 2L) {
     stop("cannot infer the event level from ", length(lev),
-         " distinct values. Set `positive_class` in mm_project().",
-         call. = FALSE)
+         " distinct value(s). Set `positive_class` in mm_project(). A ",
+         "column of counts per group is not a patient-level outcome and ",
+         "naming one count as the event would fit a model of exactly that ",
+         "many.", call. = FALSE)
   }
+  # Reached only when mm_project() was given no cohort to check against, so
+  # it could not refuse this at plan time. The choice is sort order and
+  # nothing else, and it is wrong for "case" and "control".
+  warning("the event level of this outcome was not declared, so it has ",
+          "been taken as \"", lev[2], "\", the second of \"", lev[1],
+          "\" and \"", lev[2], "\" in sort order, leaving ",
+          sum(as.character(values) == lev[2], na.rm = TRUE), " event(s). ",
+          "Set `positive_class` in mm_project() if that is the wrong way ",
+          "round: it reverses every coefficient and leaves the ",
+          "c-statistic unchanged, so no performance figure will show it.",
+          call. = FALSE)
   as.integer(as.character(values) == lev[2])
 }
 

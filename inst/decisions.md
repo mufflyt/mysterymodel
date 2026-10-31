@@ -565,3 +565,288 @@ which the reader must choose, and the axis and predictor counts beside it.
 Nothing numerical moved: coefficients, predictions, every validation basis,
 nomogram readings, adequacy, ledgers and random-number state are identical at
 tolerance zero. The printed output of three objects changed.
+
+## DEC-010: how a categorical predictor enters the model is part of the plan
+
+**Settles:** which level a categorical predictor is measured against, and the
+two kinds of data this package refuses rather than mis-fits.
+**Date:** 2026-10-31.
+
+### The baseline was set by a sort order
+
+Under treatment contrasts a factor's first level is the comparison category
+every other coefficient for that predictor is measured against. `factor()`
+makes it the alphabetically first value, so in this package's own fixtures
+`sex` was measured against `female` and `indication` against `incontinence`
+because of the alphabet. That is a reporting decision, and it was being taken
+by `sort()`.
+
+Worse, it could move. [mm_model()] droplevels a level carried only by rows
+eligibility excluded, and if that level happened to be first the baseline
+shifted while the coefficient names did not: `indication=prolapse` read
+-0.3533 in one fit and -0.3337 in another, the same term against two
+different comparison categories. The level loss was already reported in
+`lost_levels`; its consequence was not.
+
+`reference` is now a field of [mm_project()], validated against the cohort
+when the plan is written, and applied before the `datadist`, the fit and the
+prediction schema so that all three agree which level leads. A nomogram axis
+and `mm_predict()`'s refusal of an unseen level both read those, which is why
+one place had to decide it.
+
+It reparameterises the report and not the model. Every prediction, the
+apparent discrimination and the deviance are identical with and without a
+declared baseline, and a test asserts all three, because that equality is
+what makes the feature safe to use.
+
+A declared baseline that no eligible row carries is **refused, not replaced**.
+Replacing it would measure every coefficient for that predictor against a
+level nobody chose, under the names the plan asked for. An undeclared move is
+still possible and is now reported, in the warning, in `reference_moved` and
+on a `BASELINE` line when the model prints.
+
+### Two kinds of data this package cannot model
+
+Both were found by comparing against rms on datasets outside the package's
+own fixtures, and both used to fail late or misleadingly.
+
+**A tabulation is not an outcome.** `mm_project()` accepted `ncases` from
+`datasets::esoph`, a column of event counts per group, because the column
+takes more than one distinct value. `mm_model()` then advised setting
+`positive_class`, and that advice would have **worked**: it would have fitted
+a model of exactly that many events per group. A column with more than two
+distinct non-missing values and no declared positive class is now refused when
+the plan is written, and the message names the tabulation case specifically,
+because expanding to one row per patient is the fix.
+
+**An ordered factor cannot be fitted.** `rms::lrm()` refuses one with
+non-numeric levels from inside `Design()`, advising a change to the global
+contrast option, which rms's own documentation warns against relying on. The
+refusal is now this package's, naming the predictor and the two routes that
+work: drop the ordering for one parameter per level, or score the levels and
+enter the column as numeric for a trend. Both are defensible and they answer
+different questions, so neither is chosen here.
+
+`rms::scored()` is rms's own machinery for an ordinal predictor and fits,
+tests its own departure from linearity, draws a nomogram axis and validates,
+but only when the ordered factor's levels are numeric; `esoph`'s "25-34" is
+refused by `scored()` too. Supporting it would mean an `ordinal` field beside
+`nonlinear`, and the scores for labelled categories are a clinical judgement
+rather than a coercion. It is not implemented, and the refusal above will need
+the third route added to it when it is.
+
+## DEC-011: the external benchmark is split by what each part proves
+
+**Settles:** how this package is checked against an independently published
+logistic regression, and why UCLA's dataset is not vendored into it.
+**Date:** 2026-10-31.
+
+Everything this package had been validated against until now was either its
+own synthetic cohort or `rms`, which is the engine it fits with. Agreeing with
+rms is close to a tautology. A published worked example is the first reference
+that is not another run of the same arithmetic.
+
+The UCLA graduate admissions example supplies one: 400 applicants, a binary
+admission outcome, GRE, GPA and a four-level institutional rank, with
+coefficients printed to five decimal places.
+
+### What it found
+
+It found a defect committed an hour earlier. The guard refusing ordered
+factors asked `is.numeric(levels(x))`. `levels()` always returns character, so
+that test is permanently `FALSE` and the guard refused **every** ordered
+factor, including those `rms::lrm()` fits perfectly well. rms accepts an
+ordered factor whose level labels parse as numbers and spends a linear term in
+the scores plus a departure per level above the second; it refuses only labels
+that do not parse, such as `esoph`'s "25-34". UCLA's four-level rank is
+exactly the case the broken guard rejected. The check now parses the labels.
+
+### What it confirmed
+
+| check | worst difference | tolerance |
+|---|---|---|
+| published coefficients, `glm` | 4.43e-06 | 1e-04 |
+| published coefficients, this package | 3.95e-14 | 1e-06 |
+| `glm` against `rms`, probabilities | 5.33e-15 | 1e-06 |
+| `glm` against this package, probabilities | 5.33e-15 | 1e-06 |
+
+The published tolerance is the printing and not the arithmetic: a coefficient
+given to five decimals cannot witness agreement to ten.
+
+Ordered against nominal, both full rank: identical fitted probabilities to
+5.9e-15 and identical deviance at 458.51749248, on five parameters either way,
+with coefficients that differ because the parameterisations do. A numeric
+score spends one degree of freedom where the factor spends three, raises the
+deviance to 459.44177, and changes the fitted probabilities, so it is reached
+deliberately and never by accident. A baseline declared at rank 4 leaves every
+probability and the deviance unchanged and returns the published -1.55146 as
++1.55146, which is the arithmetic that proves the relevel did what it says.
+
+### Why the data is not vendored
+
+Redistributing UCLA's teaching dataset under this package's licence would be a
+claim about rights that cannot be checked from here, and 5.5 KB of convenience
+does not justify it. A test gated on network access is no better, because it
+would never run where it matters.
+
+So the benchmark is split by what each part proves. Every invariance and
+degree-of-freedom count is a property of the parameterisation rather than of
+anyone's data, so those are tested on a synthetic four-level ordered factor in
+`tests/testthat/test-ordered-predictors.R` and run on every build. They are
+also what caught the defect above. Cross-engine agreement runs there too,
+against `stats::glm()`, which ships with R and shares no code with rms, and is
+therefore the independent implementation that the published values were
+standing in for.
+
+What genuinely needs the 400 rows is reproducing printed coefficients, and
+that is a one-off confirmation rather than regression protection. It lives in
+`data-raw/external_benchmark.R`, beside the capability spike, re-runnable by
+anyone with network access, with its result recorded in the table above.
+
+## DEC-012: what the external cohorts found that the fixtures could not
+
+**Settles:** the record of validating against datasets from outside this
+package, and the two defects only they exposed.
+**Date:** 2026-10-31.
+
+Four cohorts were worked through: `titanic3` from Harrell's case study,
+`MASS::birthwt` from Venables and Ripley, `pROC::aSAH`, `MASS::bacteria`,
+`MASS::Pima.tr`/`Pima.te`, `datasets::esoph`, and `mlbench::SynthDiabetes`
+with its corrected variant. Agreement with the engine that owns each number
+was exact everywhere it should be, and the record is in the commit history.
+What matters here is what the fixtures could not have found.
+
+### Both defects were the same defect, found twice
+
+DEC-009 moved the prespecified spline and interaction terms onto
+[mm_project()], and made [mm_model()] take them when its own argument is
+`NULL`. Two functions build a *reduced* model by passing `NULL`, and both
+silently began fitting the plan instead.
+
+[mm_interactions()] tested each block against a baseline that already
+contained it, so the block added no dimension and the rank invariant refused
+it as inestimable. Found on `titanic3`, where rms reported the blocks fine and
+this package reported `not_estimable` for both.
+
+[mm_splines()] built its linear arm the same way, so a project declaring a
+spline on the predicted being compared gave two identical arms and a largest
+risk gap of exactly zero: the function reported that the degrees of freedom
+made no difference, for every cohort whose plan had been written down. Found
+on the Pima cohort, after the first.
+
+Every interaction and spline test in the suite used a project that declared
+nothing, which is why neither was caught. Both now strip the plan for their
+internal fits, which is not an override and raises no departure, and both have
+a regression test whose project declares the thing being compared.
+
+### A guard that could never fire
+
+The refusal of ordered factors asked `is.numeric(levels(x))`. `levels()`
+always returns character, so the condition was permanently true and every
+ordered factor was refused, including those `rms::lrm()` fits. Found on the
+UCLA admissions rank variable, four levels, which DEC-011 records.
+
+### What the fixtures were never going to show
+
+`mlbench::SynthDiabetes` and `SynthDiabetes2` are the same 768 rows under two
+preprocessing decisions: clinically impossible zeros kept as data, or recoded
+as missing. The eligibility ledger reconciled with `complete.cases()` under
+both, and the arithmetic is worth recording because it is the case this
+package exists for. Recoding costs **52.9%** of the cohort when all eight
+predictors are used, 405 rows to insulin alone; dropping insulin and triceps
+costs 5.3%. The `triceps` coefficient moves by a factor of 8.8 and `pressure`
+changes sign. None of that is a defect in anything, and all of it is invisible
+unless the exclusions are counted and attributed, which is what the warning
+and `incomplete_by` do.
+
+A restricted cubic spline on glucose agreed with `rms::lrm()` given the same
+formula to **zero** on coefficients, fitted probabilities and deviance, with
+knots at 85, 109.2, 131 and 184 in both.
+
+### A note on reading these comparisons
+
+Four times in this work a coefficient comparison was made by position across
+models whose term order differed, and each time the apparent disagreement was
+the comparison and not the package: 5.705 on `esoph`, 3.165 on its unordered
+variant, 8.5e-02 on the Pima spline. Coefficients must be matched by name.
+`esoph` also lost its factor `class` to an attribute-stripping line, which
+turned `pclass` into a bare integer and made a three-level predictor spend one
+degree of freedom, agreeing exactly with rms on the corrupted column.
+
+## DEC-013: which level is the event is declared, never sorted for
+
+**Settles:** how the positive class is determined for a non-numeric outcome.
+**Date:** 2026-10-31.
+
+[mm_project()] documented that "an inverted positive class silently inverts
+every reported risk", checked `positive_class` against the observed values
+when one was given, and then, when none was given, inferred one by taking
+`sort(labels)[2]`.
+
+That is right for `No` and `Yes`, and for `alive` and `dead`. It is wrong
+whenever the event sorts first, which covers `survived`/`died`,
+`control`/`case` and `remission`/`relapse` — most of the labellings a
+clinical dataset actually uses.
+
+On a case/control cohort of 600 it fitted **521 events instead of 79**,
+reversed the sign of every coefficient, and reported **the same
+c-statistic**: 0.5266 either way. Concordance does not change when the
+outcome and the predictions are flipped together, so no figure in the
+performance table can reveal the mistake. Nothing warned.
+
+A two-level non-numeric outcome with no declared positive class is now
+refused when the plan is written, with the sort-order rule and its failure
+spelled out in the message. A 0/1 numeric column still needs no declaration,
+because 1 is the event and there is nothing to infer. Where a project was
+written without a cohort to check against, the fit warns and names the level
+it took and how many events that leaves.
+
+Found on `ISLR2::Default`, whose outcome is a `No`/`Yes` factor and whose
+published coefficients this package reproduces exactly: -10.869045 for the
+intercept, 0.005737 for balance, 3.03e-06 for income and -0.646776 for
+student, with `glm`, `rms` and this package agreeing on every fitted
+probability to 6.7e-10 and on the deviance at 1571.544828.
+
+## DEC-014: a resampled figure reports its own Monte Carlo error
+
+**Settles:** how much precision an optimism-corrected figure is entitled to.
+**Date:** 2026-10-31.
+
+`pminternal` is an independent implementation of optimism correction. Given
+the same bootstrap resamples it agrees with this package exactly: on its own
+worked example the corrected c-statistic, calibration slope and calibration
+intercept matched to six decimals, 0.776220, 0.989738 and -0.013474, and the
+apparent c-statistic and Brier matched to 0 and 2.1e-14. That is the first
+check of these numbers against something that is not `rms`.
+
+Run over eight seeds it also showed what this package was hiding. Its
+corrected c-statistic moved across a range of 0.0024 and its slope across
+0.012. This package's did not move at all, because [mm_validate()] reseeds
+from `project$seed` before resampling, so the figure is reproducible by
+construction. That is the intent, and it is worth keeping. What it is not is
+evidence of stability: the variation is real, and pinning the seed only makes
+it invisible.
+
+So a figure determined to about three decimals was being printed with eight.
+
+[mm_full_process()] already computed one optimism per resample and then
+discarded them. Their standard error is the Monte Carlo error of the
+correction, it costs nothing, and it is now reported: 0.00089 on the
+c-statistic, 0.00465 on the slope and 0.00035 on the Brier at B = 200 on that
+example, which is the same order as the spread `pminternal` showed across
+seeds. The note says how many decimal places that leaves.
+
+The same figure cannot be given for the fixed-model row. `rms::validate()`
+returns the corrected index and not the per-resample values it averaged, so
+there is nothing to take a standard error of, and the printed output says so
+rather than leaving the asymmetry to be noticed.
+
+### A disagreement, recorded as one
+
+`pminternal` reports the apparent calibration intercept as 0.0000 and the
+apparent slope as 1.0000. This package withholds both. The agreement is
+complete on what the numbers are, and the disagreement is about whether to
+print them: they are the score equations of an unpenalized fit scored on its
+own rows, and beside a corrected slope of 0.99 they read as a model that is
+perfectly calibrated. That an independent package prints them as exactly 0
+and 1 is the evidence for withholding them, not against it.

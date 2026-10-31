@@ -40,6 +40,16 @@
 #' @param interactions Optional list of length-two character vectors naming
 #'   prespecified interaction blocks. Exploratory discovery is not this
 #'   argument; [mm_interactions()] reports evidence and selects nothing.
+#' @param reference Optional named list giving the comparison category for
+#'   categorical predictors, as `list(sex = "male")`. Under treatment
+#'   contrasts the first level is the baseline every other coefficient for
+#'   that predictor is measured against, and `factor()` makes it the
+#'   alphabetically first value unless someone says otherwise. That is a
+#'   reporting decision taken by a sort order, so it belongs in the plan
+#'   beside the spline and interaction terms. Declaring it also fixes the
+#'   baseline against a level being lost: [mm_model()] refuses a declared
+#'   reference that no eligible row carries, rather than quietly measuring
+#'   against the next level along.
 #' @param knots Knots for each spline term.
 #' @param seed Single whole number, recorded here so that a later resampling
 #'   step cannot invent one of its own.
@@ -56,7 +66,8 @@
 mm_project <- function(slug, outcome, predictors, positive_class = NULL,
                        cohort = NULL, split_var = NULL, split_at = NULL,
                        cluster_id = NULL, nonlinear = NULL,
-                       interactions = NULL, knots = 4L, seed = 1978L) {
+                       interactions = NULL, reference = NULL, knots = 4L,
+                       seed = 1978L) {
   one_name <- function(x, what) {
     if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(x)) {
       stop("`", what, "` must be a single non-empty name.", call. = FALSE)
@@ -113,6 +124,33 @@ mm_project <- function(slug, outcome, predictors, positive_class = NULL,
       knots != trunc(knots) || knots < 3L) {
     stop("`knots` must be a single whole number of at least 3. A restricted ",
          "cubic spline needs three knots before it can bend.", call. = FALSE)
+  }
+  if (!is.null(reference)) {
+    if (!is.list(reference) || !length(reference) ||
+        is.null(names(reference)) || !all(nzchar(names(reference)))) {
+      stop("`reference` must be a named list, as ",
+           "list(sex = \"male\"), naming the comparison category for each ",
+           "predictor it mentions.", call. = FALSE)
+    }
+    repeated_ref <- unique(names(reference)[duplicated(names(reference))])
+    if (length(repeated_ref)) {
+      stop("`reference` names ", paste(repeated_ref, collapse = ", "),
+           " more than once. A predictor has one baseline.", call. = FALSE)
+    }
+    unknown <- setdiff(names(reference), predictors)
+    if (length(unknown)) {
+      stop("`reference` names ", paste(unknown, collapse = ", "),
+           ", which the project does not declare as a predictor.",
+           call. = FALSE)
+    }
+    for (nm in names(reference)) {
+      value <- reference[[nm]]
+      if (length(value) != 1L || is.na(value) ||
+          !nzchar(as.character(value))) {
+        stop("`reference$", nm, "` must be a single level name.",
+             call. = FALSE)
+      }
+    }
   }
   if (!is.null(interactions)) {
     # The same checks mm_model() applies when it builds a formula, run here so
@@ -176,6 +214,68 @@ mm_project <- function(slug, outcome, predictors, positive_class = NULL,
            "value(s) in `cohort`. An outcome that does not vary cannot be ",
            "modelled.", call. = FALSE)
     }
+    numeric_binary <- is.numeric(cohort[[outcome]]) &&
+      all(as.numeric(seen) %in% c(0, 1))
+    if (length(seen) == 2L && is.null(positive_class) && !numeric_binary) {
+      stop("`", outcome, "` takes the two values ",
+           paste(sprintf("\"%s\"", sort(as.character(seen))),
+                 collapse = " and "),
+           ", and neither of them says which is the event. Set ",
+           "`positive_class`. Inferring it would mean taking the ",
+           "alphabetically second value, which is \"",
+           sort(as.character(seen))[2],
+           "\" here: that is right for \"No\" and \"Yes\" and wrong for ",
+           "\"case\" and \"control\", and a model fitted the wrong way ",
+           "round reverses every coefficient while reporting the same ",
+           "c-statistic, because concordance does not change when the ",
+           "outcome and the predictions are flipped together. A 0/1 column ",
+           "needs no declaration, because 1 is the event.", call. = FALSE)
+    }
+    if (length(seen) > 2L && is.null(positive_class)) {
+      stop("`", outcome, "` takes ", length(seen), " distinct non-missing ",
+           "values in `cohort`, and this package models a binary outcome. ",
+           "Either the column is not an outcome, or one of its values names ",
+           "the event and `positive_class` should say which. A column of ",
+           "event counts per group is the commonest way this happens: it is ",
+           "a tabulation and not a patient-level outcome, so expand it to ",
+           "one row per patient first. Naming one count as the positive ",
+           "class would fit a model of exactly that many events, which is ",
+           "not the question anyone means to ask.", call. = FALSE)
+    }
+    ordered_predictors <- Filter(
+      function(p) mm_unfittable_ordered(cohort[[p]]), predictors)
+    if (length(ordered_predictors)) {
+      stop("ordered factor(s) among the predictors whose levels are not ",
+           "numbers: ", paste(ordered_predictors, collapse = ", "),
+           ". `rms::lrm()` fits an ordered factor whose level labels parse ",
+           "as numbers, spending a linear term in the scores plus a ",
+           "departure per level above the second, so the departure from ",
+           "linearity is testable. It refuses one whose labels do not ",
+           "parse, from inside Design(), advising a change to the global ",
+           "contrast option that rms's own documentation warns against. The ",
+           "choice is a modelling one and so it is yours: drop the ordering ",
+           "with `factor(x, ordered = FALSE)` for one parameter per level, ",
+           "or give the levels numbers, which is a judgement about spacing ",
+           "that this package will not make for you. Either is defensible ",
+           "and they answer different questions.", call. = FALSE)
+    }
+    for (nm in names(reference %||% list())) {
+      column <- cohort[[nm]]
+      if (is.numeric(column)) {
+        stop("`reference$", nm, "` names a baseline for a continuous ",
+             "predictor. A comparison category is a level of a categorical ",
+             "one; a continuous predictor has no baseline to choose.",
+             call. = FALSE)
+      }
+      observed <- unique(as.character(stats::na.omit(column)))
+      if (!as.character(reference[[nm]]) %in% observed) {
+        stop("`reference$", nm, "` is \"", reference[[nm]], "\", which is ",
+             "not an observed value of `", nm, "` in `cohort`. Observed: ",
+             paste(sort(observed), collapse = ", "),
+             ". A baseline no patient has cannot be the category the others ",
+             "are measured against.", call. = FALSE)
+      }
+    }
     if (!is.null(positive_class) &&
         !positive_class %in% as.character(seen)) {
       stop("`positive_class` (", positive_class, ") is not an observed ",
@@ -196,6 +296,7 @@ mm_project <- function(slug, outcome, predictors, positive_class = NULL,
          cluster_id     = cluster_id,
          nonlinear      = nonlinear,
          interactions   = interactions,
+         reference      = reference,
          knots          = as.integer(knots),
          seed           = as.integer(seed)),
     class = "mm_project"
@@ -228,6 +329,12 @@ print.mm_project <- function(x, ...) {
     cat("  blocks     ",
         paste(vapply(x$interactions, paste, character(1), collapse = ":"),
               collapse = ", "), "\n", sep = "")
+  }
+  if (!is.null(x$reference)) {
+    cat("  baseline   ",
+        paste(sprintf("%s = %s", names(x$reference),
+                      unlist(x$reference)), collapse = ", "),
+        "\n", sep = "")
   }
   cat("  seed       ", x$seed, "\n", sep = "")
   invisible(x)

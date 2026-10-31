@@ -167,3 +167,47 @@ test_that("a fitting failure is reported per predictor, not raised", {
     expect_true(all(shapes$summary$added_parameters > 0L))
   }
 })
+
+test_that("the two arms differ in one predictor, whatever the plan declares", {
+  # Found on the Pima cohort. mm_project() carries the prespecified splines
+  # since DEC-009, and mm_model() takes them when its argument is NULL, so
+  # the linear arm of this comparison was the project's own splined model
+  # whenever the project declared a spline on the predictor being compared.
+  # Both arms were then identical and the reported risk gap was exactly zero:
+  # the function said the allocation made no difference, for every cohort
+  # whose plan had been written down.
+  cohort <- sp_cohort(n = 700)
+  predictors <- c("age", "bmi", "sex", "prior_uti")
+  bare <- mm_project("uds", "event", predictors, positive_class = 1,
+                     cohort = cohort, seed = 1978)
+  declared <- mm_project("uds", "event", predictors, positive_class = 1,
+                         cohort = cohort, seed = 1978, nonlinear = "age")
+
+  from_bare <- mm_splines(bare, cohort, predictors = "age", plot = FALSE)
+  from_plan <- mm_splines(declared, cohort, predictors = "age",
+                          plot = FALSE)
+
+  # The comparison must not depend on whether the plan happens to name it.
+  expect_equal(from_plan$summary$largest_risk_gap,
+               from_bare$summary$largest_risk_gap)
+  expect_equal(from_plan$curves$linear, from_bare$curves$linear)
+  expect_equal(from_plan$curves$spline, from_bare$curves$spline)
+  expect_gt(from_plan$summary$largest_risk_gap, 0)
+  expect_equal(from_plan$summary$added_parameters, 2L)
+
+  # And a spline the plan declares on a different predictor is kept in both
+  # arms, because everything but the predictor under comparison is held as
+  # specified.
+  two <- mm_project("uds", "event", predictors, positive_class = 1,
+                    cohort = cohort, seed = 1978,
+                    nonlinear = c("age", "bmi"))
+  both <- mm_splines(two, cohort, predictors = "age", plot = FALSE)
+  one <- mm_splines(bare, cohort, predictors = "age", plot = FALSE)
+  expect_equal(both$summary$parameters_linear,
+               one$summary$parameters_linear + 2L)
+  expect_equal(both$summary$added_parameters, 2L)
+
+  # Declaring the plan is not a departure when mm_splines names the arms.
+  expect_no_warning(invisible(mm_splines(declared, cohort,
+                                         predictors = "age", plot = FALSE)))
+})
