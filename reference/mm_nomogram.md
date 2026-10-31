@@ -62,8 +62,13 @@ agreement holds to machine precision. Reading *between* ticks is a
 different matter: a spline term curves between printed ticks and linear
 interpolation across them does not, so an off-tick reading carries the
 axis's resolution error. That is a property of every printed nomogram
-and of the clinician reading it, not a defect here, and `reading_error`
-reports its size instead of hiding it.
+and of the clinician reading it, not a defect here. `reading_error`
+bounds it: no reading between the printed ticks can differ from
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+by more than that figure. See
+[`mm_reading_error()`](https://mufflyt.github.io/mysterymodel/reference/mm_reading_error.md)
+for how a bound is reached without searching the joint space, and for
+the three things it does not cover.
 
 ## Examples
 
@@ -79,5 +84,6 @@ nom
 #>   axes            age, bmi, sex
 #>   profiles checked 20 at tabulated ticks
 #>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
-#>   off-tick reading error    0.0022 in risk, midway between ticks
+#>   between-tick reading      0.00881 in risk at most, anywhere off the ticks
+#>                             age is the coarsest axis
 ```

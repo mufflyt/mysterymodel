@@ -571,7 +571,8 @@ it:</p>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
 <span><span class="co">#&gt;   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)</span></span>
-<span><span class="co">#&gt;   off-tick reading error    0.00233 in risk, midway between ticks</span></span></code></pre></div>
+<span><span class="co">#&gt;   between-tick reading      0.00969 in risk at most, anywhere off the ticks</span></span>
+<span><span class="co">#&gt;                             age is the coarsest axis</span></span></code></pre></div>
 <p><code><a href="../reference/mm_nomogram.html">mm_nomogram()</a></code> reads the drawn nomogram back the way a
 clinician reads it, summing points across axes and interpolating the
 printed linear predictor scale, without consulting the fit. Then it

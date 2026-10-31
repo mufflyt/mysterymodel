@@ -596,7 +596,8 @@ nom
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
 #>   worst gap vs mm_predict() 2.22e-16 (tolerance 1e-06)
-#>   off-tick reading error    0.00233 in risk, midway between ticks
+#>   between-tick reading      0.00969 in risk at most, anywhere off the ticks
+#>                             age is the coarsest axis
 ```
 
 [`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md)

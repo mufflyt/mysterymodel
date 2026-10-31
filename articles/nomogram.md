@@ -35,7 +35,8 @@ nom
 #>   profiles checked 21 at tabulated ticks
 #>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
 #>   off printed scale 8 tick profile(s) fall beyond the drawn axis
-#>   off-tick reading error    0.00203 in risk, midway between ticks
+#>   between-tick reading      0.016 in risk at most, anywhere off the ticks
+#>                             age is the coarsest axis
 ```
 
 ``` r
@@ -271,21 +272,76 @@ where linear interpolation across them does not.
 ``` r
 
 nom$reading_error
-#> [1] 0.002029877
+#> [1] 0.01603211
 ```
 
-That is the largest risk difference found midway between ticks, the
-worst case for interpolating across a curve. It is a property of every
-printed nomogram and of every clinician reading one, not a defect of
-this package, and reporting its size is the alternative to leaving it
-unexamined. Fitting the same model without the spline makes it vanish:
+That is a bound: no reading taken anywhere between the printed ticks can
+differ from
+[`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+by more than that. It is a property of every printed nomogram and of
+every clinician reading one, not a defect of this package, and reporting
+its size is the alternative to leaving it unexamined.
+
+The bound needs no search over combinations of predictors, because the
+error decomposes. Total points are additive and the printed risk axis is
+affine in them, so the discrepancy is the points-to-lp slope times the
+sum of each axis’s own interpolation error, and each of those is zero at
+that axis’s ticks. So the extremes of the sum are the sums of the
+extremes, one scan per axis finds them, and the worst total goes through
+the steepest part of the logistic curve:
+
+``` r
+
+nom$reading_error_by_axis
+#>              lo           hi
+#> age -0.06413393 5.356972e-02
+#> bmi  0.00000000 8.881784e-16
+c(lp_bound = nom$reading_error_lp,
+  risk_bound = nom$reading_error,
+  by_hand = unname(stats::plogis(nom$reading_error_lp / 2) -
+                     stats::plogis(-nom$reading_error_lp / 2)))
+#>   lp_bound risk_bound    by_hand 
+#> 0.06413393 0.01603211 0.01603211
+```
+
+`reading_error_by_axis` is where to look when the bound is too large for
+comfort: it names the axis that needs more ticks. Fitting the same model
+without the spline makes the whole thing vanish, because linear terms
+make the printed points affine in the predictor and the interpolation
+exact:
 
 ``` r
 
 linear <- suppressWarnings(
   mm_model(project, cohort, interactions = list(c("prior_uti", "sex"))))
 mm_nomogram(linear, out_dir = NULL)$reading_error
-#> [1] 6.938894e-17
+#> [1] 4.440892e-16
+```
+
+The claim is worth testing rather than taking on the arithmetic above.
+Three hundred profiles drawn anywhere inside the printed axes, which is
+where a clinician reads, and the worst gap any of them produces:
+
+``` r
+
+ticks <- mysterymodel:::mm_axis_values(nom$nomogram, project$predictors)
+set.seed(8)
+anywhere <- data.frame(
+  age = runif(300, min(ticks$age), max(ticks$age)),
+  bmi = runif(300, min(ticks$bmi), max(ticks$bmi)),
+  sex = factor(sample(model$schema$predictors$sex$levels, 300, TRUE),
+               levels = model$schema$predictors$sex$levels),
+  prior_uti = factor(sample(model$schema$predictors$prior_uti$levels, 300,
+                            TRUE),
+                     levels = model$schema$predictors$prior_uti$levels))
+read_anywhere <- vapply(seq_len(nrow(anywhere)), function(i) unname(
+  mysterymodel:::mm_nomogram_risk(nom$nomogram,
+                                  anywhere[i, , drop = FALSE])), numeric(1))
+c(worst_of_300 = max(abs(read_anywhere -
+                           mm_predict(model, anywhere)$.pred)),
+  bound = nom$reading_error)
+#> worst_of_300        bound 
+#>   0.01328614   0.01603211
 ```
 
 ## Readings that fall off the drawn scale
@@ -314,7 +370,7 @@ mysterymodel:::mm_off_axis(nom$nomogram, c(min(totals), total, 500))
 
 out <- file.path(tempdir(), "nomogram-article")
 drawn <- mm_nomogram(model, out_dir = out, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmppKBwhY/nomogram-article/uds_nomogram.pdf, /tmp/RtmppKBwhY/nomogram-article/uds_nomogram.svg, /tmp/RtmppKBwhY/nomogram-article/uds_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/Rtmpc6OUI0/nomogram-article/uds_nomogram.pdf, /tmp/Rtmpc6OUI0/nomogram-article/uds_nomogram.svg, /tmp/Rtmpc6OUI0/nomogram-article/uds_nomogram.png
 basename(drawn$files)
 #> [1] "uds_nomogram.pdf" "uds_nomogram.svg" "uds_nomogram.png"
 ```

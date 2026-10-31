@@ -107,8 +107,10 @@ agreement holds to machine precision. Reading <em>between</em> ticks is a differ
 matter: a spline term curves between printed ticks and linear interpolation
 across them does not, so an off-tick reading carries the axis's resolution
 error. That is a property of every printed nomogram and of the clinician
-reading it, not a defect here, and <code>reading_error</code> reports its size instead
-of hiding it.</p>
+reading it, not a defect here. <code>reading_error</code> bounds it: no reading between
+the printed ticks can differ from <code><a href="mm_predict.html">mm_predict()</a></code> by more than that figure.
+See <code><a href="mm_reading_error.html">mm_reading_error()</a></code> for how a bound is reached without searching the
+joint space, and for the three things it does not cover.</p>
     </div>
 
     <div class="section level2">
@@ -124,7 +126,8 @@ of hiding it.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   axes            age, bmi, sex</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   profiles checked 20 at tabulated ticks</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   off-tick reading error    0.0022 in risk, midway between ticks</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   between-tick reading      0.00881 in risk at most, anywhere off the ticks</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             age is the coarsest axis</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

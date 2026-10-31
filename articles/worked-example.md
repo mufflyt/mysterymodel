@@ -695,13 +695,14 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.svg, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.svg, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
 #>   profiles checked 27 at tabulated ticks
 #>   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)
-#>   off-tick reading error    0.000856 in risk, midway between ticks
+#>   between-tick reading      0.00484 in risk at most, anywhere off the ticks
+#>                             age is the coarsest axis
 #>   files           uds-d_nomogram.pdf, uds-d_nomogram.svg, uds-d_nomogram.png
 ```
 
@@ -797,16 +798,14 @@ c(read_off = read_off, from_model = from_model,
   gap = abs(read_off - from_model),
   worst_between_ticks = nom$reading_error)
 #>            read_off          from_model                 gap worst_between_ticks 
-#>        0.3522627422        0.3500867482        0.0021759940        0.0008560571
+#>         0.352262742         0.350086748         0.002175994         0.004841919
 ```
 
-That gap is larger than the figure
-[`mm_nomogram()`](https://mufflyt.github.io/mysterymodel/reference/mm_nomogram.md)
-reported, and the difference is instructive.
-[`mm_reading_error()`](https://mufflyt.github.io/mysterymodel/reference/mm_reading_error.md)
-varies one predictor at a time and leaves every other at its first tick,
-so it probes a line through the space rather than the space. This
-patient is off-tick in age and BMI at once, from a different corner.
+This patient is off-tick in age and BMI at once, which is the case a
+one-predictor-at-a-time probe never visits: points are additive, so a
+reading accumulates both axes’ interpolation errors. `reading_error` is
+a bound rather than a probe for that reason, and the gap above sits
+under it.
 
 ``` r
 
@@ -827,18 +826,34 @@ anywhere <- data.frame(
 anywhere_read <- vapply(seq_len(nrow(anywhere)), function(i) unname(
   mysterymodel:::mm_nomogram_risk(nom$nomogram,
                                   anywhere[i, , drop = FALSE])), numeric(1))
-c(reported_one_at_a_time = nom$reading_error,
-  worst_over_300_joint_profiles =
-    max(abs(anywhere_read - mm_predict(fits$D, anywhere)$.pred)))
-#>        reported_one_at_a_time worst_over_300_joint_profiles 
-#>                  0.0008560571                  0.0041274360
+worst_joint <- max(abs(anywhere_read - mm_predict(fits$D, anywhere)$.pred))
+c(bound = nom$reading_error, worst_over_300_joint_profiles = worst_joint,
+  bound_holds = nom$reading_error >= worst_joint)
+#>                         bound worst_over_300_joint_profiles 
+#>                   0.004841919                   0.004127436 
+#>                   bound_holds 
+#>                   1.000000000
 ```
 
-So the reported figure is a probe and not an upper bound, and the
-package’s own wording for it (“the worst case for linear interpolation
-across a curve”) overstates what it measures. The gap belongs to every
-printed nomogram and to every clinician reading one; what is worth
-fixing is the claim, not the nomogram.
+Three hundred profiles drawn anywhere inside the printed axes, and none
+of them beats the bound. That is the property being claimed, and it
+comes from the error decomposing rather than from having looked in
+enough places: the discrepancy is the points-to-lp slope times the sum
+of each axis’s own interpolation error, each of which is zero at its own
+ticks, so the extremes of the sum are the sums of the extremes.
+
+``` r
+
+nom$reading_error_by_axis
+#>                lo         hi
+#> age -6.661338e-16 0.01936783
+#> bmi -6.661338e-16 0.00000000
+```
+
+Which says where the coarseness is, and so which axis would need more
+ticks. The gap belongs to every printed nomogram and to every clinician
+reading one. What this package adds is a number that cannot be exceeded
+by a reading rather than one that happened not to be.
 
 ``` r
 
@@ -854,18 +869,18 @@ c(lowest_profile = min(totals), axis_starts = min(nom$nomogram$lp$x),
 
 ``` r
 
-c(between_ticks = mysterymodel:::mm_reading_error(nom$nomogram, fits$D),
-  reported = nom$reading_error,
-  at_ticks = nom$worst_disagreement)
-#> between_ticks      reported      at_ticks 
-#>  8.560571e-04  8.560571e-04  5.551115e-17
+direct <- mysterymodel:::mm_reading_error(nom$nomogram, fits$D)
+c(between_ticks = direct$bound, lp_scale = direct$lp,
+  reported = nom$reading_error, at_ticks = nom$worst_disagreement)
+#> between_ticks      lp_scale      reported      at_ticks 
+#>  4.841919e-03  1.936783e-02  4.841919e-03  5.551115e-17
 ```
 
 ``` r
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.svg, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.svg, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -955,11 +970,16 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        42         8        38
+#>        41         8        38
 sort(everything[!used])
-#> [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"       
-#> [4] "mm_profiles"
+#> [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"
 ```
+
+The three it does not reach are one-line helpers whose results are
+already on the page: the four-fifths resample floor and the
+no-information Brier appear in the validation notes above, and the
+sentence explaining why a corrected c-statistic carries no interval is
+printed in those notes verbatim. Naming them is the point of the chunk.
 
 ``` r
 

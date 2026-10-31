@@ -698,13 +698,14 @@ is a check on the rows and not on their number:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">figures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"worked-example"</span><span class="op">)</span></span>
 <span><span class="va">nom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_nomogram.html">mm_nomogram</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, out_dir <span class="op">=</span> <span class="va">figures</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.svg, /tmp/RtmpFpDB45/worked-example/uds-d_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.svg, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.png</span></span>
 <span><span class="va">nom</span></span>
 <span><span class="co">#&gt; &lt;mm_nomogram&gt;</span></span>
 <span><span class="co">#&gt;   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication</span></span>
 <span><span class="co">#&gt;   profiles checked 27 at tabulated ticks</span></span>
 <span><span class="co">#&gt;   worst gap vs mm_predict() 5.55e-17 (tolerance 1e-06)</span></span>
-<span><span class="co">#&gt;   off-tick reading error    0.000856 in risk, midway between ticks</span></span>
+<span><span class="co">#&gt;   between-tick reading      0.00484 in risk at most, anywhere off the ticks</span></span>
+<span><span class="co">#&gt;                             age is the coarsest axis</span></span>
 <span><span class="co">#&gt;   files           uds-d_nomogram.pdf, uds-d_nomogram.svg, uds-d_nomogram.png</span></span></code></pre></div>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span><span class="op">)</span></span></code></pre></div>
@@ -776,13 +777,12 @@ reading carries the axis’s own resolution error:</p>
 <span>  gap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">read_off</span> <span class="op">-</span> <span class="va">from_model</span><span class="op">)</span>,</span>
 <span>  worst_between_ticks <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            read_off          from_model                 gap worst_between_ticks </span></span>
-<span><span class="co">#&gt;        0.3522627422        0.3500867482        0.0021759940        0.0008560571</span></span></code></pre></div>
-<p>That gap is larger than the figure <code><a href="../reference/mm_nomogram.html">mm_nomogram()</a></code>
-reported, and the difference is instructive.
-<code><a href="../reference/mm_reading_error.html">mm_reading_error()</a></code> varies one predictor at a time and
-leaves every other at its first tick, so it probes a line through the
-space rather than the space. This patient is off-tick in age and BMI at
-once, from a different corner.</p>
+<span><span class="co">#&gt;         0.352262742         0.350086748         0.002175994         0.004841919</span></span></code></pre></div>
+<p>This patient is off-tick in age and BMI at once, which is the case a
+one-predictor-at-a-time probe never visits: points are additive, so a
+reading accumulates both axes’ interpolation errors.
+<code>reading_error</code> is a bound rather than a probe for that
+reason, and the gap above sits under it.</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ticks</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_axis_values.html">mm_axis_values</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">plan</span><span class="op">$</span><span class="va">D</span><span class="op">$</span><span class="va">predictors</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
@@ -801,17 +801,29 @@ once, from a different corner.</p>
 <span><span class="va">anywhere_read</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">anywhere</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span></span>
 <span>  <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_risk.html">mm_nomogram_risk</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>,</span>
 <span>                                  <span class="va">anywhere</span><span class="op">[</span><span class="va">i</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>reported_one_at_a_time <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span>,</span>
-<span>  worst_over_300_joint_profiles <span class="op">=</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">anywhere_read</span> <span class="op">-</span> <span class="fu"><a href="../reference/mm_predict.html">mm_predict</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, <span class="va">anywhere</span><span class="op">)</span><span class="op">$</span><span class="va">.pred</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        reported_one_at_a_time worst_over_300_joint_profiles </span></span>
-<span><span class="co">#&gt;                  0.0008560571                  0.0041274360</span></span></code></pre></div>
-<p>So the reported figure is a probe and not an upper bound, and the
-package’s own wording for it (“the worst case for linear interpolation
-across a curve”) overstates what it measures. The gap belongs to every
-printed nomogram and to every clinician reading one; what is worth
-fixing is the claim, not the nomogram.</p>
+<span><span class="va">worst_joint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">anywhere_read</span> <span class="op">-</span> <span class="fu"><a href="../reference/mm_predict.html">mm_predict</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, <span class="va">anywhere</span><span class="op">)</span><span class="op">$</span><span class="va">.pred</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>bound <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span>, worst_over_300_joint_profiles <span class="op">=</span> <span class="va">worst_joint</span>,</span>
+<span>  bound_holds <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span> <span class="op">&gt;=</span> <span class="va">worst_joint</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                         bound worst_over_300_joint_profiles </span></span>
+<span><span class="co">#&gt;                   0.004841919                   0.004127436 </span></span>
+<span><span class="co">#&gt;                   bound_holds </span></span>
+<span><span class="co">#&gt;                   1.000000000</span></span></code></pre></div>
+<p>Three hundred profiles drawn anywhere inside the printed axes, and
+none of them beats the bound. That is the property being claimed, and it
+comes from the error decomposing rather than from having looked in
+enough places: the discrepancy is the points-to-lp slope times the sum
+of each axis’s own interpolation error, each of which is zero at its own
+ticks, so the extremes of the sum are the sums of the extremes.</p>
 <div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nom</span><span class="op">$</span><span class="va">reading_error_by_axis</span></span>
+<span><span class="co">#&gt;                lo         hi</span></span>
+<span><span class="co">#&gt; age -6.661338e-16 0.01936783</span></span>
+<span><span class="co">#&gt; bmi -6.661338e-16 0.00000000</span></span></code></pre></div>
+<p>Which says where the coarseness is, and so which axis would need more
+ticks. The gap belongs to every printed nomogram and to every clinician
+reading one. What this package adds is a number that cannot be exceeded
+by a reading rather than one that happened not to be.</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">totals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">profiles</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span></span>
 <span>  <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_points.html">mm_nomogram_points</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>,</span>
 <span>                                    <span class="va">profiles</span><span class="op">[</span><span class="va">i</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
@@ -820,16 +832,16 @@ fixing is the claim, not the nomogram.</p>
 <span>  reported <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">off_axis</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     lowest_profile        axis_starts off_scale_profiles           reported </span></span>
 <span><span class="co">#&gt;           22.04708          -19.30386            0.00000            0.00000</span></span></code></pre></div>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>between_ticks <span class="op">=</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_reading_error.html">mm_reading_error</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">fits</span><span class="op">$</span><span class="va">D</span><span class="op">)</span>,</span>
-<span>  reported <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span>,</span>
-<span>  at_ticks <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">worst_disagreement</span><span class="op">)</span></span>
-<span><span class="co">#&gt; between_ticks      reported      at_ticks </span></span>
-<span><span class="co">#&gt;  8.560571e-04  8.560571e-04  5.551115e-17</span></span></code></pre></div>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">direct</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_reading_error.html">mm_reading_error</a></span><span class="op">(</span><span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">fits</span><span class="op">$</span><span class="va">D</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>between_ticks <span class="op">=</span> <span class="va">direct</span><span class="op">$</span><span class="va">bound</span>, lp_scale <span class="op">=</span> <span class="va">direct</span><span class="op">$</span><span class="va">lp</span>,</span>
+<span>  reported <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">reading_error</span>, at_ticks <span class="op">=</span> <span class="va">nom</span><span class="op">$</span><span class="va">worst_disagreement</span><span class="op">)</span></span>
+<span><span class="co">#&gt; between_ticks      lp_scale      reported      at_ticks </span></span>
+<span><span class="co">#&gt;  4.841919e-03  1.936783e-02  4.841919e-03  5.551115e-17</span></span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exported</span> <span class="op">&lt;-</span> <span class="fu">mysterymodel</span><span class="fu">:::</span><span class="fu"><a href="../reference/mm_nomogram_export.html">mm_nomogram_export</a></span><span class="op">(</span></span>
 <span>  <span class="va">nom</span><span class="op">$</span><span class="va">nomogram</span>, <span class="va">figures</span>, <span class="st">"worked-example"</span>, width <span class="op">=</span> <span class="fl">13</span>, height <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span>
-<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.pdf, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.svg, /tmp/RtmpFpDB45/worked-example/worked-example_nomogram.png</span></span>
+<span><span class="co">#&gt; wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.svg, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.png</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">exported</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"</span></span>
 <span><span class="co">#&gt; [3] "worked-example_nomogram.png"</span></span>
@@ -839,7 +851,7 @@ fixing is the claim, not the nomogram.</p>
 <div class="section level2">
 <h2 id="one-patient-at-a-time">10. One patient at a time<a class="anchor" aria-label="anchor" href="#one-patient-at-a-time"></a>
 </h2>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ward</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  age        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">58</span>, <span class="fl">71</span>, <span class="fl">104</span><span class="op">)</span>,</span>
 <span>  bmi        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">24.0</span>, <span class="fl">33.5</span>, <span class="fl">28.0</span><span class="op">)</span>,</span>
@@ -855,7 +867,7 @@ fixing is the claim, not the nomogram.</p>
 <span><span class="co">#&gt; 1 0.05485948         FALSE</span></span>
 <span><span class="co">#&gt; 2 0.35008675         FALSE</span></span>
 <span><span class="co">#&gt; 3 0.36364259          TRUE</span></span></code></pre></div>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">unseen</span> <span class="op">&lt;-</span> <span class="va">ward</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span></span>
 <span><span class="va">unseen</span><span class="op">$</span><span class="va">indication</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span></span>
 <span>  <span class="st">"urgency"</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">ward</span><span class="op">$</span><span class="va">indication</span><span class="op">)</span>, <span class="st">"urgency"</span><span class="op">)</span><span class="op">)</span></span>
@@ -868,7 +880,7 @@ fixing is the claim, not the nomogram.</p>
 <span><span class="fu"><a href="../reference/mm_predict.html">mm_predict</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, <span class="va">incomplete</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> 1 row(s) have a missing predictor. A complete-data model cannot score them. Impute first, or pass on_missing = "na".</span></span></code></pre></div>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mm_predict.html">mm_predict</a></span><span class="op">(</span><span class="va">fits</span><span class="op">$</span><span class="va">D</span>, <span class="va">incomplete</span>, on_missing <span class="op">=</span> <span class="st">"na"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   .pred .extrapolated</span></span>
 <span><span class="co">#&gt; 1    NA         FALSE</span></span></code></pre></div>
@@ -876,7 +888,7 @@ fixing is the claim, not the nomogram.</p>
 <div class="section level2">
 <h2 id="provenance">11. Provenance<a class="anchor" aria-label="anchor" href="#provenance"></a>
 </h2>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fits</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">k</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  analysis <span class="op">=</span> <span class="va">k</span>,</span>
 <span>  coefficients <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">fits</span><span class="op">[[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">fingerprint</span>, <span class="fl">1</span>, <span class="fl">12</span><span class="op">)</span>,</span>
@@ -895,7 +907,7 @@ agree. D reserved rows, so both of its fingerprints stand alone.</p>
 <div class="section level2">
 <h2 id="coverage-proved-rather-than-claimed">12. Coverage, proved rather than claimed<a class="anchor" aria-label="anchor" href="#coverage-proved-rather-than-claimed"></a>
 </h2>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exported_fns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getNamespaceExports</a></span><span class="op">(</span><span class="st">"mysterymodel"</span><span class="op">)</span></span>
 <span><span class="va">everything</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-internal.html" class="external-link">asNamespace</a></span><span class="op">(</span><span class="st">"mysterymodel"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">everything</span> <span class="op">&lt;-</span> <span class="va">everything</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^mm_"</span>, <span class="va">everything</span><span class="op">)</span><span class="op">]</span></span>
@@ -909,11 +921,16 @@ agree. D reserved rows, so both of its fingerprints stand alone.</p>
 <span>  exported <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">everything</span>, <span class="va">exported_fns</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  used_here <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">used</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; functions  exported used_here </span></span>
-<span><span class="co">#&gt;        42         8        38</span></span>
+<span><span class="co">#&gt;        41         8        38</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">everything</span><span class="op">[</span><span class="op">!</span><span class="va">used</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"       </span></span>
-<span><span class="co">#&gt; [4] "mm_profiles"</span></span></code></pre></div>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"</span></span></code></pre></div>
+<p>The three it does not reach are one-line helpers whose results are
+already on the page: the four-fifths resample floor and the
+no-information Brier appear in the validation notes above, and the
+sentence explaining why a corrected c-statistic carries no interval is
+printed in those notes verbatim. Naming them is the point of the
+chunk.</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">methods_used</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"print.mm_project"</span>, <span class="st">"print.mm_cohort"</span>, <span class="st">"print.mm_eda"</span>,</span>
 <span>                  <span class="st">"print.mm_model"</span>, <span class="st">"print.mm_adequacy"</span>,</span>
 <span>                  <span class="st">"print.mm_validation"</span>, <span class="st">"print.mm_nomogram"</span><span class="op">)</span></span>
