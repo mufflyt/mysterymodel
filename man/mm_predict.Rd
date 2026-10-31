@@ -4,7 +4,13 @@
 \alias{mm_predict}
 \title{Predict risk from exactly the fitted model}
 \usage{
-mm_predict(model, newdata, on_missing = c("stop", "na"))
+mm_predict(
+  model,
+  newdata,
+  on_missing = c("stop", "na"),
+  interval = FALSE,
+  level = 0.95
+)
 }
 \arguments{
 \item{model}{A \code{\link[=mm_model]{mm_model()}}.}
@@ -20,10 +26,24 @@ cannot be scored by a complete-data model; \code{"stop"} refuses them and
 selects its eligible rows first and then calls this function normally,
 rather than relaxing the refusal that a clinician holding an incomplete
 record most needs.}
+
+\item{interval}{Whether to return a confidence interval on the predicted
+probability. The interval comes from the standard error of the linear
+predictor at the supplied values, transformed to the probability scale,
+so it is an interval for the model's own estimate and not for the person.
+It covers how precisely these coefficients were estimated. It does not
+cover how much people sharing a covariate pattern differ from one
+another, and it does not cover the choices that produced the model: which
+predictors, which shape, which sample. A model short of the size its
+shape requires has an interval that is too narrow for the same reason its
+coefficients are too extreme.}
+
+\item{level}{The coverage. Only read when \code{interval} is \code{TRUE}.}
 }
 \value{
 A data frame with one row per input row: \code{.pred} on the probability
 scale, and \code{.extrapolated} marking rows outside the development range.
+With \code{interval = TRUE}, also \code{.lower} and \code{.upper}.
 }
 \description{
 Checks the incoming rows against the schema recorded at fit time, then

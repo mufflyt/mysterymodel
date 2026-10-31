@@ -26,8 +26,21 @@
 #'   rather than relaxing the refusal that a clinician holding an incomplete
 #'   record most needs.
 #'
+#' @param interval Whether to return a confidence interval on the predicted
+#'   probability. The interval comes from the standard error of the linear
+#'   predictor at the supplied values, transformed to the probability scale,
+#'   so it is an interval for the model's own estimate and not for the person.
+#'   It covers how precisely these coefficients were estimated. It does not
+#'   cover how much people sharing a covariate pattern differ from one
+#'   another, and it does not cover the choices that produced the model: which
+#'   predictors, which shape, which sample. A model short of the size its
+#'   shape requires has an interval that is too narrow for the same reason its
+#'   coefficients are too extreme.
+#' @param level The coverage. Only read when `interval` is `TRUE`.
+#'
 #' @return A data frame with one row per input row: `.pred` on the probability
 #'   scale, and `.extrapolated` marking rows outside the development range.
+#'   With `interval = TRUE`, also `.lower` and `.upper`.
 #'
 #' @examples
 #' cohort <- mm_synthetic_cohort(n = 300, seed = 1)
@@ -36,7 +49,8 @@
 #' fit <- mm_model(project, cohort, nonlinear = "age")
 #' head(mm_predict(fit, cohort[1:5, ]))
 #' @export
-mm_predict <- function(model, newdata, on_missing = c("stop", "na")) {
+mm_predict <- function(model, newdata, on_missing = c("stop", "na"),
+                       interval = FALSE, level = 0.95) {
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
   }
@@ -99,7 +113,28 @@ mm_predict <- function(model, newdata, on_missing = c("stop", "na")) {
                      type = "fitted"))
   }
 
-  data.frame(.pred = pred, .extrapolated = extrapolated,
-             row.names = NULL)
+  out <- data.frame(.pred = pred, .extrapolated = extrapolated,
+                    row.names = NULL)
+  if (!isTRUE(interval)) return(out)
+
+  if (!is.numeric(level) || length(level) != 1L || is.na(level) ||
+      level <= 0 || level >= 1) {
+    stop("`level` must be a single coverage strictly between 0 and 1.",
+         call. = FALSE)
+  }
+  # A second call rather than deriving `.pred` from the linear predictor. The
+  # fitted value is what every other part of this package is checked against,
+  # the nomogram to 1e-16 among them, and an interval is not a reason to
+  # compute it a different way.
+  z <- stats::qnorm(1 - (1 - level) / 2)
+  out$.lower <- NA_real_
+  out$.upper <- NA_real_
+  if (any(usable)) {
+    lp <- stats::predict(model$fit, newdata = newdata[usable, , drop = FALSE],
+                         type = "lp", se.fit = TRUE)
+    out$.lower[usable] <- stats::plogis(lp$linear.predictors - z * lp$se.fit)
+    out$.upper[usable] <- stats::plogis(lp$linear.predictors + z * lp$se.fit)
+  }
+  out
 }
 
