@@ -331,3 +331,70 @@ correction inside each draw, is the recognised interval for it and costs `B`
 times the correction; it is not implemented. Two blank columns beside a row
 that does carry an interval invite the reader to carry it across, so the
 blanks are annotated with the reason and the method that would fill them.
+
+## DEC-007: the between-tick reading error is a bound, not a probe
+
+**Settles:** what `reading_error` means, after it was found to understate
+itself by factors of two to thirteen.
+**Date:** 2026-10-30.
+
+The figure was computed by varying one predictor at a time across the midpoint
+of each gap between its ticks, with every other predictor sitting at its first
+tabulated value, and documented as "the worst case for linear interpolation
+across a curve". It was not. Three things compounded.
+
+**Errors add across axes.** Total points are additive, so a patient off-tick
+in age and in BMI carries both axes' interpolation errors. One predictor at a
+time captures one summand of a sum.
+
+**The corner it probed was arbitrary.** A risk error is
+\eqn{|plogis(lp + bE) - plogis(lp)|}, largest where the logistic is steepest,
+at a risk of one half. Holding the other predictors at their first tick puts
+the probe wherever that corner happens to fall; on the README's own model the
+probed profiles ran from a risk of 0.04 to 0.54.
+
+**Interaction strata went unvisited.** An interaction with a factor gives a
+continuous predictor a different points curve per level, and `rms` draws those
+as separate axes. Measured on an `age:sex` fixture, the `age` error ran to
+-0.046 in one stratum where the other reached only -0.006.
+
+Across six fixtures the reported figure was exceeded by ordinary profiles by
+2.0 to 13.6 times. On the model in the README it was 7.8 times: 0.000633
+reported against a bound of 0.00494.
+
+### Why a bound is computable without searching the joint space
+
+The discrepancy decomposes exactly:
+
+\deqn{lp_{nomogram} - lp_{model} = b \sum_j e_j(x_j)}
+
+Each \eqn{e_j} is zero at its own axis's ticks, which is what the
+tick-agreement check already establishes and which was confirmed numerically
+at 1e-16, and a model with no spline has \eqn{e_j} identically zero on every
+axis. Because the predictors are chosen independently, the extremes of the sum
+are the sums of the extremes, so one scan per axis suffices and no search over
+combinations is needed. The worst total then passes through the steepest part
+of the logistic, \eqn{u = -\delta/2}, without asking whether a profile at that
+risk also attains the worst points error, which is what makes the result a
+bound rather than an estimate.
+
+Against 3000 profiles drawn anywhere inside the printed axes, the bound holds
+on every fixture and exceeds the worst observed reading by 1.05 to 1.47 times.
+
+### What it is not
+
+Interpolation only: not the clinician's eye on the page, not a total off the
+drawn scale, which is counted separately as `off_axis`, and not a predictor
+beyond the development range, which [mm_predict()] marks as `.extrapolated`.
+It is numerical rather than analytic, each axis being scanned on a finite grid.
+That slack measured about one part in a thousand, an order of magnitude below
+the margin the bound already carries.
+
+### Consequence for DEC-005
+
+The new scan builds its frames per axis and per stratum, so it no longer
+shares a profile builder with the tick-agreement check. `mm_profiles()`, added
+by the simplification audit to serve both, had one caller left and has been
+folded back into [mm_tick_profiles()]. The audit's reasoning was right when it
+was written: the two callers then built the same shape and had to agree. They
+no longer build the same shape.
