@@ -634,3 +634,141 @@ refused by `scored()` too. Supporting it would mean an `ordinal` field beside
 `nonlinear`, and the scores for labelled categories are a clinical judgement
 rather than a coercion. It is not implemented, and the refusal above will need
 the third route added to it when it is.
+
+## DEC-011: the external benchmark is split by what each part proves
+
+**Settles:** how this package is checked against an independently published
+logistic regression, and why UCLA's dataset is not vendored into it.
+**Date:** 2026-10-31.
+
+Everything this package had been validated against until now was either its
+own synthetic cohort or `rms`, which is the engine it fits with. Agreeing with
+rms is close to a tautology. A published worked example is the first reference
+that is not another run of the same arithmetic.
+
+The UCLA graduate admissions example supplies one: 400 applicants, a binary
+admission outcome, GRE, GPA and a four-level institutional rank, with
+coefficients printed to five decimal places.
+
+### What it found
+
+It found a defect committed an hour earlier. The guard refusing ordered
+factors asked `is.numeric(levels(x))`. `levels()` always returns character, so
+that test is permanently `FALSE` and the guard refused **every** ordered
+factor, including those `rms::lrm()` fits perfectly well. rms accepts an
+ordered factor whose level labels parse as numbers and spends a linear term in
+the scores plus a departure per level above the second; it refuses only labels
+that do not parse, such as `esoph`'s "25-34". UCLA's four-level rank is
+exactly the case the broken guard rejected. The check now parses the labels.
+
+### What it confirmed
+
+| check | worst difference | tolerance |
+|---|---|---|
+| published coefficients, `glm` | 4.43e-06 | 1e-04 |
+| published coefficients, this package | 3.95e-14 | 1e-06 |
+| `glm` against `rms`, probabilities | 5.33e-15 | 1e-06 |
+| `glm` against this package, probabilities | 5.33e-15 | 1e-06 |
+
+The published tolerance is the printing and not the arithmetic: a coefficient
+given to five decimals cannot witness agreement to ten.
+
+Ordered against nominal, both full rank: identical fitted probabilities to
+5.9e-15 and identical deviance at 458.51749248, on five parameters either way,
+with coefficients that differ because the parameterisations do. A numeric
+score spends one degree of freedom where the factor spends three, raises the
+deviance to 459.44177, and changes the fitted probabilities, so it is reached
+deliberately and never by accident. A baseline declared at rank 4 leaves every
+probability and the deviance unchanged and returns the published -1.55146 as
++1.55146, which is the arithmetic that proves the relevel did what it says.
+
+### Why the data is not vendored
+
+Redistributing UCLA's teaching dataset under this package's licence would be a
+claim about rights that cannot be checked from here, and 5.5 KB of convenience
+does not justify it. A test gated on network access is no better, because it
+would never run where it matters.
+
+So the benchmark is split by what each part proves. Every invariance and
+degree-of-freedom count is a property of the parameterisation rather than of
+anyone's data, so those are tested on a synthetic four-level ordered factor in
+`tests/testthat/test-ordered-predictors.R` and run on every build. They are
+also what caught the defect above. Cross-engine agreement runs there too,
+against `stats::glm()`, which ships with R and shares no code with rms, and is
+therefore the independent implementation that the published values were
+standing in for.
+
+What genuinely needs the 400 rows is reproducing printed coefficients, and
+that is a one-off confirmation rather than regression protection. It lives in
+`data-raw/external_benchmark.R`, beside the capability spike, re-runnable by
+anyone with network access, with its result recorded in the table above.
+
+## DEC-012: what the external cohorts found that the fixtures could not
+
+**Settles:** the record of validating against datasets from outside this
+package, and the two defects only they exposed.
+**Date:** 2026-10-31.
+
+Four cohorts were worked through: `titanic3` from Harrell's case study,
+`MASS::birthwt` from Venables and Ripley, `pROC::aSAH`, `MASS::bacteria`,
+`MASS::Pima.tr`/`Pima.te`, `datasets::esoph`, and `mlbench::SynthDiabetes`
+with its corrected variant. Agreement with the engine that owns each number
+was exact everywhere it should be, and the record is in the commit history.
+What matters here is what the fixtures could not have found.
+
+### Both defects were the same defect, found twice
+
+DEC-009 moved the prespecified spline and interaction terms onto
+[mm_project()], and made [mm_model()] take them when its own argument is
+`NULL`. Two functions build a *reduced* model by passing `NULL`, and both
+silently began fitting the plan instead.
+
+[mm_interactions()] tested each block against a baseline that already
+contained it, so the block added no dimension and the rank invariant refused
+it as inestimable. Found on `titanic3`, where rms reported the blocks fine and
+this package reported `not_estimable` for both.
+
+[mm_splines()] built its linear arm the same way, so a project declaring a
+spline on the predicted being compared gave two identical arms and a largest
+risk gap of exactly zero: the function reported that the degrees of freedom
+made no difference, for every cohort whose plan had been written down. Found
+on the Pima cohort, after the first.
+
+Every interaction and spline test in the suite used a project that declared
+nothing, which is why neither was caught. Both now strip the plan for their
+internal fits, which is not an override and raises no departure, and both have
+a regression test whose project declares the thing being compared.
+
+### A guard that could never fire
+
+The refusal of ordered factors asked `is.numeric(levels(x))`. `levels()`
+always returns character, so the condition was permanently true and every
+ordered factor was refused, including those `rms::lrm()` fits. Found on the
+UCLA admissions rank variable, four levels, which DEC-011 records.
+
+### What the fixtures were never going to show
+
+`mlbench::SynthDiabetes` and `SynthDiabetes2` are the same 768 rows under two
+preprocessing decisions: clinically impossible zeros kept as data, or recoded
+as missing. The eligibility ledger reconciled with `complete.cases()` under
+both, and the arithmetic is worth recording because it is the case this
+package exists for. Recoding costs **52.9%** of the cohort when all eight
+predictors are used, 405 rows to insulin alone; dropping insulin and triceps
+costs 5.3%. The `triceps` coefficient moves by a factor of 8.8 and `pressure`
+changes sign. None of that is a defect in anything, and all of it is invisible
+unless the exclusions are counted and attributed, which is what the warning
+and `incomplete_by` do.
+
+A restricted cubic spline on glucose agreed with `rms::lrm()` given the same
+formula to **zero** on coefficients, fitted probabilities and deviance, with
+knots at 85, 109.2, 131 and 184 in both.
+
+### A note on reading these comparisons
+
+Four times in this work a coefficient comparison was made by position across
+models whose term order differed, and each time the apparent disagreement was
+the comparison and not the package: 5.705 on `esoph`, 3.165 on its unordered
+variant, 8.5e-02 on the Pima spline. Coefficients must be matched by name.
+`esoph` also lost its factor `class` to an attribute-stripping line, which
+turned `pclass` into a bare integer and made a three-level predictor spend one
+degree of freedom, agreeing exactly with rms on the corrupted column.

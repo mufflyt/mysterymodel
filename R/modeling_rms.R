@@ -206,17 +206,16 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # Checked here too, because a project may have been written without a
   # cohort to check it against, and rms answers an ordered factor from inside
   # Design() with advice about a global option the analyst never set.
-  ordered_predictors <- Filter(function(p) is.ordered(cohort[[p]]) &&
-                                 !is.numeric(levels(cohort[[p]])),
-                               project$predictors)
+  ordered_predictors <- Filter(
+    function(p) mm_unfittable_ordered(cohort[[p]]), project$predictors)
   if (length(ordered_predictors)) {
-    stop("ordered factor(s) among the predictors: ",
-         paste(ordered_predictors, collapse = ", "),
-         ". `rms::lrm()` refuses one with non-numeric levels. Drop the ",
-         "ordering with `factor(x, ordered = FALSE)` for one parameter per ",
-         "level, or score the levels and enter the column as numeric for a ",
-         "trend. See mm_project() for why the choice is not made here.",
-         call. = FALSE)
+    stop("ordered factor(s) among the predictors whose levels are not ",
+         "numbers: ", paste(ordered_predictors, collapse = ", "),
+         ". `rms::lrm()` fits an ordered factor whose level labels parse as ",
+         "numbers, and refuses one whose labels do not. Drop the ordering ",
+         "with `factor(x, ordered = FALSE)` for one parameter per level, or ",
+         "give the levels numbers for a linear term plus departures. See ",
+         "mm_project() for why the choice is not made here.", call. = FALSE)
   }
 
   parts <- mm_split(project, cohort)
@@ -490,6 +489,28 @@ print.mm_model <- function(x, ...) {
   invisible(x)
 }
 
+
+#' Whether an ordered factor is one rms can fit
+#'
+#' `rms::lrm()` accepts an ordered factor whose level *labels* parse as
+#' numbers, and handles it the way [rms::scored()] does: a linear term in the
+#' scores plus a departure per level above the second, so a four-level factor
+#' spends three degrees of freedom and its departure from linearity is
+#' testable. It refuses one whose labels do not parse, from inside `Design()`,
+#' with advice to change a global contrast option.
+#'
+#' `levels()` always returns character, so asking whether the levels are
+#' numeric has to mean asking whether they parse. An earlier version of this
+#' check asked `is.numeric(levels(x))`, which is always `FALSE`, and so
+#' refused every ordered factor including the ones rms fits perfectly well.
+#'
+#' @param column A column of the cohort.
+#' @return `TRUE` when the column is an ordered factor rms cannot fit.
+#' @keywords internal
+mm_unfittable_ordered <- function(column) {
+  if (!is.ordered(column)) return(FALSE)
+  anyNA(suppressWarnings(as.numeric(levels(column))))
+}
 
 #' Turn an outcome column into a 0/1 indicator
 #'

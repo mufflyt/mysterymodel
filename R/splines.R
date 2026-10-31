@@ -110,13 +110,29 @@ mm_splines <- function(project, cohort, predictors = NULL, knots = 4L,
     profile <- reference[rep(1L, length(ticks)), , drop = FALSE]
     profile[[p]] <- ticks
 
-    arms <- list(linear = NULL, spline = p)
+    # The two arms differ in this predictor and in nothing else. The
+    # project's own prespecified splines are kept for every other predictor,
+    # which is what "everything else held as specified" has to mean, and the
+    # declared plan is stripped from the object passed down so that naming
+    # the arm is not recorded as a departure from it.
+    #
+    # Passing nonlinear = NULL for the linear arm was wrong once mm_project()
+    # began carrying the plan: NULL means "take the project's", so a project
+    # declaring a spline on this very predictor gave two identical arms and a
+    # risk gap of exactly zero. Found on the Pima cohort, after the same
+    # mistake had been found in mm_interactions() on titanic3.
+    declared <- project$nonlinear %||% character(0)
+    arms <- list(linear = setdiff(declared, p), spline = union(declared, p))
+    bare <- project
+    bare$nonlinear <- NULL
     risk <- list()
     spent <- c(linear = NA_real_, spline = NA_real_)
     why <- ""
     for (arm in names(arms)) {
       fitted <- tryCatch(
-        suppressWarnings(mm_model(project, cohort, nonlinear = arms[[arm]],
+        suppressWarnings(mm_model(bare, cohort,
+                                  nonlinear = if (!length(arms[[arm]])) NULL
+                                    else arms[[arm]],
                                   knots = knots)),
         error = function(e) conditionMessage(e))
       if (is.character(fitted)) {

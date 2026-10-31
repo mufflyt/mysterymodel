@@ -225,20 +225,22 @@ mm_project <- function(slug, outcome, predictors, positive_class = NULL,
            "class would fit a model of exactly that many events, which is ",
            "not the question anyone means to ask.", call. = FALSE)
     }
-    ordered_predictors <- Filter(function(p) is.ordered(cohort[[p]]) &&
-                                   !is.numeric(levels(cohort[[p]])),
-                                 predictors)
+    ordered_predictors <- Filter(
+      function(p) mm_unfittable_ordered(cohort[[p]]), predictors)
     if (length(ordered_predictors)) {
-      stop("ordered factor(s) among the predictors: ",
-           paste(ordered_predictors, collapse = ", "),
-           ". `rms::lrm()` refuses one with non-numeric levels unless the ",
-           "global contrast option is changed, and rms's own documentation ",
-           "warns against relying on that. The choice is a modelling one, ",
-           "so it is yours and not this package's: drop the ordering with ",
-           "`factor(x, ordered = FALSE)` and spend one parameter per level, ",
-           "or score the levels yourself and enter the column as numeric, ",
-           "which spends one parameter on a trend. Either is defensible and ",
-           "they answer different questions.", call. = FALSE)
+      stop("ordered factor(s) among the predictors whose levels are not ",
+           "numbers: ", paste(ordered_predictors, collapse = ", "),
+           ". `rms::lrm()` fits an ordered factor whose level labels parse ",
+           "as numbers, spending a linear term in the scores plus a ",
+           "departure per level above the second, so the departure from ",
+           "linearity is testable. It refuses one whose labels do not ",
+           "parse, from inside Design(), advising a change to the global ",
+           "contrast option that rms's own documentation warns against. The ",
+           "choice is a modelling one and so it is yours: drop the ordering ",
+           "with `factor(x, ordered = FALSE)` for one parameter per level, ",
+           "or give the levels numbers, which is a judgement about spacing ",
+           "that this package will not make for you. Either is defensible ",
+           "and they answer different questions.", call. = FALSE)
     }
     for (nm in names(reference %||% list())) {
       column <- cohort[[nm]]
