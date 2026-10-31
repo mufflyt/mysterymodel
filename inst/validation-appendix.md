@@ -178,6 +178,45 @@ about the printed instrument and not only the fit behind it.
   examples use both, so those terms entered linearly when his models were
   reproduced, and the difference is stated rather than absorbed.
 
+### What the privacy guarantee costs
+
+Six packages in the surrounding ecosystem cannot read a model fitted by this
+one, and they all fail for the same reason, so it is one fact and not six
+surprises.
+
+`mm_model()` builds its formula in `baseenv()`. That is deliberate: a formula
+keeps the environment it was built in, `rms::lrm()` stores that on
+`fit$terms` and `fit$sformula`, and a model built the ordinary way therefore
+carries the whole cohort, patient identifiers included, into anything that
+saves it. Stripping it took a fitted model from 176.5 KB to 36.1 KB and 500
+planted identifiers to none.
+
+The cost is that every helper which recovers the data *from the fit* breaks.
+`regplot`'s source shows the mechanism exactly:
+
+```r
+rawdata <- eval(dname, environment(formula(reg)))
+```
+
+| package | what fails | workaround |
+|---|---|---|
+| `insight` / `performance` / `report` / `modelbased` | no prediction path for `lrm` at all | none; predates this and is in the capability matrix |
+| `emmeans` | "unable to reconstruct the data" | none found |
+| `marginaleffects` | "unable to extract the data from model of class `lrm`" | none found |
+| `effects` | `object 'dev' not found` | none found |
+| `sjPlot` | "response variable(s) `.mm_y` could not be found" | none found |
+| `DynNom` | `object 'form' not found` from `getdata.DN()` | **yes**: it takes `data`, and its predictions then agree exactly, linear predictors to 1.1e-16 and risks to 0 across 189 patients |
+| `regplot` | `object 'form' not found`, with or without the plots that need a cohort | **no**: `regplot()` has no `data` argument |
+
+`rms` itself is unaffected because it reads the stored `x` and `y` and the
+`datadist` rather than rebuilding a frame, which is why `anova`, `validate`,
+`contrast`, `Predict` and `nomogram` all work.
+
+This is a trade and not a defect, and the direction is defensible for a
+package whose models may be fitted on patient data: a saved model that cannot
+carry identifiers is worth more than an interactive renderer that reads them.
+It had not been written down, which is the part that was wrong.
+
 ### A trap worth naming
 
 Four coefficient comparisons in this work were made **by position** across
@@ -186,8 +225,17 @@ comparison and not the package: 5.705 on `esoph`, 3.165 on its unordered
 variant, 8.5e-02 on the Pima spline. A fifth stripped a factor's `class`
 along with an attribute, turning a three-level predictor into a bare integer
 that spent one degree of freedom, and `rms` and this package agreed exactly
-on the corrupted column. **Coefficients must be matched by name, and classes
-checked before anything is compared.**
+on the corrupted column.
+
+A sixth was a different mistake with the same shape: `DynNom` returns a
+linear predictor and `mm_predict()` returns a probability, so comparing them
+directly reported a difference of 2.171 where the agreement was exact. On the
+logit scale it is 1.1e-16, and on the probability scale it is zero.
+
+**Coefficients must be matched by name, classes checked, and the scale of
+both sides established before anything is compared.** Four of these six
+apparent disagreements were the comparison, and in every case the package was
+right.
 
 ## 5. What the external cohorts found
 

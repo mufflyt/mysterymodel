@@ -850,3 +850,49 @@ print them: they are the score equations of an unpenalized fit scored on its
 own rows, and beside a corrected slope of 0.99 they read as a model that is
 perfectly calibrated. That an independent package prints them as exactly 0
 and 1 is the evidence for withholding them, not against it.
+
+## DEC-015: the cohort stays out of the fit, and six packages cannot read it
+
+**Settles:** what the environment stripping of DEC-era PR #5 costs, now that
+the cost is measured.
+**Date:** 2026-10-31.
+
+[mm_model()] builds its formula in `baseenv()` so that a saved model carries
+no copy of the cohort. The mechanism is worth restating because the default
+behaviour is the opposite: a formula keeps the environment it was built in,
+`rms::lrm()` stores that on `fit$terms` and `fit$sformula`, and a model built
+the ordinary way therefore holds the development rows, the split and the
+patient identifier column inside anything that saves it. Stripping it took a
+fitted model from 176.5 KB to 36.1 KB and 500 planted identifiers to none,
+with the coefficient fingerprint unchanged.
+
+Six packages in the surrounding ecosystem cannot read such a fit, and they
+fail for one reason rather than six. `regplot`'s source names it:
+
+```r
+rawdata <- eval(dname, environment(formula(reg)))
+```
+
+The data is looked up in the formula's environment, and that environment is
+deliberately empty. `emmeans` reports that it cannot reconstruct the data,
+`marginaleffects` that it cannot extract it, `effects` that an object named
+after a local variable is not found, `sjPlot` that `.mm_y` is not in the
+data, and `DynNom` and `regplot` both that `form` is not found.
+
+`DynNom` has a workaround, because it takes a `data` argument, and given one
+its predictions agree exactly: linear predictors to 1.1e-16 and risks to zero
+across all 189 rows of a worked example. `regplot` has none, because
+`regplot()` has no such argument, so a model fitted here cannot be drawn by
+it at all without being refitted through `rms` directly.
+
+`rms` is unaffected throughout, because it reads the stored `x` and `y` and
+the `datadist` rather than rebuilding a model frame from an environment. That
+is why `anova`, `validate`, `contrast`, `Predict` and `nomogram` all work on
+these fits, and it is the reason the package can keep the guarantee without
+losing the statistics.
+
+The trade is kept. For a package whose models may be fitted on patient data,
+a saved model that cannot carry identifiers somewhere the data was never
+meant to go is worth more than an interactive renderer that reads them. What
+was wrong was that the cost had not been written down, and an analyst met it
+one package at a time as six unrelated errors.
