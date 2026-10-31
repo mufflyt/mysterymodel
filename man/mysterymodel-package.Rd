@@ -6,7 +6,7 @@
 \alias{mysterymodel-package}
 \title{mysterymodel: Opinionated Workflow for Clinical Prediction Models}
 \description{
-An orchestration layer for clinical prediction modelling. Established engines do the statistics: 'rms' for regression, internal validation, calibration and nomograms, the 'easystats' packages for diagnostics and interpretation, and 'tidymodels' for resampling and model comparison. This package supplies the workflow holding them together and the methodological safeguards that keep a published model honest. It makes no model-selection decision on the analyst's behalf and hides none.
+An orchestration layer for clinical prediction modelling. Established engines do the statistics: 'rms' for regression, internal validation, calibration and nomograms, 'pmsampsize' for the sample size a model of a given shape requires, and 'pROC' for the interval on the c-statistic. This package supplies the workflow holding them together and the methodological safeguards that keep a published model honest: apparent, bootstrap-corrected and held-out performance are reported separately rather than interchangeably, a predictor that carries the outcome is refused, an interval states what it rests on or why there is none, and a nomogram must reproduce the model it was drawn from before it is returned. It makes no model-selection decision on the analyst's behalf and hides none.
 }
 \details{
 An orchestration layer, not an estimator. \code{rms} fits the regression,

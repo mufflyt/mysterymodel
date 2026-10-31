@@ -23,7 +23,7 @@ Four, each on synthetic data, each showing its own numbers rather than describin
 - [**From a raw export to a checked nomogram**](https://mufflyt.github.io/mysterymodel/articles/mysterymodel.html). The whole pipeline in the order it has to run.
 - [**Which number are you reporting?**](https://mufflyt.github.io/mysterymodel/articles/validation.html). Four c-statistics from one fit, what separates them, and the one caution about comparing two of them to each other.
 - [**Reading the nomogram back**](https://mufflyt.github.io/mysterymodel/articles/nomogram.html). The agreement check done by hand, including the clamped-interpolation error that reported 1.1% for a patient whose risk was 0.6%.
-- [**A complicated worked example**](https://mufflyt.github.io/mysterymodel/articles/worked-example.html). An awkward export, four competing plans, a leakage scan, and the nomogram read back. It exercises every function in the package and proves it does.
+- [**A complicated worked example**](https://mufflyt.github.io/mysterymodel/articles/worked-example.html). An awkward export, four competing plans, a leakage scan, and the nomogram read back. It greps its own source to report which of the package's functions it exercises, and names the ones it does not.
 
 ## The idea
 
@@ -167,7 +167,8 @@ mm_nomogram(model, out_dir = "figures")
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes)
 #>   profiles checked 24 at tabulated ticks
 #>   worst gap vs mm_predict() 1.11e-16 (tolerance 1e-06)
-#>   off-tick reading error    0.000633 in risk, midway between ticks
+#>   between-tick reading      0.00494 in risk at most, anywhere off the ticks
+#>                             age is the coarsest axis
 ```
 
 Four things in that output are deliberate.
@@ -186,7 +187,7 @@ Resampling is by whole patient when the project declares a cluster. Resampling r
 
 **The nomogram is checked against the model, not assumed to match it.** `mm_nomogram()` reads the drawn nomogram back the way a clinician does, summing points and interpolating the printed axis without consulting the fit, then refuses to return if the result disagrees with `mm_predict()`. Agreement holds to machine precision at tabulated ticks across linear, spline and interaction models.
 
-**The reading error between ticks is measured and reported.** A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis's own resolution error. It is exactly zero for a model with no splines and about 0.001 to 0.005 in risk with them. That belongs to every printed nomogram and to the clinician reading it, so it is a stated number rather than an unexamined assumption.
+**The reading error between ticks is bounded, not sampled.** A spline curves between printed ticks and linear interpolation across them does not, so an off-tick reading carries the axis's own resolution error. `reading_error` is the most any reading between the ticks can be out by: exactly zero for a model with no splines, and a few thousandths of risk with them. It needs no search over combinations of predictors, because total points are additive and each axis's interpolation error vanishes at its own ticks, so the extremes of the sum are the sums of the extremes ([DEC-007](inst/decisions.md)). That error belongs to every printed nomogram and to the clinician reading it, so it is a stated bound rather than an unexamined assumption, and `reading_error_by_axis` says which axis needs more ticks.
 
 ## Roadmap
 

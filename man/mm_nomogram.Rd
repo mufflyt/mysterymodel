@@ -45,8 +45,10 @@ agreement holds to machine precision. Reading \emph{between} ticks is a differen
 matter: a spline term curves between printed ticks and linear interpolation
 across them does not, so an off-tick reading carries the axis's resolution
 error. That is a property of every printed nomogram and of the clinician
-reading it, not a defect here, and \code{reading_error} reports its size instead
-of hiding it.
+reading it, not a defect here. \code{reading_error} bounds it: no reading between
+the printed ticks can differ from \code{\link[=mm_predict]{mm_predict()}} by more than that figure.
+See \code{\link[=mm_reading_error]{mm_reading_error()}} for how a bound is reached without searching the
+joint space, and for the three things it does not cover.
 }
 \examples{
 cohort <- mm_synthetic_cohort(n = 300, seed = 1)

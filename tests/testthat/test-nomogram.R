@@ -80,11 +80,10 @@ test_that("export writes vector and raster files", {
   expect_true(all(file.size(nom$files) > 1000))
 })
 
-test_that("one profile builder serves both the tick check and the midpoints", {
-  # The two readings are compared with each other, so they have to be built
-  # the same way. This asserts the shape they share rather than the numbers:
-  # one predictor moves, the rest sit at their first tabulated value, factors
-  # come back as the fitted levels and the row order follows the predictors.
+test_that("the tick profiles move one predictor at a time", {
+  # Every tick of every axis is exercised without taking the product of them
+  # all, factors come back as the fitted levels, and the row order follows the
+  # predictors, because mm_nomogram() pairs these rows with mm_predict().
   cohort <- mm_synthetic_cohort(n = 400, seed = 1978)
   project <- mm_project("uds", "event", c("age", "bmi", "sex"),
                         positive_class = 1, cohort = cohort)
@@ -92,28 +91,16 @@ test_that("one profile builder serves both the tick check and the midpoints", {
   nom <- mm_nomogram(model, out_dir = NULL)
   vals <- mysterymodel:::mm_axis_values(nom$nomogram, project$predictors)
 
-  ticks <- mysterymodel:::mm_profiles(vals, identity, model$schema)
-  expect_identical(ticks,
-                   mysterymodel:::mm_tick_profiles(nom$nomogram, model))
+  ticks <- mysterymodel:::mm_tick_profiles(nom$nomogram, model)
   expect_equal(nrow(ticks), sum(lengths(vals)))
   expect_identical(names(ticks), project$predictors)
   expect_s3_class(ticks$sex, "factor")
   expect_identical(levels(ticks$sex), model$schema$predictors$sex$levels)
 
-  # Exactly one predictor differs from the base profile in every row.
   base <- vapply(vals, function(v) as.character(v[1]), character(1))
   moved <- vapply(seq_len(nrow(ticks)), function(i)
     sum(vapply(names(base), function(p)
       !identical(as.character(ticks[[p]][i]), base[[p]]), logical(1))),
     integer(1))
   expect_true(all(moved <= 1L))
-
-  # A picker that selects nothing gives no frame rather than an empty one,
-  # which is what mm_reading_error() reports as an absent figure.
-  expect_null(mysterymodel:::mm_profiles(vals, function(v) numeric(0),
-                                         model$schema))
-  categorical <- mm_project("uds", "event", c("sex", "prior_uti"),
-                            positive_class = 1, cohort = cohort)
-  flat <- suppressWarnings(mm_model(categorical, cohort))
-  expect_true(is.na(mm_nomogram(flat, out_dir = NULL)$reading_error))
 })
