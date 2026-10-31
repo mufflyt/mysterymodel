@@ -495,3 +495,73 @@ either order. A formula reduces the first to a main effect and keeps one copy
 of the second, so both added no term while the parameter budget counted a
 block the model did not contain. Both are now refused where every caller
 routes through, not only in the new function.
+
+## DEC-009: the plan lives in the project, and the sheet says what it cannot draw
+
+**Settles:** where prespecified spline and interaction terms are recorded, and
+what a nomogram does with an interaction it can and cannot represent.
+**Date:** 2026-10-31.
+
+### The plan belongs to the project
+
+Section 78 of the specification asks the project configuration to carry the
+prespecified spline and interaction terms. It did not. `nonlinear`,
+`interactions` and `knots` were arguments to [mm_model()], so the thing a
+reviewer is meant to check against a protocol lived in whichever fitting call
+happened to run, which inverts the purpose [mm_project()] exists for.
+
+They are now fields of the project, validated when the plan is written rather
+than when something is fitted from it: a spline on a non-predictor, a block
+missing a main effect, a predictor crossed with itself, a block listed twice
+in either order, and fewer than three knots all fail at `mm_project()`.
+
+[mm_model()] takes them when its own arguments are `NULL`. An argument that
+differs from a declared plan still works and is recorded as a `departure` on
+the returned object, warned about, and printed, because a fit whose shape
+differs from the written plan is a finding rather than a detail.
+
+**An unset field is unset, not a declaration of linearity.** An earlier draft
+treated `nonlinear = NULL` on the project as a plan of straight lines, which
+made every existing call a departure from a default nobody had chosen. A plan
+can only be departed from once it has been written down. What fills the gap is
+[mm_splines()], which shows what the allocation is worth before it is
+committed to.
+
+### What a nomogram can draw
+
+An interaction reaches the drawn sheet as one axis per level of its
+categorical partner, and the arithmetic is sound: [mm_nomogram_points()]
+matches every value an axis holds fixed, so exactly one contributes and the
+read-back agrees with the model to machine precision, measured at 2.8e-17 for
+binary by binary, 5.6e-17 for a three-level factor and 1.1e-16 for a spline by
+a factor.
+
+Two continuous predictors have no levels to separate by. `rms::nomogram()`
+would need one of them fixed at stated settings through its `interact`
+argument, and would then draw a different instrument: one axis per setting,
+correct only at those values. The package does not pass that argument, so the
+error arrived from inside rms naming `interact=list(...)`, an argument the
+analyst never used, with nothing about what to do. Such a block is now refused
+before anything is drawn, by name, with the model left exactly as fitted and
+the recommendation section 90 already makes: present it as a calculator rather
+than reshape the model to fit a drawing. The model is sound, and
+[mm_predict()] and [mm_validate()] work on it normally.
+
+### The failure no check in this package can see
+
+A clinician holding the printed sheet sees two axes both labelled `sex`, one
+for each level of `prior_uti`, and nothing on the page stops them scoring
+both. The agreement check cannot catch it, because it happens on paper. So the
+mutually exclusive groups are named in the returned object and in what it
+prints, with the axis each group is read on and the predictor that chooses
+between them, for whoever writes the caption.
+
+No threshold on page crowding is applied. Section 90 asks for a visually
+overloaded flag, and a count of axes is a poor proxy for whether a drawn sheet
+is legible, which the exported file shows better than any number computed
+here. What is reported instead is the structural hazard, a group of axes among
+which the reader must choose, and the axis and predictor counts beside it.
+
+Nothing numerical moved: coefficients, predictions, every validation basis,
+nomogram readings, adequacy, ledgers and random-number state are identical at
+tolerance zero. The printed output of three objects changed.

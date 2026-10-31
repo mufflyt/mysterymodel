@@ -13,6 +13,9 @@ mm_project(
   split_var = NULL,
   split_at = NULL,
   cluster_id = NULL,
+  nonlinear = NULL,
+  interactions = NULL,
+  knots = 4L,
   seed = 1978L
 )
 }
@@ -41,6 +44,24 @@ development and the rest are held out.}
 \item{cluster_id}{Optional length-one character naming the column that
 identifies repeated observations on one patient, for clustered
 resampling.}
+
+\item{nonlinear}{Optional character vector of continuous predictors to fit
+with restricted cubic splines. Part of the plan rather than of the
+fitting call, because how many degrees of freedom a continuous predictor
+is given is a prespecified choice: section 78 of the specification asks
+the configuration to carry the spline and interaction terms, and a plan
+that lives in whichever \code{mm_model()} call ran is not one a reviewer can
+check against a protocol. Left \code{NULL} the project records no shape, which
+is not the same as recording that every continuous predictor is straight:
+\code{\link[=mm_model]{mm_model()}} then takes its own argument without calling it a departure,
+because there is no plan to depart from. \code{\link[=mm_splines]{mm_splines()}} shows what the
+choice is worth before it is written down.}
+
+\item{interactions}{Optional list of length-two character vectors naming
+prespecified interaction blocks. Exploratory discovery is not this
+argument; \code{\link[=mm_interactions]{mm_interactions()}} reports evidence and selects nothing.}
+
+\item{knots}{Knots for each spline term.}
 
 \item{seed}{Single whole number, recorded here so that a later resampling
 step cannot invent one of its own.}

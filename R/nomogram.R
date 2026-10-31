@@ -42,6 +42,23 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
   }
+  undrawable <- mm_undrawable_blocks(model)
+  if (length(undrawable)) {
+    stop("this model cannot be drawn as a nomogram. ",
+         paste(undrawable, collapse = "; "),
+         ". A nomogram gives each predictor one axis and adds the points, ",
+         "which can represent an interaction only by drawing a separate axis ",
+         "per level of a categorical partner. Two continuous predictors have ",
+         "no levels to separate, so `rms::nomogram()` would need one of them ",
+         "fixed at stated settings and would then draw a different ",
+         "instrument: one axis per setting, correct only at those values. ",
+         "The model itself is sound and mm_predict() and mm_validate() work ",
+         "on it normally. Present it as a calculator, which is what the ",
+         "specification asks for where complexity outgrows the page, and ",
+         "keep the model as fitted rather than reshaping it to fit a ",
+         "drawing.", call. = FALSE)
+  }
+
   old <- options(datadist = model$datadist)
   on.exit(options(old), add = TRUE)
 
@@ -79,6 +96,7 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
                                width, height)
   }
 
+  exclusive <- mm_exclusive_axes(nom, model)
   structure(list(nomogram = nom, axes = axes,
                  profiles_checked = nrow(profiles),
                  worst_disagreement = worst, tolerance = tolerance,
@@ -86,8 +104,86 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
                  reading_error = reading$bound,
                  reading_error_lp = reading$lp,
                  reading_error_by_axis = reading$by_axis,
+                 exclusive_axes = exclusive,
+                 n_axes = length(axes),
+                 n_predictors = length(model$project$predictors),
                  files = files, fingerprint = model$fingerprint),
             class = "mm_nomogram")
+}
+
+#' Interaction blocks a nomogram cannot represent
+#'
+#' A nomogram gives each predictor one axis and sums the points, so an
+#' interaction only reaches the page as a separate axis per level of a
+#' categorical partner. Two continuous predictors have no levels to separate
+#' by, and `rms::nomogram()` says so through its `interact` argument, which
+#' this package does not pass: the resulting error names an argument the
+#' analyst never used and nothing about what to do.
+#'
+#' Checked before anything is drawn, so the refusal names the block rather
+#' than arriving from inside rms.
+#'
+#' @param model A [mm_model()].
+#' @return A character vector describing each undrawable block, empty when
+#'   every block can be drawn.
+#' @keywords internal
+mm_undrawable_blocks <- function(model) {
+  blocks <- model$interactions
+  if (!length(blocks)) return(character(0))
+  continuous <- function(p) {
+    spec <- model$schema$predictors[[p]]
+    !is.null(spec) && identical(spec$type, "numeric")
+  }
+  found <- vapply(blocks, function(pair) all(vapply(pair, continuous,
+                                                    logical(1))),
+                  logical(1))
+  if (!any(found)) return(character(0))
+  vapply(blocks[found], function(pair) sprintf(
+    paste("the block %s crosses two continuous predictors, and both %s and",
+          "%s are continuous in this model"),
+    paste(pair, collapse = " by "), pair[1], pair[2]), character(1))
+}
+
+#' Groups of axes of which exactly one applies to any patient
+#'
+#' An interaction makes `rms` draw one axis per level of the categorical
+#' partner, labelled `sex (prior_uti=no)` and `sex (prior_uti=yes)`. The
+#' arithmetic handles it: [mm_nomogram_points()] matches every value an axis
+#' holds fixed, so exactly one contributes and the read-back agrees with the
+#' model to machine precision.
+#'
+#' A clinician reading the printed sheet has no such guard. They see two axes
+#' both labelled `sex` and nothing on the page stops them scoring both, which
+#' is an error no check inside this package can catch because it happens on
+#' paper. So the groups are named in the returned object and in what it
+#' prints, for whoever writes the caption.
+#'
+#' @param nom An `rms` nomogram.
+#' @param model A [mm_model()].
+#' @return A list, one element per group of two or more mutually exclusive
+#'   axes, naming the axes and the predictors that separate them.
+#' @keywords internal
+mm_exclusive_axes <- function(nom, model) {
+  axes <- mm_axis_names(nom)
+  if (length(axes) < 2L) return(list())
+  carried <- lapply(axes, function(ax)
+    sort(intersect(names(nom[[ax]]), model$project$predictors)))
+  key <- vapply(carried, paste, character(1), collapse = "|")
+  groups <- split(axes, key)
+  groups <- groups[lengths(groups) > 1L]
+  if (!length(groups)) return(list())
+  lapply(names(groups), function(k) {
+    variables <- strsplit(k, "|", fixed = TRUE)[[1]]
+    # The variable that separates the group is the one each axis holds at a
+    # single value, not the one being read off it: in `sex (prior_uti=no)`
+    # the axis is read on sex and chosen by prior_uti.
+    constant <- Filter(function(p) all(vapply(groups[[k]], function(ax)
+      length(unique(as.character(nom[[ax]][[p]]))) == 1L, logical(1))),
+      variables)
+    list(axes = groups[[k]], variables = variables,
+         separated_by = constant,
+         read_on = setdiff(variables, constant))
+  })
 }
 
 #' The tabulated values each predictor has on the nomogram
@@ -448,6 +544,19 @@ print.mm_nomogram <- function(x, ...) {
       which.max(apply(abs(x$reading_error_by_axis), 1, max))]
     cat("                            ", worst,
         " is the coarsest axis\n", sep = "")
+  }
+  if (length(x$exclusive_axes)) {
+    cat("  mutually exclusive: exactly one axis of each group below applies\n")
+    for (group in x$exclusive_axes) {
+      cat("    ", paste(group$axes, collapse = "  |  "), "\n", sep = "")
+      cat("      read on ", paste(group$read_on, collapse = ", "),
+          ", chosen by ", paste(group$separated_by, collapse = ", "),
+          "\n", sep = "")
+    }
+    cat("  axes        ", x$n_axes, " drawn for ", x$n_predictors,
+        " predictor(s). Scoring two axes of one group double-counts the\n",
+        "              patient, which no check here can see because it\n",
+        "              happens on the printed sheet\n", sep = "")
   }
   if (length(x$files)) {
     cat("  files           ", paste(basename(x$files), collapse = ", "),
