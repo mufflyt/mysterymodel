@@ -18,7 +18,7 @@ why most of the defects listed at the end were found there.
 
 ## 1. The test suite
 
-`testthat`, 24 files, **266 test blocks containing 1047 assertions**, zero
+`testthat`, 24 files, **268 test blocks containing 1059 assertions**, zero
 failures and zero skips. The package has 10 exported functions, 9 registered
 print methods and 45 internal `mm_` functions across 15 source files.
 
@@ -102,9 +102,15 @@ aliasing, when `model.matrix()` drops incomplete rows itself.
 
 ## 4. External validation
 
-Eleven cohorts from outside this package. Provenance, licences and checksums
+Twelve cohorts from outside this package. Provenance, licences and checksums
 are in `benchmarks.md`; the runnable comparison is
 `data-raw/external_benchmark.R`.
+
+Twelve cohorts, and one distinction among them: `GermanCredit` arrives with
+`caret`, which can be a declared `Suggests`, so its checks run on every build.
+Everything else needs a network fetch or an undeclared package, so for those
+the invariance runs on synthetic data and the external comparison is recorded
+here instead.
 
 | cohort | what it tests | agreement |
 |---|---|---|
@@ -121,6 +127,7 @@ are in `benchmarks.md`; the runnable comparison is
 | IBM Telco churn | factors, splines, interactions, identifiers, nesting | `rcs` matches `splines::ns` on **deviance** with differing coefficients; Contract × tenure χ² identical to `glm`'s own likelihood ratio |
 | `rms` `?validate.lrm` | the author's spline-by-factor example | 12 terms, coefficients, probabilities, deviance all **0**; corrected C, slope and intercept exact |
 | `pminternal` | optimism correction by an independent implementation | corrected C, slope and intercept to **six decimals** given the same resamples |
+| `caret::GermanCredit` | a one-hot design with every level kept | 61 columns spanning 48 dimensions, refused with the deficiency named |
 
 ### Tolerances, and why they differ
 
@@ -152,7 +159,7 @@ checked before anything is compared.**
 
 ## 5. What the external cohorts found
 
-Six defects, none reachable from this package's own fixtures. Each is
+Seven defects, none reachable from this package's own fixtures. Each is
 recorded in `decisions.md` with its reasoning.
 
 | found on | defect | why the fixtures missed it |
@@ -162,11 +169,21 @@ recorded in `decisions.md` with its reasoning.
 | UCLA | ordered factors refused unconditionally | `levels()` always returns character, so `is.numeric(levels(x))` is always false, and no fixture had an ordered factor |
 | `ISLR2::Default` | the event inferred as `sort(labels)[2]`, reversing every coefficient while the c-statistic stayed identical | the synthetic outcome is 0/1, where 1 is unambiguously the event |
 | IBM Telco | an identifier accepted as a predictor; a rank-deficient baseline reported as a block failure | no fixture carried an identifier or structurally nested categories |
+| `caret::GermanCredit` | a singular Hessian blamed on separation when the cause was a rank-deficient design, which has a different fix | no fixture was one-hot encoded with its reference levels retained |
 | `pminternal` | corrected figures printed to eight digits with their Monte Carlo error hidden by a fixed seed | the seed is pinned by design, so no run of the suite could show the variation |
 
-The pattern is worth stating: four of the six were cases where a *default*
+The pattern is worth stating: four of the seven were cases where a *default*
 was doing the deciding — a plan inherited through `NULL`, a sort order, a
-pinned seed — and a fixture that never exercised the default could not see it.
+pinned seed — and a fixture that never exercised the default could not see
+it. The other three were shapes of data the fixtures do not contain: an
+identifier column, structurally nested categories, and indicator columns that
+keep every level.
+
+German Credit is also the only external cohort whose tests run on every
+build, because `caret` can be declared in `Suggests` and carries the data.
+The others need a fetch or a package that is not a dependency, so what runs
+in CI for them is the invariance on a synthetic cohort, and the comparison
+itself is recorded rather than repeated.
 
 ## 6. What is not tested, and what cannot be
 

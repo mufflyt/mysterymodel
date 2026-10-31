@@ -396,13 +396,47 @@ mm_model <- function(project, cohort, nonlinear = NULL,
   # what is really a likelihood with no interior maximum, which is the
   # commonest way a small cohort refuses an interaction.
   if (isTRUE(fit$fail)) {
+    # A singular Hessian has two quite different causes and the fix differs,
+    # so the design's rank decides which one to name. It is computed only
+    # here, on the failure path, because a model that fits does not need it
+    # and a rank-deficient one fails in hundredths of a second.
+    deficiency <- tryCatch({
+      columns <- stats::model.matrix(
+        stats::as.formula(paste("~", paste(rhs, collapse = " + ")),
+                          env = baseenv()), data = dev)
+      columns <- columns[, setdiff(colnames(columns), "(Intercept)"),
+                         drop = FALSE]
+      c(columns = ncol(columns), rank = mm_matrix_rank(columns))
+    }, error = function(e) c(columns = NA_real_, rank = NA_real_))
+
+    if (!anyNA(deficiency) && deficiency[["rank"]] <
+        deficiency[["columns"]]) {
+      stop("rms could not fit this model, and the reason is the design and ",
+           "not the data: its ", deficiency[["columns"]], " column(s) span ",
+           "only ", deficiency[["rank"]], " dimension(s), so ",
+           deficiency[["columns"]] - deficiency[["rank"]],
+           " of them are exact combinations of the others and their ",
+           "coefficients are not identified. A set of indicator columns ",
+           "that keeps every level does this, because they sum to the ",
+           "intercept; so does a category present exactly when another is ",
+           "absent. Drop a level from each such set, or use the factor ",
+           "itself and let the model choose a baseline. `glm()` would ",
+           "instead drop the redundant columns silently and report the ",
+           "rest, which is a model of a design you did not specify.",
+           call. = FALSE)
+    }
     stop("rms could not fit this model: ", if (length(pairs))
       paste0("the design includes ",
              paste(vapply(pairs, paste, character(1), collapse = ":"),
                    collapse = ", "), ", and ") else "",
       "the estimate did not converge, which a singular Hessian usually ",
-      "means: some combination of the terms separates the outcome, so the ",
-      "likelihood has no interior maximum and there is no estimate to ",
+      "means. The design is of full rank",
+      if (!anyNA(deficiency)) paste0(", ", deficiency[["columns"]],
+                                     " column(s) spanning ",
+                                     deficiency[["rank"]],
+                                     " dimension(s)") else "",
+      ", so some combination of the terms separates the outcome instead: ",
+      "the likelihood has no interior maximum and there is no estimate to ",
       "report. Fewer terms, or a cohort in which every combination carries ",
       "both outcomes, is what fixes it. mm_interactions() reports this per ",
       "block rather than raising it.", call. = FALSE)

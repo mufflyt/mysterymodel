@@ -204,3 +204,57 @@ test_that("separation is the strict definition, with no gap required", {
     as_fit(c(0.40, 0.44, 0.50, 0.50, 0.55, 0.60)), y)
   expect_false(touching$complete_separation)
 })
+
+test_that("a singular Hessian names the design or the data, whichever it is", {
+  # Found on caret's German Credit, which is one-hot encoded with every level
+  # kept: each group of indicators sums to the intercept, so 61 columns span
+  # 48 dimensions and 13 coefficients are not identified. The message used to
+  # blame separation for both causes, and the fix differs: drop a level, or
+  # reduce the model.
+  data(GermanCredit, package = "caret", envir = environment())
+  credit <- GermanCredit
+  credit$bad <- as.integer(credit$Class == "Bad")
+  predictors <- setdiff(names(credit), c("Class", "bad"))
+
+  design <- stats::model.matrix(
+    stats::as.formula(paste("~", paste(predictors, collapse = " + "))),
+    data = credit)
+  design <- design[, colnames(design) != "(Intercept)", drop = FALSE]
+  expect_lt(mysterymodel:::mm_matrix_rank(design), ncol(design))
+
+  deficient <- tryCatch(suppressWarnings(mm_model(
+    mm_project("gc", "bad", predictors, positive_class = 1,
+               cohort = credit, seed = 1978), credit)),
+    error = function(e) conditionMessage(e))
+  expect_true(is.character(deficient))
+  expect_match(deficient, "the reason is the design and not the data")
+  expect_match(deficient, "exact combinations of the others")
+  expect_match(deficient, "sum to the intercept")
+  expect_no_match(deficient, "separates the outcome")
+
+  # The other cause, on a design of full rank, gets the other message.
+  cohort <- mm_synthetic_cohort(n = 600, prevalence = 0.15, seed = 1978)
+  male <- cohort$sex == "male"
+  cohort$event[male] <- as.integer(cohort$age[male] > 70)
+  separated <- tryCatch(suppressWarnings(mm_model(
+    mm_project("s", "event", c("age", "bmi", "sex"), positive_class = 1,
+               cohort = cohort, seed = 1978),
+    cohort, interactions = list(c("age", "sex")))),
+    error = function(e) conditionMessage(e))
+  expect_true(is.character(separated))
+  expect_match(separated, "design is of full rank")
+  expect_match(separated, "separates the outcome")
+  expect_no_match(separated, "exact combinations of the others")
+})
+
+test_that("the event of a Bad/Good outcome must be declared", {
+  # German Credit again. Sort puts Bad first, so an inferred event would be
+  # Good: a model of creditworthiness reported as a model of default.
+  data(GermanCredit, package = "caret", envir = environment())
+  expect_error(mm_project("gc", "Class", c("Duration", "Amount"),
+                          cohort = GermanCredit),
+               "neither of them says which is the event")
+  expect_no_error(mm_project("gc", "Class", c("Duration", "Amount"),
+                             positive_class = "Bad",
+                             cohort = GermanCredit))
+})
