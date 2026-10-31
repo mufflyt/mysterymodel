@@ -45,6 +45,14 @@ reference:
     contents:
       - mm_model
       - mm_predict
+  - title: Assess the shape
+    desc: >
+      What a declared modelling decision amounts to: the degrees of freedom a
+      continuous predictor is given, and the evidence for a prespecified
+      interaction. Both report and decide nothing.
+    contents:
+      - mm_splines
+      - mm_interactions
   - title: Validate
     desc: >
       Performance on a stated basis, because apparent, bootstrap-corrected

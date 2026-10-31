@@ -2,6 +2,10 @@
 on:
   push:
     branches: [main]
+  # Pull requests build the site but do not deploy it. R CMD check does not
+  # read _pkgdown.yml, so an exported function missing from the reference
+  # index passed every PR gate and broke the site on merge instead.
+  pull_request:
   release:
     types: [published]
   workflow_dispatch:
@@ -36,6 +40,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.6.4
         with:
           clean: true
