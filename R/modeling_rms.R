@@ -57,11 +57,15 @@
 #' @param cohort The development data. When the project declares a split, only
 #'   rows below `split_at` are used, and the held-out rows are returned
 #'   untouched for later scoring.
-#' @param nonlinear Character vector of continuous predictors to fit with
-#'   restricted cubic splines.
-#' @param interactions List of length-two character vectors naming
-#'   prespecified interactions. Exploratory discovery is not this argument.
-#' @param knots Knots for each spline term.
+#' @param nonlinear Continuous predictors to fit with restricted cubic
+#'   splines. `NULL` takes the project's prespecified `nonlinear`, which is
+#'   where the choice belongs. Supplying it here overrides the plan and the
+#'   departure is recorded on the returned object and warned about, because a
+#'   model whose shape differs from the written plan is a finding and not a
+#'   detail.
+#' @param interactions Prespecified interaction blocks. `NULL` takes the
+#'   project's, with departures recorded the same way.
+#' @param knots Knots for each spline term. `NULL` takes the project's.
 #' @param check_leakage Scan the development predictors for duplication of the
 #'   outcome. `TRUE` for a declared model. [mm_full_process()] passes `FALSE`
 #'   when refitting inside a resample, because the declared cohort has already
@@ -81,10 +85,58 @@
 #' fit
 #' @export
 mm_model <- function(project, cohort, nonlinear = NULL,
-                     interactions = NULL, knots = 4L,
+                     interactions = NULL, knots = NULL,
                      check_leakage = TRUE) {
   if (!inherits(project, "mm_project")) {
     stop("`project` must come from mm_project().", call. = FALSE)
+  }
+  # The plan is the project's. An argument here overrides it, and overriding
+  # a written plan is reported rather than absorbed.
+  departures <- character(0)
+  note_departure <- function(what, planned, used) {
+    sprintf("%s: the project prespecifies %s and this fit used %s", what,
+            if (!length(planned)) "none" else
+              paste(planned, collapse = ", "),
+            if (!length(used)) "none" else paste(used, collapse = ", "))
+  }
+  # A project that declares nothing has no plan to depart from: an unset
+  # field is unset, not a declaration that every continuous predictor is
+  # straight. Only a plan that was written down can be departed from, which
+  # is also what keeps a fit from being scolded for a default nobody chose.
+  declared_shape <- !is.null(project$nonlinear)
+  if (is.null(nonlinear)) {
+    nonlinear <- project$nonlinear
+  } else if (declared_shape &&
+             !identical(sort(nonlinear), sort(project$nonlinear))) {
+    departures <- c(departures, note_departure(
+      "nonlinear", project$nonlinear, nonlinear))
+  }
+  if (is.null(interactions)) {
+    interactions <- project$interactions
+  } else if (!is.null(project$interactions)) {
+    label <- function(blocks) sort(vapply(blocks %||% list(), function(b)
+      paste(sort(b), collapse = ":"), character(1)))
+    if (!identical(label(interactions), label(project$interactions))) {
+      departures <- c(departures, note_departure(
+        "interactions", label(project$interactions), label(interactions)))
+    }
+  }
+  if (is.null(knots)) {
+    knots <- project$knots %||% 4L
+  } else if (declared_shape &&
+             !identical(as.integer(knots), as.integer(project$knots))) {
+    # Knots only mean anything beside a declared spline, so they are a
+    # departure only when the plan declared one.
+    departures <- c(departures, note_departure(
+      "knots", project$knots, knots))
+  }
+  if (length(departures)) {
+    warning("this fit departs from the project's written plan. ",
+            paste(departures, collapse = "; "),
+            ". The plan is what a reviewer checks against a protocol, so the ",
+            "departure is recorded on the returned object as `departures` ",
+            "rather than left to be reconstructed from the call.",
+            call. = FALSE)
   }
   if (!is.data.frame(cohort)) {
     stop("`cohort` must be a data frame.", call. = FALSE)
@@ -284,6 +336,7 @@ mm_model <- function(project, cohort, nonlinear = NULL,
          nonlinear  = nonlinear,
          interactions = pairs,
          knots      = as.integer(knots),
+         departures = departures,
          n_dev      = n_fitted,
          events_dev = events_fitted,
          n_supplied = nrow(supplied),
@@ -312,6 +365,11 @@ mm_model <- function(project, cohort, nonlinear = NULL,
 print.mm_model <- function(x, ...) {
   cat("<mm_model: ", x$project$slug, ">\n", sep = "")
   cat("  formula    ", deparse(x$formula), "\n", sep = "")
+  if (length(x$departures)) {
+    for (one in x$departures) {
+      cat("  DEPARTS    ", one, "\n", sep = "")
+    }
+  }
   cat("  developed  ", x$n_dev, " rows, ", x$events_dev, " events\n",
       sep = "")
   if (x$n_incomplete > 0L) {

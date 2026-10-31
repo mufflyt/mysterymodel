@@ -9,7 +9,7 @@ mm_model(
   cohort,
   nonlinear = NULL,
   interactions = NULL,
-  knots = 4L,
+  knots = NULL,
   check_leakage = TRUE
 )
 }
@@ -20,13 +20,17 @@ mm_model(
 rows below \code{split_at} are used, and the held-out rows are returned
 untouched for later scoring.}
 
-\item{nonlinear}{Character vector of continuous predictors to fit with
-restricted cubic splines.}
+\item{nonlinear}{Continuous predictors to fit with restricted cubic
+splines. \code{NULL} takes the project's prespecified \code{nonlinear}, which is
+where the choice belongs. Supplying it here overrides the plan and the
+departure is recorded on the returned object and warned about, because a
+model whose shape differs from the written plan is a finding and not a
+detail.}
 
-\item{interactions}{List of length-two character vectors naming
-prespecified interactions. Exploratory discovery is not this argument.}
+\item{interactions}{Prespecified interaction blocks. \code{NULL} takes the
+project's, with departures recorded the same way.}
 
-\item{knots}{Knots for each spline term.}
+\item{knots}{Knots for each spline term. \code{NULL} takes the project's.}
 
 \item{check_leakage}{Scan the development predictors for duplication of the
 outcome. \code{TRUE} for a declared model. \code{\link[=mm_full_process]{mm_full_process()}} passes \code{FALSE}
