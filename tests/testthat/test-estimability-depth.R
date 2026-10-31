@@ -168,3 +168,39 @@ test_that("a continuous pair has no cells and says so", {
   expect_true(is.na(row$smallest_cell))
   expect_match(row$reason, "no.*cells to count")
 })
+
+test_that("separation is the strict definition, with no gap required", {
+  # Mutation testing found this untested: widening the comparison to demand a
+  # gap between the classes still detected the fully diverged fixtures, where
+  # the gap is nearly 1, so nothing distinguished the definition from a
+  # tolerance. Separation does not require a wide gap. It requires only that
+  # no non-event outranks an event, which is exactly when the likelihood has
+  # no interior maximum.
+  as_fit <- function(risk) {
+    structure(list(fit = list(linear.predictors = stats::qlogis(risk),
+                              fail = FALSE,
+                              coefficients = c(`(Intercept)` = 0.1,
+                                               x = 0.2))),
+              class = "mm_model")
+  }
+  # Separated by a hair: the largest non-event risk is below the smallest
+  # event risk by 0.01, and neither class is near 0 or 1.
+  y <- c(0L, 0L, 0L, 1L, 1L, 1L)
+  narrow <- mysterymodel:::mm_interaction_health(
+    as_fit(c(0.40, 0.44, 0.49, 0.50, 0.55, 0.60)), y)
+  expect_true(narrow$complete_separation)
+  expect_equal(narrow$at_boundary, 0L)
+  expect_match(narrow$note, "no interior maximum")
+
+  # One pair out of order is enough to make it not separation, which is the
+  # property that keeps a merely excellent model from being withheld.
+  overlapping <- mysterymodel:::mm_interaction_health(
+    as_fit(c(0.40, 0.44, 0.51, 0.50, 0.55, 0.60)), y)
+  expect_false(overlapping$complete_separation)
+  expect_equal(overlapping$note, "")
+
+  # Touching is not separating: equal risks leave the maximum attainable.
+  touching <- mysterymodel:::mm_interaction_health(
+    as_fit(c(0.40, 0.44, 0.50, 0.50, 0.55, 0.60)), y)
+  expect_false(touching$complete_separation)
+})
