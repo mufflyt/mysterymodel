@@ -36,6 +36,17 @@ The model, and risks from exactly that model.
 - [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
   : Predict risk from exactly the fitted model
 
+## Assess the shape
+
+What a declared modelling decision amounts to: the degrees of freedom a
+continuous predictor is given, and the evidence for a prespecified
+interaction. Both report and decide nothing.
+
+- [`mm_splines()`](https://mufflyt.github.io/mysterymodel/reference/mm_splines.md)
+  : Draw each continuous predictor as a straight line and as a spline
+- [`mm_interactions()`](https://mufflyt.github.io/mysterymodel/reference/mm_interactions.md)
+  : Test prespecified interactions, and report what the test rests on
+
 ## Validate
 
 Performance on a stated basis, because apparent, bootstrap-corrected and

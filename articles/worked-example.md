@@ -500,6 +500,214 @@ identical(schema$predictors, fits$D$schema$predictors)
 #> [1] TRUE
 ```
 
+### The shape plan B buys, and what it costs
+
+A and B differ in one declared decision: B gives `age` a restricted
+cubic spline. Both allocations were written down in section 4, so what
+follows is not a choice being made now; it is what the choice already
+made amounts to.
+[`mm_splines()`](https://mufflyt.github.io/mysterymodel/reference/mm_splines.md)
+fits each continuous predictor both ways and reports the difference,
+which is the arithmetic the contrast table below needs in order to mean
+anything.
+
+``` r
+
+shapes <- mm_splines(plan$B, cohort, knots = 4)
+```
+
+![](worked-example_files/figure-html/splines-1.png)
+
+``` r
+
+shapes$summary[, c("predictor", "parameters_linear", "parameters_spline",
+                   "largest_risk_gap", "at_value")]
+#>   predictor parameters_linear parameters_spline largest_risk_gap at_value
+#> 1       age                 6                 8       0.09783402     95.0
+#> 2       bmi                 6                 8       0.10965151     48.6
+```
+
+Two continuous predictors and the same two extra parameters each. The
+generating model behind this cohort carries a quadratic age term and a
+linear `bmi` term:
+
+``` r
+
+attr(raw, "truth")$formula
+#> [1] "event ~ 0.0011*(age-62)^2 + 0.045*(bmi-29) + 0.35*male + 0.80*prior_uti + 0.60*prior_uti:male"
+```
+
+The age gap is the larger of the two, which is the ordering the truth
+predicts. It is worth being careful about how much that ordering proves,
+because `bmi` is linear by construction and its gap is not small either,
+and both maxima sit at the very top of their observed ranges. A spline
+is least constrained where the data runs out, so `largest_risk_gap` is
+partly a statement about curvature and partly a statement about where
+this cohort stops. Reading it without the rug below would attribute all
+of it to the first.
+
+The curves are **adjusted**: every other predictor sits at the reference
+profile, which is returned because an adjusted curve means nothing
+without the values it was adjusted to.
+
+``` r
+
+shapes$reference
+#>    age  bmi    sex prior_uti   indication
+#> 1 63.5 29.1 female        no incontinence
+```
+
+Standing somewhere else moves them. Here is the same comparison for a
+patient at the other end of both categorical axes, which is a different
+question and has a different answer:
+
+``` r
+
+elsewhere <- mm_splines(plan$B, cohort, predictors = "age",
+                        at = list(sex = "male", prior_uti = "yes",
+                                  indication = "retention"),
+                        plot = FALSE)
+rbind(reference = shapes$summary[shapes$summary$predictor == "age",
+                                 c("largest_risk_gap", "at_value")],
+      elsewhere = elsewhere$summary[, c("largest_risk_gap", "at_value")])
+#>           largest_risk_gap at_value
+#> reference       0.09783402       95
+#> elsewhere       0.15569960       95
+```
+
+``` r
+
+invisible(mm_splines(plan$B, cohort, knots = 4))
+```
+
+![](worked-example_files/figure-html/splines-plot-1.png)
+
+The dashed line is A’s allocation and the solid line is B’s. The rug is
+where the data actually is, and it is the part of the picture that
+explains the table above: both maxima are at the right-hand end of their
+panels, where the rug thins out and the spline has least holding it
+down. That is a real feature of the allocation rather than an artefact
+to be corrected, and it is the reason a clinician reading a nomogram
+built on plan B should be told which part of each axis the cohort
+actually covered.
+
+What the figure does **not** carry is a binned observed event rate,
+however natural it would look underneath two fitted curves. A marginal
+event rate and an adjusted curve are different quantities, and an eye
+given both will compare them anyway.
+
+Nor is there a p-value here, and that absence is deliberate. `rms` will
+give you one: the aggregate nonlinear term sits in the `anova` table
+immediately beside the interaction block.
+
+``` r
+
+old <- options(datadist = fits$B$datadist)
+anova(fits$B$fit, test = "LR")[c("age", " Nonlinear"), ]
+#>            Chi-Square d.f.          P
+#> age         10.419639    3 0.01531606
+#>  Nonlinear   6.275555    2 0.04337911
+options(old)
+```
+
+Fitting the spline, reading that row, and dropping back to a straight
+line when it is not significant would make the model’s shape a function
+of the outcome. The optimism of that choice is corrected by nothing
+downstream, which is the same error as choosing an interaction on the
+development data and then validating the chosen model as though it had
+been prespecified. The allocation belonged in section 4, and that is
+where it was.
+
+The cost side is the parameter budget, which the sample-size gate was
+already unhappy about:
+
+``` r
+
+data.frame(
+  analysis = c("A", "B"),
+  parameters = c(fits$A$adequacy$parameters, fits$B$adequacy$parameters),
+  required_n = ceiling(c(fits$A$adequacy$required_n,
+                         fits$B$adequacy$required_n)),
+  short_by = ceiling(c(fits$A$adequacy$short_by,
+                       fits$B$adequacy$short_by)),
+  shrinkage = round(c(fits$A$adequacy$heuristic_shrinkage,
+                      fits$B$adequacy$heuristic_shrinkage), 3))
+#>   analysis parameters required_n short_by shrinkage
+#> 1        A          6       1658      917     0.749
+#> 2        B          8       1760     1019     0.735
+```
+
+So B buys a shape worth a tenth or two of predicted risk towards the top
+of the age range, where this cohort is thinnest, and pays for it with
+two parameters the sample is already short of. Both halves of that
+sentence are reported, and neither is a recommendation.
+
+### The block plans C and D declare
+
+C and D add `prior_uti` by `sex`, prespecified in section 4 and planted
+in the generating model.
+[`mm_interactions()`](https://mufflyt.github.io/mysterymodel/reference/mm_interactions.md)
+tests it as an addition to the main-effects model, and reports what the
+test rests on rather than only its p-value. A second candidate is
+included that nobody declared, to show that a screen of two blocks is
+reported as a screen of two blocks.
+
+``` r
+
+blocks <- mm_interactions(
+  plan$C, cohort,
+  candidates = list(c("prior_uti", "sex"), c("sex", "indication")),
+  nonlinear = "age", adjustment = "holm")
+#> mm_interactions(): 2 prespecified block(s), LR test, multiplicity holm
+blocks
+#> <mm_interaction_screen>  prespecified, LR test
+#>   development 741 rows, 83 events, 8 parameter(s) before any block
+#>   candidates  2 block(s) considered, 3 parameter(s) of candidate complexity in total
+#>   prior_uti x sex        tested  chi2=4.353 df=1 p=0.0369 p.adj=0.0739
+#>   sex x indication       tested  chi2=1.664 df=2 p=0.4351 p.adj=0.4351
+#>   Evidence about blocks, not a model. Nothing here has been added to
+#>   a model, and a small p-value is not a reason to add it: the
+#>   optimism of choosing on these data is not corrected by this
+#>   function.
+```
+
+``` r
+
+blocks$screen[, c("interaction", "statistic", "degrees_freedom", "p_value",
+                  "p_adjusted", "added_rank", "smallest_cell", "lr_agrees")]
+#>        interaction statistic degrees_freedom    p_value p_adjusted added_rank
+#> 1  prior_uti x sex  4.352836               1 0.03694738 0.07389476          1
+#> 2 sex x indication  1.664190               2 0.43513667 0.43513667          2
+#>   smallest_cell lr_agrees
+#> 1            70      TRUE
+#> 2            40      TRUE
+```
+
+`added_rank` is the dimension each block actually adds to the design
+matrix, and no test is reported unless it equals the columns the block
+contributes: that is what stops a block which adds nothing from coming
+back with a p-value near one, which would read as evidence of no
+interaction. `lr_agrees` records that the deviance difference and
+`rms::anova(test = "LR")` agreed, checked on this call rather than once
+in a test file.
+
+The planted block is the one the plan declared. The other was included
+to be counted, and it is: the candidate budget is two blocks and three
+parameters whichever of them survives, which is the complexity the
+analysis spent even though plan C contains only one of them.
+
+``` r
+
+c(candidates = blocks$n_candidates,
+  candidate_parameters = blocks$candidate_parameters,
+  parameters_in_plan_C = fits$C$adequacy$parameters)
+#>           candidates candidate_parameters parameters_in_plan_C 
+#>                    2                    3                    9
+```
+
+Nothing above changed a model. Plan C contains the block because section
+4 said so, not because this table did.
+
 ## 8. Validating all four
 
 ``` r
@@ -695,7 +903,7 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.svg, /tmp/RtmpkNegHM/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.pdf, /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.svg, /tmp/RtmpEHmlqa/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
@@ -880,7 +1088,7 @@ c(between_ticks = direct$bound, lp_scale = direct$lp,
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.pdf, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.svg, /tmp/RtmpkNegHM/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.pdf, /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.svg, /tmp/RtmpEHmlqa/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -970,16 +1178,23 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        41         8        38
+#>        50        10        40
 sort(everything[!used])
-#> [1] "mm_min_resamples"         "mm_no_corrected_interval" "mm_no_information"
+#>  [1] "mm_anova_block"           "mm_candidate_pairs"      
+#>  [3] "mm_draw_splines"          "mm_interaction_rank"     
+#>  [5] "mm_interaction_support"   "mm_matrix_rank"          
+#>  [7] "mm_min_resamples"         "mm_no_corrected_interval"
+#>  [9] "mm_no_information"        "mm_reference_profile"
 ```
 
-The three it does not reach are one-line helpers whose results are
-already on the page: the four-fifths resample floor and the
-no-information Brier appear in the validation notes above, and the
-sentence explaining why a corrected c-statistic carries no interval is
-printed in those notes verbatim. Naming them is the point of the chunk.
+The ones it does not reach are helpers whose results are already on the
+page rather than capabilities going untested: the four-fifths resample
+floor and the no-information Brier appear in the validation notes above,
+the sentence about a corrected c-statistic’s missing interval is printed
+in those notes verbatim, and the rank and support machinery behind the
+interaction screen is summarised in its own columns. Naming them is the
+point of the chunk, and the list is printed rather than described so it
+cannot quietly go stale.
 
 ``` r
 
