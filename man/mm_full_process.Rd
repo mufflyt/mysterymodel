@@ -4,7 +4,13 @@
 \alias{mm_full_process}
 \title{Optimism of the whole modelling strategy, not just of the coefficients}
 \usage{
-mm_full_process(model, cohort, B = 200L, min_valid = mm_min_resamples(B))
+mm_full_process(
+  model,
+  cohort,
+  B = 200L,
+  min_valid = mm_min_resamples(B),
+  refit = NULL
+)
 }
 \arguments{
 \item{model}{A \code{\link[=mm_model]{mm_model()}}.}
@@ -16,6 +22,13 @@ drawn.}
 
 \item{min_valid}{Fewest successful resamples for the result to be
 reported as adequate.}
+
+\item{refit}{\code{NULL}, or a \verb{function(project, draw)} returning an
+\code{\link[=mm_model]{mm_model()}} fitted on \code{draw}. Supply it when the strategy makes a
+data-dependent choice this function cannot see - a selection step, tuning,
+an imputation - so the choice is re-made inside every resample and its
+optimism is in the correction. It is called once on the development rows
+first, and must give the same equation as \code{model}.}
 }
 \value{
 A list with the optimism, the corrected metrics and the count of
@@ -35,11 +48,27 @@ shaped by. Here the resample gets its own spline knot placement, its own
 learned from data and all three are part of what would be redone on a new
 sample.
 
-What this does \strong{not} yet re-execute, because the package does not do them
-yet, is imputation, feature selection, tuning and interaction screening. A
-strategy including any of those is not fully validated by this function
-either, and \code{covers} names what was actually repeated so the claim stays
-honest as the pipeline grows.
+What it re-executes on its own is knot placement, \code{datadist} and factor
+levels. Anything else the strategy learns from the data - which predictors
+are splined, which interactions are in the model, a selection step, tuning,
+imputation - is the caller's, and \code{refit} is how the caller puts it inside
+the resampling. Without \code{refit} those choices are inherited from \code{model}
+and the optimism excludes them, which \code{held_fixed} says and the note
+repeats.
+
+THE CLAIM IS COMPUTED, NOT WRITTEN DOWN. \code{covers} and \code{held_fixed} are
+built from what actually happened in this call. An earlier version stated
+"imputation, selection and tuning are not in this pipeline yet" as a string
+literal, which stopped being true the moment \code{\link[=mm_splines]{mm_splines()}} and
+\code{\link[=mm_interactions]{mm_interactions()}} shipped: a caller who screens, picks and then validates
+was told the thing it most needed to doubt, and the test suite asserted the
+sentence.
+
+\code{refit} is checked against \code{model} before any resample is drawn. It is
+called once on the development rows, and the equation it produces must be
+the equation being corrected - otherwise the optimism belongs to a model
+nobody fitted, which is the failure that makes a wrong number look like a
+careful one.
 
 Resamples that cannot be fitted are counted rather than dropped quietly. A
 resample missing a factor level, or separating, is a real feature of small

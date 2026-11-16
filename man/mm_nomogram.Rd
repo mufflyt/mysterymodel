@@ -13,7 +13,8 @@ mm_nomogram(
   fun_at = NULL,
   funlabel = "Predicted risk",
   labels = NULL,
-  level_case = c("title", "asis")
+  level_case = c("title", "asis"),
+  id = NULL
 )
 }
 \arguments{
@@ -52,6 +53,12 @@ the default, title cases them for printing and leaves a word carrying a
 capital of its own alone, so \code{AOA} and \code{USMLE} survive. \code{"asis"} prints
 them exactly as the fit holds them. Like \code{labels}, this happens after the
 sheet has been checked and never before.}
+
+\item{id}{Optional text appended to the exported filenames, as
+\verb{<slug>_nomogram_<id>.pdf}. Two fits of the same project otherwise write
+the same three filenames, and the export refuses to overwrite, so this is
+how both sheets reach disk. A run id, a date, or whatever distinguishes
+the fits; it is used verbatim.}
 }
 \value{
 An object of class \code{mm_nomogram}. Its \code{nomogram} element is the

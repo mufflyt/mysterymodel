@@ -7,6 +7,31 @@ implemented, the record in `inst/decisions.md` that settled it.
 
 ## The pipeline
 
+* `mm_full_process(refit = )` and `mm_validate(refit = )` take a
+  `function(project, draw)` returning an `mm_model`, re-executed inside every
+  resample, so a strategy that selects, tunes or imputes can have the optimism
+  of those choices in its correction instead of excluded from it. It is called
+  once on the development rows first and must give the same equation as the
+  model being corrected; a `refit` that fits something else is refused there,
+  after one fit rather than after `B` of them, because an optimism measured on
+  a different strategy is wrong in no visible way.
+* `covers` and the new `held_fixed` are **computed from the call**, and the
+  note is derived from both. They used to be a literal vector and a literal
+  sentence saying "imputation, selection and tuning are not in this pipeline
+  yet", written when that was true and still printed after `mm_splines()` and
+  `mm_interactions()` shipped — so a caller who screened with one of those,
+  picked a term and then validated was told the one thing they most needed to
+  doubt, and `test-full-process.R` asserted the sentence. `held_fixed` now
+  names each data-dependent choice the resample inherited instead of re-making
+  ("which predictors are splined", "which interactions are in the model") and
+  says that holding it fixed is correct only if it was prespecified.
+* `mm_nomogram()` refuses to overwrite an exported sheet, and takes `id` to
+  distinguish two of them. Both fits of a project write
+  `<slug>_nomogram.pdf`, so the second silently replaced the published sheet
+  of the first with nothing on disk recording which was which. A figure is as
+  destroyable as a table.
+
+
 * `mm_project()`, `mm_clean()`, `mm_eda()`, `mm_model()`, `mm_predict()`,
   `mm_validate()`, `mm_nomogram()`, `mm_interactions()`, `mm_splines()`,
   `mm_calculator()` and `mm_synthetic_cohort()` are the whole public surface.

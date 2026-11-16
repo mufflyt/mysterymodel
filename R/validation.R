@@ -127,8 +127,12 @@ mm_check_resamples <- function(B) {
 #'
 #' * **bootstrap, full process**, with `full_process = TRUE`. Refits the
 #'   whole strategy inside every resample, so the optimism corrected includes
-#'   the data-dependent choices the fixed-model bootstrap inherits. See
-#'   [mm_full_process()] for what it does and does not re-execute.
+#'   the data-dependent choices the fixed-model bootstrap inherits. What it
+#'   re-executes on its own is knot placement, `datadist` and factor levels;
+#'   pass `refit` to put a selection step, tuning or an imputation inside the
+#'   resampling too. The result's `full_process_detail$held_fixed` names every
+#'   data-dependent choice that was inherited instead, and is empty only when
+#'   there was none. See [mm_full_process()].
 #'
 #' @section Incomplete rows:
 #'
@@ -159,6 +163,12 @@ mm_check_resamples <- function(B) {
 #' @param B Bootstrap resamples.
 #' @param full_process Also run the full-process bootstrap. Off by default
 #'   because it refits `B` times and costs accordingly.
+#' @param refit `NULL`, or a `function(project, draw)` returning an
+#'   [mm_model()] fitted on `draw`, used only when `full_process = TRUE`. It is
+#'   the strategy's own data-dependent steps - a selection, tuning, an
+#'   imputation - made repeatable inside a resample, so their optimism reaches
+#'   the correction instead of being excluded from it. Checked against `model`
+#'   on the development rows before any resample is drawn.
 #'
 #' @section The scaled Brier column:
 #'
@@ -181,7 +191,8 @@ mm_check_resamples <- function(B) {
 #' fit <- mm_model(project, cohort, nonlinear = "age")
 #' mm_validate(fit, cohort, B = 25)
 #' @export
-mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
+mm_validate <- function(model, cohort, B = 200L, full_process = FALSE,
+                        refit = NULL) {
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
   }
@@ -291,7 +302,7 @@ mm_validate <- function(model, cohort, B = 200L, full_process = FALSE) {
   # Bootstrap, whole strategy.
   fp <- NULL
   if (isTRUE(full_process)) {
-    fp <- mm_full_process(model, cohort, B = B)
+    fp <- mm_full_process(model, cohort, B = B, refit = refit)
     rows[[length(rows) + 1L]] <- data.frame(
       basis = "bootstrap, full process",
       n = model$n_dev, events = model$events_dev,
@@ -593,6 +604,13 @@ print.mm_validation <- function(x, ...) {
         paste(x$full_process_detail$covers, collapse = ", "),
         " per resample; ", x$full_process_detail$valid, " of ",
         x$full_process_detail$B, " valid.\n", sep = "")
+    # Printed beside what WAS repeated, because a reader comparing two
+    # corrected figures needs to know they corrected for different things.
+    hf <- x$full_process_detail$held_fixed
+    if (length(hf)) {
+      cat("  Held fixed, and so NOT in that correction: ",
+          paste(hf, collapse = "; "), ".\n", sep = "")
+    }
     se <- x$full_process_detail$monte_carlo_se
     if (!is.null(se) && !is.na(se[["c_stat"]])) {
       cat("  Its correction carries a Monte Carlo standard error of ",

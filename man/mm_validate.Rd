@@ -4,7 +4,7 @@
 \alias{mm_validate}
 \title{Validate the model, on a stated basis}
 \usage{
-mm_validate(model, cohort, B = 200L, full_process = FALSE)
+mm_validate(model, cohort, B = 200L, full_process = FALSE, refit = NULL)
 }
 \arguments{
 \item{model}{A \code{\link[=mm_model]{mm_model()}}.}
@@ -16,6 +16,13 @@ development rows must be the ones the model was fitted on.}
 
 \item{full_process}{Also run the full-process bootstrap. Off by default
 because it refits \code{B} times and costs accordingly.}
+
+\item{refit}{\code{NULL}, or a \verb{function(project, draw)} returning an
+\code{\link[=mm_model]{mm_model()}} fitted on \code{draw}, used only when \code{full_process = TRUE}. It is
+the strategy's own data-dependent steps - a selection, tuning, an
+imputation - made repeatable inside a resample, so their optimism reaches
+the correction instead of being excluded from it. Checked against \code{model}
+on the development rows before any resample is drawn.}
 }
 \value{
 An object of class \code{mm_validation}: a data frame of metrics by
@@ -46,8 +53,12 @@ actually fitted, because rms keeps only those and says so only when asked.
 \item \strong{held out}, rows the project's split reserved. Scored once.
 \item \strong{bootstrap, full process}, with \code{full_process = TRUE}. Refits the
 whole strategy inside every resample, so the optimism corrected includes
-the data-dependent choices the fixed-model bootstrap inherits. See
-\code{\link[=mm_full_process]{mm_full_process()}} for what it does and does not re-execute.
+the data-dependent choices the fixed-model bootstrap inherits. What it
+re-executes on its own is knot placement, \code{datadist} and factor levels;
+pass \code{refit} to put a selection step, tuning or an imputation inside the
+resampling too. The result's \code{full_process_detail$held_fixed} names every
+data-dependent choice that was inherited instead, and is empty only when
+there was none. See \code{\link[=mm_full_process]{mm_full_process()}}.
 }
 }
 \section{Incomplete rows}{

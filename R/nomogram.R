@@ -48,6 +48,12 @@
 #'   them exactly as the fit holds them. Like `labels`, this happens after the
 #'   sheet has been checked and never before.
 #'
+#' @param id Optional text appended to the exported filenames, as
+#'   `<slug>_nomogram_<id>.pdf`. Two fits of the same project otherwise write
+#'   the same three filenames, and the export refuses to overwrite, so this is
+#'   how both sheets reach disk. A run id, a date, or whatever distinguishes
+#'   the fits; it is used verbatim.
+#'
 #' @return An object of class `mm_nomogram`. Its `nomogram` element is the
 #'   sheet that was checked, carrying the levels the fit holds; `drawn` is the
 #'   copy that was printed, with any renaming and title casing applied.
@@ -63,7 +69,7 @@
 mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
                         width = NULL, height = NULL, fun_at = NULL,
                         funlabel = "Predicted risk", labels = NULL,
-                        level_case = c("title", "asis")) {
+                        level_case = c("title", "asis"), id = NULL) {
   level_case <- match.arg(level_case)
   if (!inherits(model, "mm_model")) {
     stop("`model` must come from mm_model().", call. = FALSE)
@@ -141,7 +147,7 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
   files <- character(0)
   if (!is.null(out_dir)) {
     files <- mm_nomogram_export(drawn, out_dir, model$project$slug,
-                               page$width, page$height)
+                               page$width, page$height, id)
   }
 
   exclusive <- mm_exclusive_axes(nom, model)
@@ -670,9 +676,26 @@ mm_reading_error <- function(nom, model, per_gap = 5L) {
 #' @param width,height Inches.
 #' @return The paths written.
 #' @keywords internal
-mm_nomogram_export <- function(nom, out_dir, slug, width, height) {
+mm_nomogram_export <- function(nom, out_dir, slug, width, height,
+                               id = NULL) {
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  stem <- file.path(out_dir, paste0(slug, "_nomogram"))
+  stem <- file.path(out_dir, paste0(slug, "_nomogram",
+                                    if (is.null(id)) "" else paste0("_", id)))
+  # NEVER OVERWRITTEN. The write fails instead, which is the one rule here
+  # that needs no identity scheme to be useful: without it a second fit
+  # silently replaces the published sheet of the first, under the same name,
+  # and nothing anywhere records which fit is on disk. A figure is as
+  # destroyable as a table, and `id` is how a caller that has a run id keeps
+  # two sheets side by side rather than relying on remembering not to.
+  exts <- c(".pdf", ".svg", ".png")
+  clash <- paste0(stem, exts)
+  clash <- clash[file.exists(clash)]
+  if (length(clash)) {
+    stop("refusing to overwrite ", length(clash), " existing nomogram file(s): ",
+         paste(basename(clash), collapse = ", "),
+         ".\n  Pass id = <something distinguishing>, write to another ",
+         "out_dir, or delete them deliberately.", call. = FALSE)
+  }
   draw <- function() {
     op <- graphics::par(mar = c(4, 2, 2, 2))
     on.exit(graphics::par(op), add = TRUE)

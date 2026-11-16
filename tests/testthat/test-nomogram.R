@@ -205,3 +205,29 @@ test_that("printed level text is title cased without touching the fit's levels",
   # A continuous axis carries numbers and is left alone.
   expect_true(is.numeric(titled$drawn$age$age))
 })
+
+test_that("an exported sheet is never overwritten, and id keeps two side by side", {
+  # A figure is as destroyable as a table. Both fits write
+  # <slug>_nomogram.pdf, so without a refusal the second silently replaces the
+  # published sheet of the first and nothing on disk records which is which.
+  f <- nom_fixture()
+  out <- file.path(tempdir(), paste0("nomover", as.integer(runif(1, 1, 1e6))))
+  first <- suppressMessages(mm_nomogram(f$model, out_dir = out))
+  expect_true(all(file.exists(first$files)))
+
+  expect_error(suppressMessages(mm_nomogram(f$model, out_dir = out)),
+               "refusing to overwrite")
+  # Refused means refused: the first sheet is still the first sheet.
+  before <- tools::md5sum(first$files)
+  expect_error(suppressMessages(mm_nomogram(f$model, out_dir = out)),
+               "refusing to overwrite")
+  expect_identical(tools::md5sum(first$files), before)
+
+  # And the way through is to say which fit this is.
+  second <- suppressMessages(
+    mm_nomogram(f$model, out_dir = out, id = "20261115T202927Z_83121b4"))
+  expect_true(all(file.exists(second$files)))
+  expect_length(intersect(first$files, second$files), 0L)
+  expect_true(all(grepl("_20261115T202927Z_83121b4[.]",
+                        basename(second$files))))
+})
