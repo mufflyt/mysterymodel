@@ -18,20 +18,21 @@
 #' stored coefficients, refuses an unseen level by name and marks a row outside
 #' the development range, which is the behaviour a clinical calculator needs.
 #'
-#' An interval IS shown, and what it covers is narrower than it looks. It comes
-#' from [mm_predict()]`(interval = TRUE)`, which is the standard error of the
-#' linear predictor transformed to the probability scale: it covers how
-#' precisely these coefficients were estimated, and not how much people sharing
-#' a covariate pattern differ from one another, nor the choices that produced
-#' the model. A reader who takes "95% CI 4% to 9%" as the range the patient's
-#' own risk lies in has read it as something it is not. See the `interval`
-#' argument of [mm_predict()] for the full statement, and review finding `D-1`
-#' in `review/findings.csv` for the recommendation that the displayed label
-#' carry the caveat rather than leaving it in the documentation.
+#' **No uncertainty range is shown beside the risk.** [mm_predict()] computes
+#' one and this function still receives it, so nothing statistical was removed,
+#' but it is not displayed: it is parameter uncertainty on the probability
+#' scale, and a reader shown it beside one person's risk would reasonably take
+#' it for the range that person's own risk lies in, which is a wider quantity
+#' this package does not compute. The three uncertainties are distinguished in
+#' the panel's own "Before you use this" text, and the interval remains in the
+#' returned prediction and in each saved record for anyone doing statistics
+#' rather than reading the screen.
 #'
-#' This paragraph previously said that no interval was shown because
-#' [mm_predict()] does not produce one. Both halves were false: it produces
-#' one, and `output$interval` renders it.
+#' This is the owner's resolution of review finding `D-1`, recorded in
+#' `review/findings.csv`. Before it, this paragraph claimed no interval was
+#' shown because [mm_predict()] does not produce one; both halves of that were
+#' false, and the interval was in fact rendered in three places. A regression
+#' test now fails if any of them returns.
 #'
 #' @param model A [mm_model()].
 #' @param title The heading. Defaults to the outcome the model predicts.
@@ -146,11 +147,14 @@ mm_calculator <- function(model, title = NULL, subtitle = NULL,
       if (is.na(prob())) "--" else sprintf("%.1f%%", 100 * prob())
     })
 
-    output$interval <- shiny::renderText({
-      p <- pred()
-      if (is.na(p$.lower[1]) || is.na(p$.upper[1])) return("")
-      sprintf("95%% CI %.1f%% to %.1f%%", 100 * p$.lower[1], 100 * p$.upper[1])
-    })
+    # NO INTERVAL IS RENDERED BESIDE THE POINT ESTIMATE. Owner decision on
+    # review finding D-1: mm_predict()'s interval is parameter uncertainty on
+    # the probability scale, and printing it next to one person's risk invites
+    # the reading that their risk lies inside it. The interval is still
+    # computed and still travels in the prediction and in the saved records,
+    # so nothing statistical was removed; it is withheld from this display
+    # until an interval with the right meaning exists. Reintroducing it here
+    # fails tests/testthat/test-calculator-no-interval.R.
 
     output$interpretation <- shiny::renderUI({
       b <- band()
@@ -662,17 +666,12 @@ mm_calculator_comparison <- function(saved, threshold,
       shiny::div(class = "compare-n", i),
       shiny::div(
         class = "compare-track",
-        shiny::div(class = "compare-ci",
-                   style = sprintf("left: %s; right: %.4f%%;", at(r$lower),
-                                   100 - pos(r$upper))),
+        # the uncertainty bar was removed here: see D-1 above
         shiny::div(class = "compare-dot",
                    style = sprintf("left: %s; background-color: %s;",
                                    at(r$pred), band$color))),
       shiny::div(class = "compare-figure",
                  sprintf("%.1f%%", 100 * r$pred),
-                 shiny::tags$span(class = "compare-ci-text",
-                                  sprintf(" (%.1f to %.1f)", 100 * r$lower,
-                                          100 * r$upper)),
                  if (r$extrapolated)
                    shiny::tags$span(class = "compare-flag", " extrapolated")))
   })
@@ -682,9 +681,9 @@ mm_calculator_comparison <- function(saved, threshold,
     shiny::h4("Predictions"),
     shiny::tags$p(class = "result-sub", sprintf(paste(
       "Each row is one set of answers you pressed the button on, so you can",
-      "change a value and see what it moves. The dot is the estimate and the",
-      "bar is its 95%% interval, both on a common scale ending at %.0f%%.",
-      "Hover a row for the values that produced it."),
+      "change a value and see what it moves. The dot is the estimate, on a",
+      "common scale ending at %.0f%%. No uncertainty range is drawn; see",
+      "'Before you use this'. Hover a row for the values that produced it."),
       100 * top)),
     shiny::div(class = "compare-list", rows),
     shiny::actionButton("clear_saved", "Clear the list", class = "btn-reset"))
@@ -900,8 +899,6 @@ mm_calculator_ui <- function(model, title = NULL, subtitle = NULL,
             shiny::uiOutput("gauge"),
             shiny::div(class = "gauge-value",
                        shiny::textOutput("probability", inline = TRUE)),
-            shiny::div(class = "ci-display",
-                       shiny::textOutput("interval", inline = TRUE)),
             shiny::uiOutput("extrapolation"),
             shiny::div(
               class = "interpretation-box",
@@ -1068,20 +1065,31 @@ mm_calculator_disclaimer <- function(subject = "patient",
     shiny::h6("Before you use this"),
     body,
     if (identical(audience, "clinician")) {
-      para("What the interval covers. ",
-        "The 95% interval is the uncertainty in the coefficients at these ",
-        "values, transformed to the probability scale. It does not say how ",
-        "much people sharing these values differ from one another, and it ",
-        "does not cover which predictors were chosen or what shape they were ",
-        "given. On a model short of the sample its shape requires, the ",
-        "interval is too narrow for the same reason the coefficients are too ",
-        "extreme.")
+      para("Why no range is shown. ",
+        "Three different uncertainties could be attached to this number and ",
+        "they are not interchangeable. PARAMETER uncertainty is how precisely ",
+        "the coefficients were estimated; that is what the model can compute, ",
+        "and it is available in the returned prediction. ESTIMATED RISK ",
+        "uncertainty is how well this covariate pattern's average risk is ",
+        "pinned down, which the same calculation approximates but which also ",
+        "depends on choices the calculation cannot see: which predictors were ",
+        "entered and what shape they were given. PREDICTION uncertainty is ",
+        "how much two people sharing every value on this form still differ ",
+        "from each other, and it is the widest of the three and is not ",
+        "computed anywhere in this package. A reader shown the first and ",
+        "told nothing would reasonably take it for the third. So the figure ",
+        "above is a point estimate with no range beside it, and the ",
+        "parameter interval stays in the object for anyone doing the ",
+        "statistics rather than reading the screen.")
     } else {
-      para("The range is the model's, not yours. ",
-        "It says how sure the model is about its own number, given how much ",
-        "data it was fitted on. It is not the range you might fall in: two ",
-        paste0(subject, "s"), "who answer this form identically can still ",
-        "have different years, and nothing on this page measures that.")
+      para("There is one number, and no range beside it. ",
+        "A range was removed on purpose. The one this model can work out says ",
+        "how sure it is about its own figure, given how much data it was ",
+        "fitted on. It is not the range you might fall in, and it is much ",
+        "narrower than that range would be: two ", paste0(subject, "s"),
+        " who answer this form identically can still have different years, ",
+        "and nothing on this page measures that. Showing the narrow one ",
+        "without saying which it was would have read as the wide one.")
     },
     para("Performance is reported elsewhere. ",
       "Discrimination and calibration, apparent and corrected, come from ",
@@ -1124,7 +1132,6 @@ mm_calculator_css <- function() {
 ".gauge-center { position: absolute; bottom: -10px; left: 115px; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(15,23,42,0.15); z-index: 10; transition: background-color 1.0s ease; }",
 ".gauge-scale { display: flex; justify-content: space-between; width: 250px; margin: 0 auto; font-size: 11px; color: #94a3b8; }",
 ".gauge-value { font-family: 'Outfit', sans-serif; font-size: 48px; font-weight: 800; color: #0f172a; margin-top: 6px; letter-spacing: -1px; }",
-".ci-display { font-size: 13px; color: #64748b; margin-top: 2px; min-height: 18px; }",
 ".alert-extrapolation { background-color: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 14px 18px; border-radius: 12px; margin: 10px 0 0 0; text-align: left; font-size: 13px; line-height: 1.5; }",
 ".interpretation-box { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 4px solid #3b82f6; padding: 20px 22px; margin: 22px 0; border-radius: 0 12px 12px 0; text-align: left; }",
 ".interpretation-box h5 { color: #1e3a8a; margin: 0 0 8px 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 15px; }",
@@ -1155,10 +1162,8 @@ mm_calculator_css <- function() {
 ".compare-row { display: flex; align-items: center; gap: 14px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }",
 ".compare-n { width: 22px; color: #94a3b8; font-size: 12px; text-align: right; }",
 ".compare-track { position: relative; flex: 1; height: 14px; background: #f1f5f9; border-radius: 7px; }",
-".compare-ci { position: absolute; top: 5px; height: 4px; background: #cbd5e1; border-radius: 2px; }",
 ".compare-dot { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 2px solid white; }",
 ".compare-figure { width: 210px; font-size: 13px; color: #334155; font-variant-numeric: tabular-nums; }",
-".compare-ci-text { color: #94a3b8; }",
 ".compare-flag { color: #b45309; font-weight: 600; }",
 ".nomogram-card { background: white; border-radius: 16px; padding: 28px; margin-top: 25px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.8); }",
 ".nomogram-card h4 { color: #0f172a; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px; border-bottom: 2px solid #3b82f6; padding-bottom: 12px; margin-top: 0; margin-bottom: 10px; }",

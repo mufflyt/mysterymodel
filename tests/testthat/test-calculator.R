@@ -270,12 +270,14 @@ test_that("the instructions are written for whoever is reading them", {
   expect_false(grepl("It is not advice", self, fixed = TRUE))
 
   # Both are told that performance is not on this screen, and both are told
-  # what the interval covers, in the words their own half of the page uses.
+  # why no range is shown, in the words their own half of the page uses.
+  # Reworded when finding D-1 was resolved: the interval was withdrawn from
+  # the display, so the text explains its absence instead of its contents.
   for (t in list(clinician, self)) {
     expect_match(t, "Performance is reported elsewhere")
   }
-  expect_match(clinician, "What the interval covers")
-  expect_match(self, "The range is the model's, not yours")
+  expect_match(clinician, "Why no range is shown")
+  expect_match(self, "There is one number, and no range beside it")
   expect_error(mm_calculator_disclaimer("patient", "nobody"), "should be one of")
 })
 
@@ -448,7 +450,7 @@ test_that("a dropdown shows a tidy spelling and submits the level", {
                "never saw")
 })
 
-test_that("the page shows an interval and says what it covers", {
+test_that("the page shows no interval, and says why (finding D-1)", {
   skip_if_not_installed("shiny")
   cohort <- mm_synthetic_cohort(n = 300, seed = 4)
   project <- mm_project("uds", "event", c("age", "bmi", "sex"), cohort = cohort)
@@ -458,29 +460,40 @@ test_that("the page shows an interval and says what it covers", {
     session$setInputs(p1 = 60, p2 = 28, p3 = "female")
     want <- mm_predict(fit, data.frame(age = 60, bmi = 28, sex = "female"),
                        interval = TRUE)
-    expect_equal(output$interval,
-                 sprintf("95%% CI %.1f%% to %.1f%%",
-                         100 * want$.lower, 100 * want$.upper))
-    # The point estimate sits inside it.
+
+    # THE OUTPUT IS GONE, by owner decision on finding D-1. Asking for it is
+    # an error from shiny rather than an empty string, which is the strongest
+    # form this assertion can take: the slot does not exist to be filled.
+    expect_error(output$interval, "hasn't been defined")
+
+    # The estimate itself is still rendered.
+    expect_match(output$probability, "%")
+
+    # And the interval is still COMPUTED and still correct: the decision
+    # withheld a display, not a calculation. The point estimate sits inside it.
     expect_gt(want$.pred, want$.lower)
     expect_lt(want$.pred, want$.upper)
 
     # Nothing to show before every predictor is in.
     session$setInputs(p1 = NA)
-    expect_equal(output$interval, "")
+    expect_match(output$probability, "[-]{2}|^$")
   })
 
-  # The caveat no longer apologises for an absence; it says what the interval
-  # is and what it leaves out.
+  # The caveat explains the absence and separates the three uncertainties that
+  # could have been attached to the number, because they are not the same size.
   clin <- paste(as.character(mm_calculator_disclaimer("patient", "clinician")),
                 collapse = " ")
-  expect_match(clin, "uncertainty in the coefficients")
-  expect_match(clin, "does not cover which predictors were chosen")
+  expect_match(clin, "PARAMETER uncertainty")
+  expect_match(clin, "PREDICTION uncertainty")
+  # within one string literal: as.character() on a tag puts
+  # whitespace between child text nodes, so a phrase spanning two
+  # literals will not match the raw markup
+  expect_match(clin, "computed anywhere in this package")
   expect_false(grepl("No interval is shown", clin, fixed = TRUE))
 
   self <- gsub("\\s+", " ", gsub("<[^>]+>", "", paste(as.character(
     mm_calculator_disclaimer("applicant", "self")), collapse = " ")))
-  expect_match(self, "The range is the model's, not yours")
+  expect_match(self, "There is one number, and no range beside it")
   expect_match(self, "not the range you might fall in")
 })
 
@@ -512,7 +525,7 @@ test_that("rows can be kept and compared, which is DynNom's one good idea", {
   })
 })
 
-test_that("a kept row shows its interval and says when it is extrapolated", {
+test_that("a kept row shows no interval bar, and says when extrapolated", {
   skip_if_not_installed("shiny")
   cohort <- mm_synthetic_cohort(n = 300, seed = 4)
   project <- mm_project("uds", "event", c("age", "bmi"), cohort = cohort)
@@ -529,9 +542,12 @@ test_that("a kept row shows its interval and says when it is extrapolated", {
     fit$schema$predictors)), collapse = " ")
 
   expect_length(gregexpr("compare-row", html)[[1]], 2)
-  expect_match(html, "compare-ci")
+  # the uncertainty bar was withdrawn with the rest of the interval display
+  # (finding D-1); the dot that marks the estimate stays
+  expect_no_match(html, "compare-ci", fixed = TRUE)
+  expect_match(html, "compare-dot")
   expect_match(html, "extrapolated")
-  # The common scale is stated, because two bars drawn against different
+  # The common scale is stated, because two estimates drawn against different
   # scales are not a comparison.
   expect_match(html, "on a common scale ending at")
   expect_match(html, ">Predictions<")
@@ -551,17 +567,20 @@ test_that("a kept row's bar is placed where the numbers say", {
   html <- paste(as.character(mm_calculator_comparison(
     list(keep(0.10, 0.05, 0.20)), threshold = 0.05)), collapse = " ")
 
-  # The scale ends at four times the reference, stretched if need be so the
-  # widest interval is not clipped: max(4 * 0.05, 0.20 * 1.05) = 0.21.
+  # The scale still ends at four times the reference, stretched if need be by
+  # the widest stored upper bound: max(4 * 0.05, 0.20 * 1.05) = 0.21. The
+  # bound is still in the record and still sets the scale even though no bar
+  # is drawn from it, which is finding D-1's "keep the statistics, drop the
+  # display" in one line of arithmetic.
   expect_match(html, "on a common scale ending at 21%")
   expect_match(html, "change a value and see what it moves")
-  expect_match(html, sprintf("left: %.4f%%; right: %.4f%%",
-                             100 * 0.05 / 0.21, 100 - 100 * 0.20 / 0.21),
-               fixed = TRUE)
+  # The interval bar's own placement is no longer asserted because the bar is
+  # gone; the dot that marks the estimate is still placed by arithmetic.
+  expect_no_match(html, "right:", fixed = TRUE)
   expect_match(html, sprintf("left: %.4f%%", 100 * 0.10 / 0.21),
                fixed = TRUE)
 
-  # Nothing is positioned outside its own track, whatever the numbers.
+  # The dot is never positioned outside its own track, whatever the numbers.
   wide <- paste(as.character(mm_calculator_comparison(
     list(keep(0.99, 0.80, 0.999)), threshold = 0.05)), collapse = " ")
   pcts <- as.numeric(sub("%.*", "", regmatches(wide,
