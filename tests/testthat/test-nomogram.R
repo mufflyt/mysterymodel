@@ -151,7 +151,16 @@ test_that("risk ticks are evenly spaced on the drawn axis, not in probability", 
 
   # A degenerate axis asks for nothing rather than returning a single tick.
   expect_length(mm_risk_ticks(c(2, 2)), 0)
+  # Nothing, and quietly: an all-missing axis used to reach base min and max
+  # and warn twice on its way to the same empty answer (finding W-2).
   expect_length(mm_risk_ticks(c(NA_real_, NA_real_)), 0)
+  expect_no_warning(mm_risk_ticks(c(NA_real_, NA_real_)))
+  expect_length(mm_risk_ticks(numeric(0)), 0)
+  expect_no_warning(mm_risk_ticks(numeric(0)))
+  # Still nothing when a bound is infinite, which the range check caught
+  # before and the new guard must not start accepting.
+  expect_length(mm_risk_ticks(c(-Inf, Inf)), 0)
+  expect_length(mm_risk_ticks(c(1, Inf)), 0)
 })
 
 test_that("choosing the ticks cannot change what the sheet agrees with", {

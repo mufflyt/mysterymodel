@@ -678,7 +678,21 @@ test_that("the form opens on the cohort's most ordinary member", {
 
   # A level the fit never saw cannot be offered, so an "Adjust to" that is
   # not in the schema falls back rather than putting it in the form.
+  #
+  # THE COLUMN IS COERCED TO CHARACTER FIRST, which is the point of writing it
+  # this way: assigning an unknown level straight into a factor cell stores NA
+  # and warns, so the earlier version of this block exercised the is.na()
+  # branch of mm_calculator_defaults() while its comment claimed the
+  # not-in-levels branch. Both branches return the same value, so nothing
+  # failed and the gap was invisible except as an unexplained warning.
   broken <- fit
+  broken$datadist$limits$site <- as.character(broken$datadist$limits$site)
   broken$datadist$limits["Adjust to", "site"] <- "vanished"
   expect_equal(mm_calculator_defaults(broken)$site, "rare")
+
+  # And the missing case on its own, which is what that assignment used to
+  # produce by accident. Kept separate so each branch has its own assertion.
+  absent <- fit
+  absent$datadist$limits["Adjust to", "site"] <- NA
+  expect_equal(mm_calculator_defaults(absent)$site, "rare")
 })

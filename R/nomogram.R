@@ -185,6 +185,12 @@ mm_nomogram <- function(model, out_dir = NULL, tolerance = 1e-6,
 #'   rounding collapses neighbours.
 #' @keywords internal
 mm_risk_ticks <- function(lp_real, n = 7L) {
+  # ASKED BEFORE range() RATHER THAN AFTER, because range(na.rm = TRUE) on an
+  # all-missing axis warns twice from base min and max on its way to returning
+  # c(Inf, -Inf). The old code read that result correctly and returned nothing,
+  # so this changes no return value; it stops a caller drawing an empty axis
+  # from emitting two warnings that look like a fault in the sheet.
+  if (!any(is.finite(lp_real))) return(numeric(0))
   lp <- range(lp_real, na.rm = TRUE)
   if (!all(is.finite(lp)) || lp[1] >= lp[2]) return(numeric(0))
   p <- stats::plogis(seq(lp[1], lp[2], length.out = n))

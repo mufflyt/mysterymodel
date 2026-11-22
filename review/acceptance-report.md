@@ -196,6 +196,111 @@ work. Both report `Status: OK`, so no commit in this series is check-dirty.
 Run 4's only delta over run 3 is one test assertion changed from
 `expect_setequal` to `expect_identical`, which is strictly stronger.
 
+## 7b. Mutation testing (round 3) and independent review
+
+### Independent review: what it was, and what it was not
+
+A `/code-review` session examined the D-1 change and returned **six findings,
+all six reproduced and all six fixed** (`081622b`). It was launched as a fork of
+the implementing session, so it carried that context rather than the fresh one
+specification E1 asks for, and it ran the **same model**, which E5 says must not
+be treated as fully independent statistical verification. It is recorded here
+as a same-model forked review. Acceptance item 11 stays open.
+
+It earned its place regardless. Its highest finding was that
+`tests/testthat/test-calculator-no-interval.R` called `readLines()` before the
+`skip_if()` meant to guard it, so under `R CMD check` the regression guard
+protecting the D-1 decision was itself two errors. **`R CMD check` was ERROR,
+not OK**, which contradicted a claim made in an earlier version of this report.
+
+### Mutation campaign: 18 attempted, 16 detected
+
+`review/mutation-evidence.csv`, thirteen columns. DETECTED requires: baseline
+green, mutation demonstrably applied, mutant loads, the targeted test runs and
+fails with the failure recorded, and green again after restore. A general
+error, a missing test file, a failed load or an unrelated failure never counts.
+
+| classification | n | ids |
+|---|---:|---|
+| DETECTED | 16 | M01-M06, M08, M10-M18 |
+| SURVIVED | 2 | M07, M09, both now covered by new tests |
+
+**M07 is a blind spot in both test lanes.** Removing
+`S3method(coef,mm_model)` makes `coef()` return `NULL` for a user, and neither
+lane can see it: `pkgload` loads with `export_all = TRUE`, and `R CMD check`'s
+`test_check()` evaluates tests in an environment inheriting the package
+namespace, so `UseMethod()` resolves the method by name with no registration.
+Verified by running the check against the mutant: `Status: 1 NOTE`, tests
+passing. The remedy reads `getNamespaceInfo(ns, "S3methods")`, which name
+lookup cannot mask.
+
+**M09 is a real scientific defect** that a complete-case fixture hid. Building
+the schema before complete-case filtering moved `bmi`'s recorded range from
+15-45.7 to 15-47.2 and flipped the extreme patient's `.extrapolated` from
+`TRUE` to `FALSE`, switching off extrapolation warnings for exactly the
+patients outside the fitted population.
+
+### What the campaign says about its own author
+
+The harness needed four passes, and three mutation definitions were wrong.
+
+| pass | reported | actual |
+|---|---|---|
+| 1 | 16 of 16 detected | worktrees contained no test files; `test_local()`'s exception scored as DETECTED |
+| 2 | everything invalid | the inverse error: `test_local()` throws on failure, so the exception meant detection |
+| 3 | 8 detected, 3 missed | correct, but no restore step and no evidence captured |
+| 4 | 16 detected, 2 survived | the campaign reported here |
+
+M10 and M11 were pointed at guards their detectors never exercise; M16 deleted
+part of a `stop()` message rather than disabling the guard. In all three cases
+the first conclusion blamed the tests. A green suite and a claimed detection
+rate are worth exactly as much as the record of what actually ran.
+
+## 7c. Warning audit of the suite
+
+`devtools::document()` was re-run and is a no-op: the roxygen blocks regenerate
+`NAMESPACE` and `man/` identically, which is the specific thing that was broken
+when roxygenise discarded hand-added `importFrom` lines earlier in this work.
+`R CMD check` on the committed tree is `Status: OK` with no ERROR, WARNING or
+NOTE.
+
+The suite was green but reported `WARN 10`, and a count is not an explanation.
+Every warning was traced to its message and its test rather than assumed
+benign. Eight were the fixtures working as designed. Two were not.
+
+| source | n | what it is | verdict |
+|---|---|---|---|
+| the package's own sample-size warning | 4 | small synthetic cohorts are below the Riley requirement, which is the behaviour being tested | expected |
+| `glm.fit` separation and boundary warnings | 3 | cohorts built deliberately to separate, in the leakage and metric-reporting tests | expected |
+| `invalid factor level, NA generated` | 1 | a test defect, now **W-3** | fixed |
+| `no non-missing arguments to min`/`max` | 2 | **W-2**, previously documented and not fixed | fixed |
+
+**W-3 is the one worth reading.** The calculator test sabotaged a fit by
+assigning an unknown level into a factor cell, which stores `NA` and warns. So
+the block exercised the `is.na(typical)` branch of `mm_calculator_defaults()`
+while its comment claimed the `!typical %in% levels` branch. Both branches
+return the same value, so the test passed and the only visible trace was the
+warning. Verified in both directions, with the mutation's diff printed before
+each run: deleting the membership check leaves the old test at FAIL 0
+(survived) and the corrected test at FAIL 1, `actual: "vanished"`. The first
+attempt at that mutation used `perl` `\Q`, which silently did not apply the
+edit; had it been scored it would have been a third invalid campaign, which is
+why the applied diff is now printed before any mutant is run.
+
+**W-2** was fixed rather than left documented, by asking
+`any(is.finite(lp_real))` before `range()`. The original range check is kept, so
+no input changes its return value.
+
+After both fixes: `Status: OK`, `FAIL 0 | WARN 7 | SKIP 2 | PASS 1549`. The
+warning count falls by exactly the 3 explained above and the pass count rises
+by the 6 new assertions. The 7 that remain are the fixture warnings in the
+table, each attributed.
+
+The 2 skips are the two source-scanning blocks of
+`test-calculator-no-interval.R`, which cannot reach `R/calculator.R` from the
+installed tree. The other 27 assertions in that file test rendered output and
+do run under check, so the D-1 decision is guarded in both lanes.
+
 ## 8. Acceptance checklist
 
 | # | item | state |
@@ -208,7 +313,7 @@ Run 4's only delta over run 3 is one test assertion changed from
 | 6 | no exploratory test touched production research data | **met**: synthetic fixtures and disposable temp directories only |
 | 7 | existing API and statistical results remain compatible | **met**: additive methods only, no existing signature or return structure changed |
 | 8 | synthetic end-to-end modelling tests pass | **met** |
-| 9 | all confirmed high-severity findings fixed and regression-tested | **not met**: `D-1` is high and its substantive half is open by design, awaiting an owner decision |
+| 9 | all confirmed high-severity findings fixed and regression-tested | **met**: `D-1` resolved by owner decision and regression-tested (29 assertions); the review's high finding fixed and verified; the two surviving mutations covered by tests verified to fail on their mutants |
 | 10 | `R CMD check` and CI gates verified, nothing pending shown as passed | **met**: `Status: OK` on every commit in this series, verified in two runs rather than inferred from one. No result in this report is pending |
 | 11 | final report with commits, evidence, unresolved issues and recomputed completeness | **this document**, with items 9 and 10 open |
 
