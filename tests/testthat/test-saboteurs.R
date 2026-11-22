@@ -142,7 +142,11 @@ test_that("saboteur: patient ids reshuffled is a different cohort", {
   reassigned <- cohort
   set.seed(9)
   reassigned$pid <- sample(reassigned$pid)
-  expect_setequal(table(reassigned$pid), table(cohort$pid))
+  # expect_identical, not expect_setequal: the precondition is that each
+  # identifier keeps its own visit count, and setequal compares the counts as
+  # a set while ignoring which identifier each belongs to (it warns about
+  # exactly that). The saboteur detection itself is the expect_error below.
+  expect_identical(table(reassigned$pid), table(cohort$pid))
   expect_error(mm_validate(model, reassigned, B = 5), "not the same rows")
 })
 
