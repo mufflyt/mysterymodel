@@ -1,0 +1,255 @@
+set,subsection,standard,verdict,state
+General,Documentation,G1.0,Y,already done
+General,Documentation,G1.1,Y,already done
+General,Documentation,G1.2,Y,already done
+General,Documentation,G1.3,Y,already done
+General,Documentation,G1.4,Y,already done
+General,Documentation,G1.4a,Y,already done
+General,Documentation,G1.5,Y,already done
+General,Documentation,G1.6,Y,already done
+General,Input Structures,G2.0,Y,already done
+General,Input Structures,G2.0a,Y,already done
+General,Input Structures,G2.1,Y,already done
+General,Input Structures,G2.1a,Y,already done
+General,Input Structures,G2.2,Y,already done
+General,Input Structures,G2.3,Y,already done
+General,Input Structures,G2.3a,Y,already done
+General,Input Structures,G2.3b,Y,"feasible, not yet implemented"
+General,Input Structures,G2.4,Y,"feasible, not yet implemented"
+General,Input Structures,G2.4a,Y,already done
+General,Input Structures,G2.4b,Y,"feasible, not yet implemented"
+General,Input Structures,G2.4c,Y,"feasible, not yet implemented"
+General,Input Structures,G2.4d,Y,already done
+General,Input Structures,G2.4e,Y,"feasible, not yet implemented"
+General,Input Structures,G2.5,Y,already done
+General,Input Structures,G2.6,Y,"feasible, not yet implemented"
+General,Input Structures,G2.7,Y,"feasible, not yet implemented"
+General,Input Structures,G2.8,Y,"feasible, not yet implemented"
+General,Input Structures,G2.9,Y,already done
+General,Input Structures,G2.10,Y,"feasible, not yet implemented"
+General,Input Structures,G2.11,Y,"feasible, not yet implemented"
+General,Input Structures,G2.12,Y,"feasible, not yet implemented"
+General,Input Structures,G2.13,Y,already done
+General,Input Structures,G2.14,Y,already done
+General,Input Structures,G2.14a,Y,already done
+General,Input Structures,G2.14b,Y,already done
+General,Input Structures,G2.14c,Y,"feasible, not yet implemented"
+General,Input Structures,G2.15,Y,already done
+General,Input Structures,G2.16,Y,"feasible, not yet implemented"
+General,Algorithms,G3.0,Y,already done
+General,Algorithms,G3.1,NA,
+General,Algorithms,G3.1a,NA,
+General,Output Structures,G4.0,Y,already done
+General,Testing,G5.0,Y,already done
+General,Testing,G5.1,Y,already done
+General,Testing,G5.2,Y,already done
+General,Testing,G5.2a,Y,"feasible, not yet implemented"
+General,Testing,G5.2b,Y,already done
+General,Testing,G5.3,Y,"feasible, not yet implemented"
+General,Testing,G5.4,Y,already done
+General,Testing,G5.4a,Y,already done
+General,Testing,G5.4b,Y,already done
+General,Testing,G5.4c,Y,already done
+General,Testing,G5.5,Y,already done
+General,Testing,G5.6,Y,already done
+General,Testing,G5.6a,Y,already done
+General,Testing,G5.6b,Y,"feasible, not yet implemented"
+General,Testing,G5.7,Y,already done
+General,Testing,G5.8,Y,already done
+General,Testing,G5.8a,Y,"feasible, not yet implemented"
+General,Testing,G5.8b,Y,already done
+General,Testing,G5.8c,Y,already done
+General,Testing,G5.8d,Y,already done
+General,Testing,G5.9,Y,"feasible, not yet implemented"
+General,Testing,G5.9a,Y,"feasible, not yet implemented"
+General,Testing,G5.9b,Y,"feasible, not yet implemented"
+General,Testing,G5.10,Y,"feasible, not yet implemented"
+General,Testing,G5.11,Y,"feasible, not yet implemented"
+General,Testing,G5.11a,Y,"feasible, not yet implemented"
+General,Testing,G5.12,Y,"feasible, not yet implemented"
+EDA,Documentation Standards,EA1.0,Y,already done
+EDA,Documentation Standards,EA1.1,Y,already done
+EDA,Documentation Standards,EA1.2,Y,already done
+EDA,Documentation Standards,EA1.3,Y,already done
+EDA,Input Data,EA2.0,Y,already done
+EDA,Input Data,EA2.1,Y,"feasible, not yet implemented"
+EDA,Input Data,EA2.2,NA,
+EDA,Input Data,EA2.2a,NA,
+EDA,Input Data,EA2.2b,NA,
+EDA,Input Data,EA2.3,NA,
+EDA,Input Data,EA2.4,N,
+EDA,Input Data,EA2.5,NA,
+EDA,Input Data,EA2.6,Y,"feasible, not yet implemented"
+EDA,Analytic Algorithms,EA3.0,Y,already done
+EDA,Analytic Algorithms,EA3.1,Y,already done
+EDA,Return Results / Output Data,EA4.0,Y,already done
+EDA,Return Results / Output Data,EA4.1,Y,"feasible, not yet implemented"
+EDA,Return Results / Output Data,EA4.2,Y,already done
+EDA,Visualization and Summary Output,EA5.0,Y,already done
+EDA,Visualization and Summary Output,EA5.0a,Y,"feasible, not yet implemented"
+EDA,Visualization and Summary Output,EA5.0b,Y,already done
+EDA,Visualization and Summary Output,EA5.1,Y,already done
+EDA,Visualization and Summary Output,EA5.2,Y,already done
+EDA,Visualization and Summary Output,EA5.3,Y,"feasible, not yet implemented"
+EDA,Visualization and Summary Output,EA5.4,Y,already done
+EDA,Visualization and Summary Output,EA5.5,Y,already done
+EDA,Visualization and Summary Output,EA5.6,Y,already done
+EDA,Testing,EA6.0,Y,already done
+EDA,Testing,EA6.0a,Y,"feasible, not yet implemented"
+EDA,Testing,EA6.0b,Y,already done
+EDA,Testing,EA6.0c,Y,already done
+EDA,Testing,EA6.0d,Y,already done
+EDA,Testing,EA6.0e,Y,"feasible, not yet implemented"
+EDA,Testing,EA6.1,Y,already done
+Machine Learning,Input Data Specification,ML1.0,Y,already done
+Machine Learning,Input Data Specification,ML1.0a,Y,already done
+Machine Learning,Input Data Specification,ML1.1,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.1a,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.1b,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.2,Y,already done
+Machine Learning,Input Data Specification,ML1.3,Y,already done
+Machine Learning,Input Data Specification,ML1.4,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.5,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.6,Y,already done
+Machine Learning,Input Data Specification,ML1.6a,Y,already done
+Machine Learning,Input Data Specification,ML1.6b,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.7,Y,already done
+Machine Learning,Input Data Specification,ML1.7a,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.7b,Y,"feasible, not yet implemented"
+Machine Learning,Input Data Specification,ML1.8,Y,already done
+Machine Learning,Pre-processing,ML2.0,Y,already done
+Machine Learning,Pre-processing,ML2.0a,Y,already done
+Machine Learning,Pre-processing,ML2.0b,Y,already done
+Machine Learning,Pre-processing,ML2.1,NA,
+Machine Learning,Pre-processing,ML2.2,Y,already done
+Machine Learning,Pre-processing,ML2.2a,Y,already done
+Machine Learning,Pre-processing,ML2.2b,Y,already done
+Machine Learning,Pre-processing,ML2.3,Y,already done
+Machine Learning,Pre-processing,ML2.4,Y,already done
+Machine Learning,Pre-processing,ML2.5,Y,already done
+Machine Learning,Pre-processing,ML2.6,Y,"feasible, not yet implemented"
+Machine Learning,Pre-processing,ML2.7,Y,"feasible, not yet implemented"
+Machine Learning,Model and Algorithm Specification,ML3.0,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.0a,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.0b,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.0c,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.0d,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.1,N,
+Machine Learning,Model and Algorithm Specification,ML3.2,Y,"feasible, not yet implemented"
+Machine Learning,Model and Algorithm Specification,ML3.3,Y,already done
+Machine Learning,Model and Algorithm Specification,ML3.4,NA,
+Machine Learning,Model and Algorithm Specification,ML3.4a,NA,
+Machine Learning,Model and Algorithm Specification,ML3.4b,NA,
+Machine Learning,Model and Algorithm Specification,ML3.5,NA,
+Machine Learning,Model and Algorithm Specification,ML3.5a,NA,
+Machine Learning,Model and Algorithm Specification,ML3.5b,NA,
+Machine Learning,Model and Algorithm Specification,ML3.6,NA,
+Machine Learning,Model and Algorithm Specification,ML3.6a,NA,
+Machine Learning,Model and Algorithm Specification,ML3.6b,NA,
+Machine Learning,Model and Algorithm Specification,ML3.7,NA,
+Machine Learning,Model Training,ML4.0,Y,already done
+Machine Learning,Model Training,ML4.1,NA,
+Machine Learning,Model Training,ML4.1a,NA,
+Machine Learning,Model Training,ML4.1b,NA,
+Machine Learning,Model Training,ML4.1c,NA,
+Machine Learning,Model Training,ML4.2,NA,
+Machine Learning,Model Training,ML4.3,NA,
+Machine Learning,Model Training,ML4.4,NA,
+Machine Learning,Model Training,ML4.5,Y,"feasible, not yet implemented"
+Machine Learning,Model Training,ML4.6,NA,
+Machine Learning,Model Training,ML4.7,Y,"feasible, not yet implemented"
+Machine Learning,Model Training,ML4.8,Y,already done
+Machine Learning,Model Training,ML4.8a,Y,"feasible, not yet implemented"
+Machine Learning,Model Output and Performance,ML5.0,Y,already done
+Machine Learning,Model Output and Performance,ML5.0a,Y,already done
+Machine Learning,Model Output and Performance,ML5.0b,Y,already done
+Machine Learning,Model Output and Performance,ML5.1,Y,already done
+Machine Learning,Model Output and Performance,ML5.2,Y,already done
+Machine Learning,Model Output and Performance,ML5.2a,Y,already done
+Machine Learning,Model Output and Performance,ML5.2b,Y,"feasible, not yet implemented"
+Machine Learning,Model Output and Performance,ML5.2c,Y,"feasible, not yet implemented"
+Machine Learning,Model Output and Performance,ML5.3,Y,already done
+Machine Learning,Model Output and Performance,ML5.4,Y,already done
+Machine Learning,Model Output and Performance,ML5.4a,Y,already done
+Machine Learning,Model Output and Performance,ML5.4b,Y,"feasible, not yet implemented"
+Machine Learning,Documentation,ML6.0,Y,"feasible, not yet implemented"
+Machine Learning,Documentation,ML6.1,Y,"feasible, not yet implemented"
+Machine Learning,Documentation,ML6.1a,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.0,Y,already done
+Machine Learning,Testing,ML7.1,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.2,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.3,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.3a,Y,already done
+Machine Learning,Testing,ML7.3b,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.4,NA,
+Machine Learning,Testing,ML7.5,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.6,NA,
+Machine Learning,Testing,ML7.7,Y,already done
+Machine Learning,Testing,ML7.8,Y,already done
+Machine Learning,Testing,ML7.9,NA,
+Machine Learning,Testing,ML7.9a,NA,
+Machine Learning,Testing,ML7.10,Y,already done
+Machine Learning,Testing,ML7.11,Y,"feasible, not yet implemented"
+Machine Learning,Testing,ML7.11a,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Input data structures and validation,RE1.0,Y,already done
+Regression and Supervised Learning,Input data structures and validation,RE1.1,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Input data structures and validation,RE1.2,Y,already done
+Regression and Supervised Learning,Input data structures and validation,RE1.3,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Input data structures and validation,RE1.3a,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Input data structures and validation,RE1.4,Y,already done
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.0,Y,already done
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.1,Y,already done
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.2,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.3,NA,
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4,Y,already done
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4a,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4b,Y,already done
+Regression and Supervised Learning,Algorithms,RE3.0,Y,already done
+Regression and Supervised Learning,Algorithms,RE3.1,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Algorithms,RE3.2,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Algorithms,RE3.3,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.0,Y,already done
+Regression and Supervised Learning,Return Results,RE4.1,Y,already done
+Regression and Supervised Learning,Return Results,RE4.2,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.3,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.4,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.5,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.6,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.7,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.8,Y,already done
+Regression and Supervised Learning,Return Results,RE4.9,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.10,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.11,Y,already done
+Regression and Supervised Learning,Return Results,RE4.12,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Return Results,RE4.13,Y,already done
+Regression and Supervised Learning,Return Results,RE4.14,Y,already done
+Regression and Supervised Learning,Return Results,RE4.15,Y,already done
+Regression and Supervised Learning,Return Results,RE4.16,Y,already done
+Regression and Supervised Learning,Return Results,RE4.17,Y,already done
+Regression and Supervised Learning,Return Results,RE4.18,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Documentation,RE5.0,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Visualization,RE6.0,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Visualization,RE6.1,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Visualization,RE6.2,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Visualization,RE6.3,NA,
+Regression and Supervised Learning,Testing,RE7.0,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Testing,RE7.0a,Y,already done
+Regression and Supervised Learning,Testing,RE7.1,Y,already done
+Regression and Supervised Learning,Testing,RE7.1a,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Testing,RE7.2,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Testing,RE7.3,Y,"feasible, not yet implemented"
+Regression and Supervised Learning,Testing,RE7.4,Y,already done
+Probability Distributions,Documentation,PD1.0,Y,"feasible, not yet implemented"
+Probability Distributions,Packages for Representing Distributions,PD2.0,NA,
+Probability Distributions,Algorithms,PD3.0,NA,
+Probability Distributions,Algorithms,PD3.1,NA,
+Probability Distributions,Algorithms,PD3.2,Y,"feasible, not yet implemented"
+Probability Distributions,Algorithms,PD3.3,Y,"feasible, not yet implemented"
+Probability Distributions,Algorithms,PD3.4,NA,
+Probability Distributions,Algorithms,PD3.5,NA,
+Probability Distributions,Algorithms,PD3.5a,NA,
+Probability Distributions,Testing,PD4.0,NA,
+Probability Distributions,Testing,PD4.1,NA,
+Probability Distributions,Testing,PD4.2,NA,
+Probability Distributions,Testing,PD4.3,Y,"feasible, not yet implemented"
+Probability Distributions,Testing,PD4.4,Y,"feasible, not yet implemented"
