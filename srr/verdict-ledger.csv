@@ -1,255 +1,255 @@
-set,subsection,standard,verdict,state
-General,Documentation,G1.0,Y,already done
-General,Documentation,G1.1,Y,already done
-General,Documentation,G1.2,Y,already done
-General,Documentation,G1.3,Y,already done
-General,Documentation,G1.4,Y,already done
-General,Documentation,G1.4a,Y,already done
-General,Documentation,G1.5,Y,already done
-General,Documentation,G1.6,Y,already done
-General,Input Structures,G2.0,Y,already done
-General,Input Structures,G2.0a,Y,already done
-General,Input Structures,G2.1,Y,already done
-General,Input Structures,G2.1a,Y,already done
-General,Input Structures,G2.2,Y,already done
-General,Input Structures,G2.3,Y,already done
-General,Input Structures,G2.3a,Y,already done
-General,Input Structures,G2.3b,Y,"feasible, not yet implemented"
-General,Input Structures,G2.4,Y,"feasible, not yet implemented"
-General,Input Structures,G2.4a,Y,already done
-General,Input Structures,G2.4b,Y,"feasible, not yet implemented"
-General,Input Structures,G2.4c,Y,"feasible, not yet implemented"
-General,Input Structures,G2.4d,Y,already done
-General,Input Structures,G2.4e,Y,"feasible, not yet implemented"
-General,Input Structures,G2.5,Y,already done
-General,Input Structures,G2.6,Y,"feasible, not yet implemented"
-General,Input Structures,G2.7,Y,"feasible, not yet implemented"
-General,Input Structures,G2.8,Y,"feasible, not yet implemented"
-General,Input Structures,G2.9,Y,already done
-General,Input Structures,G2.10,Y,"feasible, not yet implemented"
-General,Input Structures,G2.11,Y,"feasible, not yet implemented"
-General,Input Structures,G2.12,Y,"feasible, not yet implemented"
-General,Input Structures,G2.13,Y,already done
-General,Input Structures,G2.14,Y,already done
-General,Input Structures,G2.14a,Y,already done
-General,Input Structures,G2.14b,Y,already done
-General,Input Structures,G2.14c,Y,"feasible, not yet implemented"
-General,Input Structures,G2.15,Y,already done
-General,Input Structures,G2.16,Y,"feasible, not yet implemented"
-General,Algorithms,G3.0,Y,already done
-General,Algorithms,G3.1,NA,
-General,Algorithms,G3.1a,NA,
-General,Output Structures,G4.0,Y,already done
-General,Testing,G5.0,Y,already done
-General,Testing,G5.1,Y,already done
-General,Testing,G5.2,Y,already done
-General,Testing,G5.2a,Y,"feasible, not yet implemented"
-General,Testing,G5.2b,Y,already done
-General,Testing,G5.3,Y,"feasible, not yet implemented"
-General,Testing,G5.4,Y,already done
-General,Testing,G5.4a,Y,already done
-General,Testing,G5.4b,Y,already done
-General,Testing,G5.4c,Y,already done
-General,Testing,G5.5,Y,already done
-General,Testing,G5.6,Y,already done
-General,Testing,G5.6a,Y,already done
-General,Testing,G5.6b,Y,"feasible, not yet implemented"
-General,Testing,G5.7,Y,already done
-General,Testing,G5.8,Y,already done
-General,Testing,G5.8a,Y,"feasible, not yet implemented"
-General,Testing,G5.8b,Y,already done
-General,Testing,G5.8c,Y,already done
-General,Testing,G5.8d,Y,already done
-General,Testing,G5.9,Y,"feasible, not yet implemented"
-General,Testing,G5.9a,Y,"feasible, not yet implemented"
-General,Testing,G5.9b,Y,"feasible, not yet implemented"
-General,Testing,G5.10,Y,"feasible, not yet implemented"
-General,Testing,G5.11,Y,"feasible, not yet implemented"
-General,Testing,G5.11a,Y,"feasible, not yet implemented"
-General,Testing,G5.12,Y,"feasible, not yet implemented"
-EDA,Documentation Standards,EA1.0,Y,already done
-EDA,Documentation Standards,EA1.1,Y,already done
-EDA,Documentation Standards,EA1.2,Y,already done
-EDA,Documentation Standards,EA1.3,Y,already done
-EDA,Input Data,EA2.0,Y,already done
-EDA,Input Data,EA2.1,Y,"feasible, not yet implemented"
-EDA,Input Data,EA2.2,NA,
-EDA,Input Data,EA2.2a,NA,
-EDA,Input Data,EA2.2b,NA,
-EDA,Input Data,EA2.3,NA,
-EDA,Input Data,EA2.4,N,
-EDA,Input Data,EA2.5,NA,
-EDA,Input Data,EA2.6,Y,"feasible, not yet implemented"
-EDA,Analytic Algorithms,EA3.0,Y,already done
-EDA,Analytic Algorithms,EA3.1,Y,already done
-EDA,Return Results / Output Data,EA4.0,Y,already done
-EDA,Return Results / Output Data,EA4.1,Y,"feasible, not yet implemented"
-EDA,Return Results / Output Data,EA4.2,Y,already done
-EDA,Visualization and Summary Output,EA5.0,Y,already done
-EDA,Visualization and Summary Output,EA5.0a,Y,"feasible, not yet implemented"
-EDA,Visualization and Summary Output,EA5.0b,Y,already done
-EDA,Visualization and Summary Output,EA5.1,Y,already done
-EDA,Visualization and Summary Output,EA5.2,Y,already done
-EDA,Visualization and Summary Output,EA5.3,Y,"feasible, not yet implemented"
-EDA,Visualization and Summary Output,EA5.4,Y,already done
-EDA,Visualization and Summary Output,EA5.5,Y,already done
-EDA,Visualization and Summary Output,EA5.6,Y,already done
-EDA,Testing,EA6.0,Y,already done
-EDA,Testing,EA6.0a,Y,"feasible, not yet implemented"
-EDA,Testing,EA6.0b,Y,already done
-EDA,Testing,EA6.0c,Y,already done
-EDA,Testing,EA6.0d,Y,already done
-EDA,Testing,EA6.0e,Y,"feasible, not yet implemented"
-EDA,Testing,EA6.1,Y,already done
-Machine Learning,Input Data Specification,ML1.0,Y,already done
-Machine Learning,Input Data Specification,ML1.0a,Y,already done
-Machine Learning,Input Data Specification,ML1.1,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.1a,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.1b,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.2,Y,already done
-Machine Learning,Input Data Specification,ML1.3,Y,already done
-Machine Learning,Input Data Specification,ML1.4,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.5,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.6,Y,already done
-Machine Learning,Input Data Specification,ML1.6a,Y,already done
-Machine Learning,Input Data Specification,ML1.6b,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.7,Y,already done
-Machine Learning,Input Data Specification,ML1.7a,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.7b,Y,"feasible, not yet implemented"
-Machine Learning,Input Data Specification,ML1.8,Y,already done
-Machine Learning,Pre-processing,ML2.0,Y,already done
-Machine Learning,Pre-processing,ML2.0a,Y,already done
-Machine Learning,Pre-processing,ML2.0b,Y,already done
-Machine Learning,Pre-processing,ML2.1,NA,
-Machine Learning,Pre-processing,ML2.2,Y,already done
-Machine Learning,Pre-processing,ML2.2a,Y,already done
-Machine Learning,Pre-processing,ML2.2b,Y,already done
-Machine Learning,Pre-processing,ML2.3,Y,already done
-Machine Learning,Pre-processing,ML2.4,Y,already done
-Machine Learning,Pre-processing,ML2.5,Y,already done
-Machine Learning,Pre-processing,ML2.6,Y,"feasible, not yet implemented"
-Machine Learning,Pre-processing,ML2.7,Y,"feasible, not yet implemented"
-Machine Learning,Model and Algorithm Specification,ML3.0,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.0a,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.0b,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.0c,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.0d,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.1,N,
-Machine Learning,Model and Algorithm Specification,ML3.2,Y,"feasible, not yet implemented"
-Machine Learning,Model and Algorithm Specification,ML3.3,Y,already done
-Machine Learning,Model and Algorithm Specification,ML3.4,NA,
-Machine Learning,Model and Algorithm Specification,ML3.4a,NA,
-Machine Learning,Model and Algorithm Specification,ML3.4b,NA,
-Machine Learning,Model and Algorithm Specification,ML3.5,NA,
-Machine Learning,Model and Algorithm Specification,ML3.5a,NA,
-Machine Learning,Model and Algorithm Specification,ML3.5b,NA,
-Machine Learning,Model and Algorithm Specification,ML3.6,NA,
-Machine Learning,Model and Algorithm Specification,ML3.6a,NA,
-Machine Learning,Model and Algorithm Specification,ML3.6b,NA,
-Machine Learning,Model and Algorithm Specification,ML3.7,NA,
-Machine Learning,Model Training,ML4.0,Y,already done
-Machine Learning,Model Training,ML4.1,NA,
-Machine Learning,Model Training,ML4.1a,NA,
-Machine Learning,Model Training,ML4.1b,NA,
-Machine Learning,Model Training,ML4.1c,NA,
-Machine Learning,Model Training,ML4.2,NA,
-Machine Learning,Model Training,ML4.3,NA,
-Machine Learning,Model Training,ML4.4,NA,
-Machine Learning,Model Training,ML4.5,Y,"feasible, not yet implemented"
-Machine Learning,Model Training,ML4.6,NA,
-Machine Learning,Model Training,ML4.7,Y,"feasible, not yet implemented"
-Machine Learning,Model Training,ML4.8,Y,already done
-Machine Learning,Model Training,ML4.8a,Y,"feasible, not yet implemented"
-Machine Learning,Model Output and Performance,ML5.0,Y,already done
-Machine Learning,Model Output and Performance,ML5.0a,Y,already done
-Machine Learning,Model Output and Performance,ML5.0b,Y,already done
-Machine Learning,Model Output and Performance,ML5.1,Y,already done
-Machine Learning,Model Output and Performance,ML5.2,Y,already done
-Machine Learning,Model Output and Performance,ML5.2a,Y,already done
-Machine Learning,Model Output and Performance,ML5.2b,Y,"feasible, not yet implemented"
-Machine Learning,Model Output and Performance,ML5.2c,Y,"feasible, not yet implemented"
-Machine Learning,Model Output and Performance,ML5.3,Y,already done
-Machine Learning,Model Output and Performance,ML5.4,Y,already done
-Machine Learning,Model Output and Performance,ML5.4a,Y,already done
-Machine Learning,Model Output and Performance,ML5.4b,Y,"feasible, not yet implemented"
-Machine Learning,Documentation,ML6.0,Y,"feasible, not yet implemented"
-Machine Learning,Documentation,ML6.1,Y,"feasible, not yet implemented"
-Machine Learning,Documentation,ML6.1a,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.0,Y,already done
-Machine Learning,Testing,ML7.1,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.2,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.3,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.3a,Y,already done
-Machine Learning,Testing,ML7.3b,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.4,NA,
-Machine Learning,Testing,ML7.5,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.6,NA,
-Machine Learning,Testing,ML7.7,Y,already done
-Machine Learning,Testing,ML7.8,Y,already done
-Machine Learning,Testing,ML7.9,NA,
-Machine Learning,Testing,ML7.9a,NA,
-Machine Learning,Testing,ML7.10,Y,already done
-Machine Learning,Testing,ML7.11,Y,"feasible, not yet implemented"
-Machine Learning,Testing,ML7.11a,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Input data structures and validation,RE1.0,Y,already done
-Regression and Supervised Learning,Input data structures and validation,RE1.1,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Input data structures and validation,RE1.2,Y,already done
-Regression and Supervised Learning,Input data structures and validation,RE1.3,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Input data structures and validation,RE1.3a,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Input data structures and validation,RE1.4,Y,already done
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.0,Y,already done
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.1,Y,already done
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.2,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.3,NA,
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4,Y,already done
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4a,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Pre-processing and Variable Transformation,RE2.4b,Y,already done
-Regression and Supervised Learning,Algorithms,RE3.0,Y,already done
-Regression and Supervised Learning,Algorithms,RE3.1,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Algorithms,RE3.2,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Algorithms,RE3.3,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.0,Y,already done
-Regression and Supervised Learning,Return Results,RE4.1,Y,already done
-Regression and Supervised Learning,Return Results,RE4.2,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.3,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.4,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.5,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.6,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.7,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.8,Y,already done
-Regression and Supervised Learning,Return Results,RE4.9,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.10,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.11,Y,already done
-Regression and Supervised Learning,Return Results,RE4.12,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Return Results,RE4.13,Y,already done
-Regression and Supervised Learning,Return Results,RE4.14,Y,already done
-Regression and Supervised Learning,Return Results,RE4.15,Y,already done
-Regression and Supervised Learning,Return Results,RE4.16,Y,already done
-Regression and Supervised Learning,Return Results,RE4.17,Y,already done
-Regression and Supervised Learning,Return Results,RE4.18,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Documentation,RE5.0,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Visualization,RE6.0,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Visualization,RE6.1,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Visualization,RE6.2,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Visualization,RE6.3,NA,
-Regression and Supervised Learning,Testing,RE7.0,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Testing,RE7.0a,Y,already done
-Regression and Supervised Learning,Testing,RE7.1,Y,already done
-Regression and Supervised Learning,Testing,RE7.1a,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Testing,RE7.2,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Testing,RE7.3,Y,"feasible, not yet implemented"
-Regression and Supervised Learning,Testing,RE7.4,Y,already done
-Probability Distributions,Documentation,PD1.0,Y,"feasible, not yet implemented"
-Probability Distributions,Packages for Representing Distributions,PD2.0,NA,
-Probability Distributions,Algorithms,PD3.0,NA,
-Probability Distributions,Algorithms,PD3.1,NA,
-Probability Distributions,Algorithms,PD3.2,Y,"feasible, not yet implemented"
-Probability Distributions,Algorithms,PD3.3,Y,"feasible, not yet implemented"
-Probability Distributions,Algorithms,PD3.4,NA,
-Probability Distributions,Algorithms,PD3.5,NA,
-Probability Distributions,Algorithms,PD3.5a,NA,
-Probability Distributions,Testing,PD4.0,NA,
-Probability Distributions,Testing,PD4.1,NA,
-Probability Distributions,Testing,PD4.2,NA,
-Probability Distributions,Testing,PD4.3,Y,"feasible, not yet implemented"
-Probability Distributions,Testing,PD4.4,Y,"feasible, not yet implemented"
+standard_id,category,subsection,requirement_text,applicability,implementation_status,verification_status,evidence_file,evidence_function,test_file,gap_description,priority,decision_rationale
+G1.0,General,Documentation,Statistical Software should list at least one primary reference from published academic literature.,applicable,implemented,untested,README.md,(prose),,,low,"DESCRIPTION plus README Status, Design commitments and the comparison table"
+G1.1,General,Documentation,Statistical Software should document whether the algorithm(s) it implements are:* - *The first implementation of a novel algorithm*; or - *The first implementation within **R** of an algorithm which has previously been implemented in other languages or contexts*; or - *An improvement on other implementations of similar algorithms in **R***.,applicable,implemented,untested,README.md,(prose),,,low,"DESCRIPTION plus README Status, Design commitments and the comparison table"
+G1.2,General,Documentation,Statistical Software should include a* Life Cycle Statement *describing current and anticipated future states of development.,applicable,implemented,untested,README.md,(prose),,,low,"DESCRIPTION plus README Status, Design commitments and the comparison table"
+G1.3,General,Documentation,All statistical terminology should be clarified and unambiguously defined.,applicable,implemented,untested,README.md,(prose),,,low,"DESCRIPTION plus README Status, Design commitments and the comparison table"
+G1.4,General,Documentation,Software should use [`roxygen2`](https://roxygen2.r-lib.org/) to document all functions.,applicable,implemented,untested,man/,(roxygen),,,low,11 exports and 45 internals documented
+G1.4a,General,Documentation,"All internal (non-exported) functions should also be documented in standard [`roxygen2`](https://roxygen2.r-lib.org/) format, along with a final `@noRd` tag to suppress automatic generation of `.Rd` files or [`@keywords internal`](https://roxygen2.r-lib.org/reference/tags-index-crossref.html?q=keywords%20internal#null) if documentation is still desired.",applicable,implemented,untested,man/,(roxygen),,,low,11 exports and 45 internals documented
+G1.5,General,Documentation,Software should include all code necessary to reproduce results which form the basis of performance claims made in associated publications.,applicable,implemented,untested,inst/capability-matrix.md,(prose),,,low,the spike measured easystats/tidymodels/rms/mlr3 against an lrm fit
+G1.6,General,Documentation,Software should include code necessary to compare performance claims with alternative implementations in other R packages.,applicable,implemented,untested,inst/capability-matrix.md,(prose),,,low,the spike measured easystats/tidymodels/rms/mlr3 against an lrm fit
+G2.0,General,Input Structures,"Implement assertions on lengths of inputs, particularly through asserting that inputs expected to be single- or multi-valued are indeed so.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.0a,General,Input Structures,Provide explicit secondary documentation of any expectations on lengths of inputs,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.1,General,Input Structures,Implement assertions on types of inputs (see the initial point on nomenclature above).,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.1a,General,Input Structures,Provide explicit secondary documentation of expectations on data types of all vector inputs.,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.2,General,Input Structures,Appropriately prohibit or restrict submission of multivariate input to parameters expected to be univariate.,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.3,General,Input Structures,For univariate character input:,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.3a,General,Input Structures,Use `match.arg()` or equivalent where applicable to only permit expected values.,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,30 stop() calls refusing unmeanable configurations
+G2.3b,General,Input Structures,Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.4,General,Input Structures,"Provide appropriate mechanisms to convert between different data types, potentially including:",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.4a,General,Input Structures,explicit conversion to `integer` via `as.integer()`,applicable,implemented,verified,R/synthetic.R,mm_synthetic_cohort,tests/testthat/test-synthetic.R,,low,as.integer(seed); a non-whole seed is refused in mm_project
+G2.4b,General,Input Structures,explicit conversion to continuous via `as.numeric()`,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.4c,General,Input Structures,explicit conversion to character via `as.character()` (and not `paste` or `paste0`),applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.4d,General,Input Structures,explicit conversion to factor via `as.factor()`,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,reference levels and lost_levels
+G2.4e,General,Input Structures,explicit conversion from factor via `as...()` functions,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.5,General,Input Structures,"Where inputs are expected to be of `factor` type, secondary documentation should explicitly state whether these should be `ordered` or not, and those inputs should provide appropriate error or other routines to ensure inputs follow these expectations.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,reference levels and lost_levels
+G2.6,General,Input Structures,Software which accepts one-dimensional input should ensure values are appropriately pre-processed regardless of class structures.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.7,General,Input Structures,"Software should accept as input as many of the above standard tabular forms as possible, including extension to domain-specific forms.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.8,General,Input Structures,Software should provide appropriate conversion or dispatch routines as part of initial pre-processing to ensure that all other sub-functions of a package receive inputs of a single defined class or type.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.9,General,Input Structures,Software should issue diagnostic messages for type conversion in which information is lost (such as conversion of variables from factor to character; standardisation of variable names; or removal of meta-data such as those associated with [`sf`-format](https://r-spatial.github.io/sf/) data) or added (such as insertion of variable or column names where none were provided).,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"lost_levels, reference_moved and incomplete_by report what each conversion cost"
+G2.10,General,Input Structures,"Software should ensure that extraction or filtering of single columns from tabular inputs should not presume any particular default behaviour, and should ensure all column-extraction operations behave consistently regardless of the class of tabular data used as input.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.11,General,Input Structures,"Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.12,General,Input Structures,"Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G2.13,General,Input Structures,Statistical Software should implement appropriate checks for missing data as part of initial pre-processing prior to passing data to analytic algorithms.,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,n_incomplete and incomplete_by; complete-case fitting with attribution
+G2.14,General,Input Structures,"Where possible, all functions should provide options for users to specify how to handle missing (`NA`) data, with options minimally including:",applicable,implemented,verified,R/prediction.R,mm_predict,tests/testthat/test-prediction.R,,low,"on_missing = c('stop','na')"
+G2.14a,General,Input Structures,error on missing data,applicable,implemented,verified,R/prediction.R,mm_predict,tests/testthat/test-prediction.R,,low,"on_missing = c('stop','na')"
+G2.14b,General,Input Structures,ignore missing data with default warnings or messages issued,applicable,implemented,verified,R/prediction.R,mm_predict,tests/testthat/test-prediction.R,,low,"on_missing = c('stop','na')"
+G2.14c,General,Input Structures,replace missing data with appropriately imputed values,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+G2.15,General,Input Structures,"Functions should never assume non-missingness, and should never pass data with potential missing values to any base routines with default `na.rm = FALSE`-type parameters (such as [`mean()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/mean.html), [`sd()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/sd.html) or [`cor()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.html)).",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,n_incomplete and incomplete_by; complete-case fitting with attribution
+G2.16,General,Input Structures,"All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G3.0,General,Algorithms,"Statistical software should never compare floating point numbers for equality. All numeric equality comparisons should either ensure that they are made between integers, or use appropriate tolerances for approximate equality.",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"all.equal with a stated 1e-06 tolerance, never =="
+G3.1,General,Algorithms,"Statistical software which relies on covariance calculations should enable users to choose between different algorithms for calculating covariances, and should not rely solely on covariances from the `stats::cov` function.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+G3.1a,General,Algorithms,The ability to use arbitrarily specified covariance methods should be documented (typically in examples or vignettes).,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+G4.0,General,Output Structures,Statistical Software which enables outputs to be written to local files should parse parameters specifying file names to ensure appropriate file suffixes are automatically generated where not provided.,applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,writes PDF and PNG to a caller-supplied out_dir
+G5.0,General,Testing,"Where applicable or practicable, tests should use standard data sets with known properties (for example, the [NIST Standard Reference Datasets](https://www.itl.nist.gov/div898/strd/), or data sets provided by other widely-used R packages).",applicable,implemented,verified,R/synthetic.R,mm_synthetic_cohort,tests/testthat/test-synthetic.R,,low,exported generator with known truth; provenance in inst/benchmarks.md
+G5.1,General,Testing,"Data sets created within, and used to test, a package should be exported (or otherwise made generally available) so that users can confirm tests and run examples.",applicable,implemented,verified,R/synthetic.R,mm_synthetic_cohort,tests/testthat/test-synthetic.R,,low,exported generator with known truth; provenance in inst/benchmarks.md
+G5.2,General,Testing,"Appropriate error and warning behaviour of all functions should be explicitly demonstrated through tests. In particular,",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,168 expect_error and 172 expect_match: messages asserted by text
+G5.2a,General,Testing,"Every message produced within R code by `stop()`, `warning()`, `message()`, or equivalent should be unique",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.2b,General,Testing,"Explicit tests should demonstrate conditions which trigger every one of those messages, and should compare the result with expected values.",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,168 expect_error and 172 expect_match: messages asserted by text
+G5.3,General,Testing,"For functions which are expected to return objects containing no missing (`NA`) or undefined (`NaN`, `Inf`) values, the absence of any such values in return objects should be explicitly tested.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.4,General,Testing,*Correctness tests** *to test that statistical algorithms produce expected results to some fixed test data sets (potentially through comparisons using binding frameworks such as [RStata](https://github.com/lbraglia/RStata)).,applicable,implemented,verified,R/interactions.R,mm_interactions,tests/testthat/test-interactions.R,,critical,LR from the deviance difference cross-checked against rms::anova(test='LR')
+G5.4a,General,Testing,"For new methods, it can be difficult to separate out correctness of the method from the correctness of the implementation, as there may not be reference for comparison. In this case, testing may be implemented against simple, trivial cases or against multiple implementations such as an initial R implementation compared with results from a C/C++ implementation.",applicable,implemented,verified,R/interactions.R,mm_interactions,tests/testthat/test-interactions.R,,critical,LR from the deviance difference cross-checked against rms::anova(test='LR')
+G5.4b,General,Testing,"For new implementations of existing methods, correctness tests should include tests against previous implementations. Such testing may explicitly call those implementations in testing, preferably from fixed-versions of other software, or use stored outputs from those where that is not possible.",applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-discrimination-interval.R,,critical,c-statistic against an independent pROC call; Hmisc::rcorr.cens agrees to 1e-14
+G5.4c,General,Testing,"Where applicable, stored values may be drawn from published paper outputs when applicable and where code from original implementations is not available",applicable,implemented,untested,inst/benchmarks.md,(registry),,,low,provenance of every external cohort
+G5.5,General,Testing,Correctness tests should be run with a fixed random seed,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,set.seed(project$seed); synthetic cohort with known truth; tolerances in the appendix
+G5.6,General,Testing,"*Parameter recovery tests** *to test that the implementation produce expected results given data with known properties. For instance, a linear regression algorithm should return expected coefficient values for a simulated data set generated from a linear model.",applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,set.seed(project$seed); synthetic cohort with known truth; tolerances in the appendix
+G5.6a,General,Testing,Parameter recovery tests should generally be expected to succeed within a defined tolerance rather than recovering exact values.,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,set.seed(project$seed); synthetic cohort with known truth; tolerances in the appendix
+G5.6b,General,Testing,"Parameter recovery tests should be run with multiple random seeds when either data simulation or the algorithm contains a random component. (When long-running, such tests may be part of an extended, rather than regular, test suite; see G5.10-4.12, below).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.7,General,Testing,"*Algorithm performance tests** *to test that implementation performs as expected as properties of data change. For instance, a test may show that parameters approach correct estimates within tolerance as data size increases, or that convergence times decrease for higher convergence thresholds.",applicable,implemented,untested,R/sample_size.R,mm_adequacy,,,low,behaviour as sample size and prevalence change
+G5.8,General,Testing,*Edge condition tests** *to test that these conditions produce expected behaviour such as clear warnings or errors when confronted with data with extreme properties including but not limited to:,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"non-varying outcome, unobserved positive class, B = 2.7 and a predicted probability of 1.5 all refused"
+G5.8a,General,Testing,Zero-length data,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.8b,General,Testing,"Data of unsupported types (e.g., character or complex numbers in for functions designed only for numeric data)",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"non-varying outcome, unobserved positive class, B = 2.7 and a predicted probability of 1.5 all refused"
+G5.8c,General,Testing,Data with all-`NA` fields or columns or all identical fields or columns,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"non-varying outcome, unobserved positive class, B = 2.7 and a predicted probability of 1.5 all refused"
+G5.8d,General,Testing,"Data outside the scope of the algorithm (for example, data with more fields (columns) than observations (rows) for some regression algorithms)",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"non-varying outcome, unobserved positive class, B = 2.7 and a predicted probability of 1.5 all refused"
+G5.9,General,Testing,"*Noise susceptibility tests** *Packages should test for expected stochastic behaviour, such as through the following conditions:",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.9a,General,Testing,"Adding trivial noise (for example, at the scale of `.Machine$double.eps`) to data does not meaningfully change results",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.9b,General,Testing,Running under different random seeds or initial conditions does not meaningfully change results,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.10,General,Testing,"Extended tests should included and run under a common framework with other tests but be switched on by flags such as as a `<MYPKG>_EXTENDED_TESTS=""true""` environment variable.* - The extended tests can be then run automatically by GitHub Actions for example by adding the following to the `env` section of the workflow:",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.11,General,Testing,"Where extended tests require large data sets or other assets, these should be provided for downloading and fetched as part of the testing workflow.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.11a,General,Testing,"When any downloads of additional data necessary for extended tests fail, the tests themselves should not fail, rather be skipped and implicitly succeed with an appropriate diagnostic message.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+G5.12,General,Testing,"Any conditions necessary to run extended tests such as platform requirements, memory, expected runtime, and artefacts produced that may need manual inspection, should be described in developer documentation such as a `CONTRIBUTING.md` or `tests/README.md` file.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA1.0,EDA,Documentation Standards,Identify one or more target audiences for whom the software is intended,applicable,implemented,untested,README.md,(prose),,,low,"audience, questions and data stated"
+EA1.1,EDA,Documentation Standards,Identify the kinds of data the software is capable of analysing (see *Kinds of Data* below).,applicable,implemented,untested,README.md,(prose),,,low,"audience, questions and data stated"
+EA1.2,EDA,Documentation Standards,Identify the kinds of questions the software is intended to help explore.,applicable,implemented,untested,README.md,(prose),,,low,"audience, questions and data stated"
+EA1.3,EDA,Documentation Standards,Identify the kinds of data each function is intended to accept as input,applicable,implemented,untested,README.md,(prose),,,low,"audience, questions and data stated"
+EA2.0,EDA,Input Data,EDA Software which accepts standard tabular data and implements or relies upon extensive table filter and join operations should utilise an **index column** system,applicable,implemented,verified,R/cleaning.R,mm_clean,tests/testthat/test-cleaning.R,,low,input types documented and checked
+EA2.1,EDA,Input Data,"All values in an index column must be unique, and this uniqueness should be affirmed as a pre-processing step for all input data.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA2.2,EDA,Input Data,"Index columns should be explicitly identified, either:",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+EA2.2a,EDA,Input Data,"by using an appropriate class system, or",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+EA2.2b,EDA,Input Data,"through setting an `attribute` on a table, `x`, of `attr(x, ""index"") <- <index_col_name>`.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+EA2.3,EDA,Input Data,Table join operations should not be based on any assumed variable or column names,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+EA2.4,EDA,Input Data,"Use and demand an explicit class system for such input (for example, via the [`DM` package](https://github.com/krlmlr/dm)).",applicable,missing,untested,,,,would require a capability outside the package's design,medium,
+EA2.5,EDA,Input Data,Ensure all individual tables follow the above standards for Index Columns,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+EA2.6,EDA,Input Data,Routines should appropriately process vector data regardless of additional attributes,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA3.0,EDA,Analytic Algorithms,"The algorithmic components of EDA Software should enable automated extraction and/or reporting of statistics as some sufficiently ""meta"" level (such as variable or model selection), for which previous or reference implementations require manual intervention.",applicable,implemented,verified,R/eda.R,mm_eda,tests/testthat/test-eda.R,,low,returns a data frame with the denominator and missing count per row
+EA3.1,EDA,Analytic Algorithms,"EDA software should enable standardised comparison of inputs, processes, models, or outputs which previous or reference implementations otherwise only enable in some comparably unstandardised form.",applicable,implemented,verified,R/splines.R,mm_splines,tests/testthat/test-splines.R,,low,both allocations drawn with their degrees of freedom; mm_validate's four bases
+EA4.0,EDA,Return Results / Output Data,EDA Software should ensure all return results have types which are consistent with input types.,applicable,implemented,untested,R/eda.R,print.mm_eda,,,low,nine print methods; types preserved
+EA4.1,EDA,Return Results / Output Data,EDA Software should implement parameters to enable explicit control of numeric precision,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA4.2,EDA,Return Results / Output Data,The primary routines of EDA Software should return objects for which default `print` and `plot` methods give sensible results. Default `summary` methods may also be implemented.,applicable,implemented,untested,R/eda.R,print.mm_eda,,,low,nine print methods; types preserved
+EA5.0,EDA,Visualization and Summary Output,"Graphical presentation in EDA software should be as accessible as possible or practicable. In particular, EDA software should consider accessibility in terms of:",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.0a,EDA,Visualization and Summary Output,"Typeface sizes, which should default to sizes which explicitly enhance accessibility",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA5.0b,EDA,Visualization and Summary Output,"Default colour schemes, which should be carefully constructed to ensure accessibility.",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.1,EDA,Visualization and Summary Output,Any explicit specifications of typefaces which override default values provided through other packages (including the `graphics` package) should consider accessibility,applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.2,EDA,Visualization and Summary Output,"Screen-based output should never rely on default print formatting of `numeric` types, rather should also use some version of `round(., digits)`, `formatC`, `sprintf`, or similar functions for numeric formatting according the parameter described in* **EA4.1**.",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.3,EDA,Visualization and Summary Output,"Column-based summary statistics should always indicate the `storage.mode`, `class`, or equivalent defining attribute of each column.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA5.4,EDA,Visualization and Summary Output,"All visualisations should ensure values are rounded sensibly (for example, via `pretty()` function).",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.5,EDA,Visualization and Summary Output,All visualisations should include units on all axes where such are specified or otherwise obtainable from input data or other routines.,applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA5.6,EDA,Visualization and Summary Output,"Any packages which internally bundle libraries used for dynamic visualization and which are also bundled in other, pre-existing R packages, should explain the necessity and advantage of re-bundling that library.",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,"sheet sized to the model, Hmisc labels, configurable axes, no pagination"
+EA6.0,EDA,Testing,"Return values from all functions should be tested, including tests for the following characteristics:",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"return values, column values, dimensions and names asserted"
+EA6.0a,EDA,Testing,Classes and types of objects,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA6.0b,EDA,Testing,Dimensions of tabular objects,applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"return values, column values, dimensions and names asserted"
+EA6.0c,EDA,Testing,Column names (or equivalent) of tabular objects,applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"return values, column values, dimensions and names asserted"
+EA6.0d,EDA,Testing,Classes or types of all columns contained within `data.frame`-type tabular objects,applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"return values, column values, dimensions and names asserted"
+EA6.0e,EDA,Testing,"Values of single-valued objects; for `numeric` values either using `testthat::expect_equal()` or equivalent with a defined value for the `tolerance` parameter, or using `round(..., digits = x)` with some defined value of `x` prior to testing equality.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+EA6.1,EDA,Testing,"The properties of graphical output from EDA software should be explicitly tested, for example via the [`vdiffr` package](https://github.com/r-lib/vdiffr) or equivalent.",applicable,implemented,verified,R/nomogram.R,mm_nomogram,tests/testthat/test-nomogram.R,,low,the drawn sheet is read back and must agree with mm_predict() or the call refuses
+ML1.0,ML,Input Data Specification,Documentation should make a clear conceptual distinction between training and test data (even where such may ultimately be confounded as described above.),applicable,implemented,untested,README.md,(prose),,,low,"develops versus held out, stated and used"
+ML1.0a,ML,Input Data Specification,"Where these terms are ultimately eschewed, these should nevertheless be used in initial documentation, along with clear explanation of, and justification for, alternative terminology.",applicable,implemented,untested,README.md,(prose),,,low,"develops versus held out, stated and used"
+ML1.1,ML,Input Data Specification,"Absent clear justification for alternative design decisions, input data should be expected to be labelled ""test"", ""training"", and, where applicable, ""validation"" data.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML1.1a,ML,Input Data Specification,"The presence and use of these labels should be explicitly confirmed via pre-processing steps (and tested in accordance with **ML7.0**, below).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML1.1b,ML,Input Data Specification,"Matches to expected labels should be case-insensitive and based on partial matching such that, for example, ""Test"", ""test"", or ""testing"" should all suffice.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML1.2,ML,Input Data Specification,"Training and test data sets for ML software should be able to be input as a single, generally tabular, data object, with the training and test data distinguished either by* - *A specified variable containing, for example, `TRUE`/`FALSE` or `0`/`1` values, or which uses some other system such as missing (`NA`) values to denote test data); and/or* - *An additional parameter designating case or row numbers, or labels of test data.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,one cohort partitioned by split_var and split_at
+ML1.3,ML,Input Data Specification,"Input data should be clearly partitioned between training and test data (for example, through having each passed as a distinct `list` item), or should enable an additional means of categorically distinguishing training from test data (such as via an additional parameter which provides explicit labels). Where applicable, distinction of validation and any other data should also accord with this standard.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,one cohort partitioned by split_var and split_at
+ML1.4,ML,Input Data Specification,"Training and test data sets, along with other necessary components such as validation data sets, should be stored in their own distinctly labelled sub-directories (for distinct files), or according to an explicit and distinct labelling scheme (for example, for database connections). Labelling should in all cases adhere to **ML1.1**, above.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+ML1.5,ML,Input Data Specification,"ML software should implement a single function which summarises the contents of test and training (and other) data sets, minimally including counts of numbers of cases, records, or files, and potentially extending to tables or summaries of file or data types, sizes, and other information (such as unique hashes for each component).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML1.6,ML,Input Data Specification,"ML software which does not admit missing values, and which expects no missing values, should implement explicit pre-processing routines to identify whether data has any missing values, and should generally error appropriately and informatively when passed data with missing values. In addition, ML software which does not admit missing values should:",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,complete-case with every excluded row counted; DEC-003 explains why
+ML1.6a,ML,Input Data Specification,Explain why missing values are not admitted.,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,complete-case with every excluded row counted; DEC-003 explains why
+ML1.6b,ML,Input Data Specification,"Provide explicit examples (in function documentation, vignettes, or both) for how missing values may be imputed, rather than simply discarded.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+ML1.7,ML,Input Data Specification,ML software which admits missing values should clearly document how such values are processed.,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,complete-case with every excluded row counted; DEC-003 explains why
+ML1.7a,ML,Input Data Specification,"Where missing values are imputed, software should offer multiple user-defined ways to impute missing data.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+ML1.7b,ML,Input Data Specification,"Where missing values are imputed, the precise imputation steps should also be explicitly documented, either in tests (see **ML7.2** below), function documentation, or vignettes.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+ML1.8,ML,Input Data Specification,"ML software should enable equal treatment of missing values for both training and test data, with optional user ability to control application to either one or both.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,complete-case with every excluded row counted; DEC-003 explains why
+ML2.0,ML,Pre-processing,A dedicated function should enable pre-processing steps to be defined and parametrized.,applicable,implemented,verified,R/cleaning.R,mm_clean,tests/testthat/test-cleaning.R,,low,parametrized rules returning an mm_cohort with a print method
+ML2.0a,ML,Pre-processing,"That function should return an object which can be directly submitted to a specified model (see section 3, below).",applicable,implemented,verified,R/cleaning.R,mm_clean,tests/testthat/test-cleaning.R,,low,parametrized rules returning an mm_cohort with a print method
+ML2.0b,ML,Pre-processing,"Absent explicit justification otherwise, that return object should have a defined class minimally intended to implement a default `print` method which summarizes the input data set (as per **ML1.5** above) and associated transformations (see the following standard).",applicable,implemented,verified,R/cleaning.R,mm_clean,tests/testthat/test-cleaning.R,,low,parametrized rules returning an mm_cohort with a print method
+ML2.1,ML,Pre-processing,ML software which uses broadcasting to reconcile dimensionally incommensurate input data should offer an ability to at least optionally record transformations applied to each input file.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML2.2,ML,Pre-processing,"ML software which requires or relies upon numeric transformations of input data (such as change in mean values or variances) should allow optimal explicit specification of target values, rather than restricting transformations to default generic values only (such as transformations to z-scores).",applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.2a,ML,Pre-processing,"Where the parameters have default values, reasons for those particular defaults should be explicitly described.",applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.2b,ML,Pre-processing,Any extended documentation (such as vignettes) which demonstrates the use of explicit values for numeric transformations should explicitly describe why particular values are used.,applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.3,ML,Pre-processing,The values associated with all transformations should be recorded in the object returned by the function described in the preceding standard (**ML2.0**).,applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.4,ML,Pre-processing,"Default values of all transformations should be explicitly documented, both in documentation of parameters where appropriate (such as for numeric transformations), and in extended documentation such as vignettes.",applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.5,ML,Pre-processing,ML software should provide options to bypass or otherwise switch off all default transformations.,applicable,implemented,untested,R/splines.R,mm_splines,,,low,knots parametrized and justified; nonlinear = NULL switches it off; values recorded
+ML2.6,ML,Pre-processing,"Where transformations are implemented via distinct functions, these should be exported to a package's namespace so they can be applied in other contexts.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML2.7,ML,Pre-processing,"Where possible, documentation should be provided for how transformations may be reversed. For example, documentation may demonstrate how the values retained via **ML2.3**, above, can be used along with transformations either exported via **ML2.6** or otherwise exemplified in demonstration code to independently transform data, and then to reverse those transformations.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML3.0,ML,Model and Algorithm Specification,"Model specification should be implemented as a distinct stage subsequent to specification of pre-processing routines (see Section 2, above) and prior to actual model fitting or training (see Section 4, below). In particular,",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.0a,ML,Model and Algorithm Specification,"A dedicated function should enable models to be specified without actually fitting or training them, or if this (**ML3**) and the following (**ML4**) stages are controlled by a single function, that function should have a parameter enabling models to be specified yet not fitted (for example, `nofit = FALSE`).",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.0b,ML,Model and Algorithm Specification,"That function should accept as input the objects produced by the previous Input Data Specification stage, and defined according to **ML2.0**, above.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.0c,ML,Model and Algorithm Specification,The function described above (**ML3.0a**) should return an object which can be directly trained as described in the following sub-section (**ML4**).,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.0d,ML,Model and Algorithm Specification,"That return object should have a defined class minimally intended to implement a default `print` method which summarises the model specification, including values of all relevant parameters.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.1,ML,Model and Algorithm Specification,"ML software should allow the use of both untrained models, specified through model parameters only, as well as pre-trained models. Use of the latter commonly entails an ability to submit a previously-trained model object to the function defined according to **ML3.0a**, above.",applicable,missing,untested,,,,would require a capability outside the package's design,medium,
+ML3.2,ML,Model and Algorithm Specification,"ML software should enable different models to be applied to the object specifying data inputs and transformations (see sub-sections 1--2, above) without needing to re-define those preceding steps.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML3.3,ML,Model and Algorithm Specification,"Where ML software implements its own distinct classes of model objects, the properties and behaviours of those specific classes of objects should be explicitly compared with objects produced by other ML software. In particular, where possible, ML software should provide extended documentation (as vignettes or equivalent) comparing model objects with those from other ML software, noting both unique abilities and restrictions of any implemented classes.",applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,"specification as a distinct stage, without fitting, with a class and print method"
+ML3.4,ML,Model and Algorithm Specification,"Where training rates are used, ML software should provide explicit documentation both in all functions which use training rates, and in extended form such as vignettes, of the importance of, and/or sensitivity to, different values of training rates. In particular,",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.4a,ML,Model and Algorithm Specification,"Unless explicitly justified otherwise, ML software should offer abilities to automatically determine appropriate or optimal training rates, either as distinct pre-processing stages, or as implicit stages of model training.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.4b,ML,Model and Algorithm Specification,ML software which provides default values for training rates should clearly document anticipated restrictions of validity of those default values; for example through clear suggestions that user-determined and -specified values may generally be necessary or preferable.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.5,ML,Model and Algorithm Specification,Parameters controlling optimization algorithms should minimally include:,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.5a,ML,Model and Algorithm Specification,"Specification of the type of algorithm used to explore the search space (commonly, for example, some kind of gradient descent algorithm)",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.5b,ML,Model and Algorithm Specification,The kind of loss function used to assess distance between model estimates and desired output.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.6,ML,Model and Algorithm Specification,"Unless explicitly justified otherwise (for example because ML software under consideration is an implementation of one specific algorithm), ML software should:",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.6a,ML,Model and Algorithm Specification,Implement or otherwise permit usage of multiple ways of exploring search space,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.6b,ML,Model and Algorithm Specification,Implement or otherwise permit usage of multiple loss functions.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML3.7,ML,Model and Algorithm Specification,"For ML software in which algorithms are coded in C++, user-controlled use of either CPUs or GPUs (on NVIDIA processors at least) should be implemented through direct use of [`libcudacxx`](https://github.com/NVIDIA/libcudacxx).",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.0,ML,Model Training,"ML software should generally implement a unified single-function interface to model training, able to receive as input a model specified according to all preceding standards. In particular, models with categorically different specifications, such as different model architectures or optimization algorithms, should be able to be submitted to the same model training function.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,one training call; print plus adequacy
+ML4.1,ML,Model Training,ML software should at least optionally retain explicit information on paths taken as an optimizer advances towards minimal loss. Such information should minimally include:,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.1a,ML,Model Training,"Specification of all model-internal parameters, or equivalent hashed representation.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.1b,ML,Model Training,The value of the loss function at each point,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.1c,ML,Model Training,"Information used to advance to next point, for example quantification of local gradient.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.2,ML,Model Training,"The subsequent extraction of information retained according to the preceding standard should be explicitly documented, including through example code.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.3,ML,Model Training,"All parameters controlling batch processing and associated terminology should be explicitly documented, and it should not, for example, be presumed that users will understand the definition of ""epoch"" as implemented in any particular ML software.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.4,ML,Model Training,"Explicit guidance should be provided on selection of appropriate values for parameter controlling batch processing, for example, on trade-offs between batch sizes and numbers of epochs (with both terms provided as Control Parameters in accordance with the preceding standard, **ML3**).",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.5,ML,Model Training,"ML software may optionally include a function to estimate likely time to train a specified model, through estimating initial timings from a small sample of the full batch.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML4.6,ML,Model Training,ML software should by default provide explicit information on the progress of batch jobs (even where those jobs may be implemented in parallel on GPUs). That information may be optionally suppressed through additional parameters.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML4.7,ML,Model Training,ML software should provide an ability to combine results from multiple re-sampling iterations using a single parameter specifying numbers of iterations.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML4.8,ML,Model Training,"Absent any additional specification, re-sampling algorithms should by default partition data according to proportions of original test and training data.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,one training call; print plus adequacy
+ML4.8a,ML,Model Training,Re-sampling routines of ML software should nevertheless offer an ability to explicitly control or override such default proportions of test and training data.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML5.0,ML,Model Output and Performance,"The result of applying the training processes described above should be contained within a single model object returned by the function defined according to **ML4.0**, above. Even where the output reflects application to a test data set, the resultant object need not include any information on model performance (see **ML5.3**--**ML5.4**, below).",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.0a,ML,Model Output and Performance,"That object should either have its own class, or extend some previously-defined class.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.0b,ML,Model Output and Performance,"That class should have a defined `print` method which summarises important aspects of the model object, including but not limited to summaries of input data and algorithmic control parameters.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.1,ML,Model Output and Performance,"As for the untrained model objects produced according to the above standards, and in particular as a direct extension of **ML3.3**, the properties and behaviours of trained models produced by ML software should be explicitly compared with equivalent objects produced by other ML software. (Such comparison will generally be done in terms of comparing model performance, as described in the following standard **ML5.3**--**ML5.4**).",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.2,ML,Model Output and Performance,"The structure and functionality of objects representing trained ML models should be thoroughly documented. In particular,",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.2a,ML,Model Output and Performance,"Either all functionality extending from the class of model object should be explicitly documented, or a method for listing or otherwise accessing all associated functionality explicitly documented and demonstrated in example code.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"single classed object, documented, with print; mm_predict for new data"
+ML5.2b,ML,Model Output and Performance,"Documentation should include examples of how to save and re-load trained model objects for their re-use in accordance with **ML3.1**, above.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML5.2c,ML,Model Output and Performance,"Where general functions for saving or serializing objects, such as [`saveRDS`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/readRDS.html) are not appropriate for storing local copies of trained models, an explicit function should be provided for that purpose, and should be demonstrated with example code.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML5.3,ML,Model Output and Performance,Assessment of model performance should be implemented as one or more functions distinct from model training.,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,"assessment distinct from training, reporting discrimination, calibration and Brier"
+ML5.4,ML,Model Output and Performance,Model performance should be able to be assessed according to a variety of metrics.,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,"assessment distinct from training, reporting discrimination, calibration and Brier"
+ML5.4a,ML,Model Output and Performance,All model performance metrics represented by functions internal to a package must be clearly and distinctly documented.,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-validation.R,,low,"assessment distinct from training, reporting discrimination, calibration and Brier"
+ML5.4b,ML,Model Output and Performance,"It should be possible to submit custom metrics to a model assessment function, and the ability to do so should be clearly documented including through example code.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML6.0,ML,Documentation,"Descriptions of ML software should make explicit reference to a workflow which separates training and testing stages, and which clearly indicates a need for distinct training and test data sets.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML6.1,ML,Documentation,ML software intentionally designed to address only a restricted subset of the workflow described here should clearly document how it can be embedded within a typical full ML workflow in the sense considered here.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML6.1a,ML,Documentation,Such demonstrations should include and contrast embedding within a full workflow using at least two other packages to implement that workflow.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.0,ML,Testing,"Test should explicitly confirm partial and case-insensitive matching of ""test"", ""train"", and, where applicable, ""validation"" data.",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"split distinction, leakage, prediction, metrics and seeded reproducibility"
+ML7.1,ML,Testing,Tests should demonstrate effects of different numeric scaling of input data (see **ML2.2**).,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.2,ML,Testing,"For software which imputes missing data, tests should compare internal imputation with explicit code which directly implements imputation steps (even where such imputation is a single-step implemented via some external package). These tests serve as an explicit reference for how imputation is performed.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.3,ML,Testing,"Where model objects are implemented as distinct classes, tests should explicitly compare the functionality of these classes with functionality of equivalent classes for ML model objects from other packages.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.3a,ML,Testing,These tests should explicitly identify restrictions on the functionality of model objects in comparison with those of other packages.,applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"split distinction, leakage, prediction, metrics and seeded reproducibility"
+ML7.3b,ML,Testing,These tests should explicitly identify functional advantages and unique abilities of the model objects in comparison with those of other packages.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.4,ML,Testing,"ML software should explicit document the effects of different training rates, and in particular should demonstrate divergence from optima with inappropriate training rates.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML7.5,ML,Testing,"ML software which implements routines to determine optimal training rates (see **ML3.4**, above) should implement tests to confirm the optimality of resultant values.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.6,ML,Testing,"ML software which implement independent training ""epochs"" should demonstrate in tests the effects of lesser versus greater numbers of epochs.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML7.7,ML,Testing,"ML software should explicitly test different optimization algorithms, even where software is intended to implement one specific algorithm.",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"split distinction, leakage, prediction, metrics and seeded reproducibility"
+ML7.8,ML,Testing,"ML software should explicitly test different loss functions, even where software is intended to implement one specific measure of loss.",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"split distinction, leakage, prediction, metrics and seeded reproducibility"
+ML7.9,ML,Testing,"Tests should explicitly compare all possible combinations in categorical differences in model architecture, such as different model architectures with same optimization algorithms, same model architectures with different optimization algorithms, and differences in both.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML7.9a,ML,Testing,"Such combinations will generally be formed from multiple categorical factors, for which explicit use of functions such as [`expand.grid()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/expand.grid.html) is recommended.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+ML7.10,ML,Testing,"The successful extraction of information on paths taken by optimizers (see **ML5.1**, above), should be tested, including testing the general properties, but not necessarily actual values of, such data.",applicable,implemented,verified,tests/testthat/,(suite),tests/testthat/,,low,"split distinction, leakage, prediction, metrics and seeded reproducibility"
+ML7.11,ML,Testing,All performance metrics available for a given class of trained model should be thoroughly tested and compared.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+ML7.11a,ML,Testing,Tests which compare metrics should do so over a range of inputs (generally implying differently trained models) to demonstrate relative advantages and disadvantages of different metrics.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE1.0,Regression,Input data structures and validation,"Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.",applicable,implemented,untested,R/project.R,mm_project,,,low,"no formula interface, and the prespecified-plan reason is documented, which the standard permits"
+RE1.1,Regression,Input data structures and validation,Regression Software should document how formula interfaces are converted to matrix representations of input data.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE1.2,Regression,Input data structures and validation,"Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"expected predictor formats and the complete-case assumption, DEC-003"
+RE1.3,Regression,Input data structures and validation,"Regression Software which passes or otherwise transforms aspects of input data onto output structures should ensure that those output structures retain all relevant aspects of input data, notably including row and column names, and potentially information from other `attributes()`.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE1.3a,Regression,Input data structures and validation,"Where otherwise relevant information is not transferred, this should be explicitly documented.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE1.4,Regression,Input data structures and validation,"Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"expected predictor formats and the complete-case assumption, DEC-003"
+RE2.0,Regression,Pre-processing and Variable Transformation,"Regression Software should document any transformations applied to input data, for example conversion of label-values to `factor`, and should provide ways to explicitly avoid any default transformations (with error or warning conditions where appropriate).",applicable,implemented,verified,R/splines.R,mm_splines,tests/testthat/test-splines.R,,low,"spline allocation and its degrees of freedom reported, no p-value"
+RE2.1,Regression,Pre-processing and Variable Transformation,"Regression Software should implement explicit parameters controlling the processing of missing values, ideally distinguishing `NA` or `NaN` values from `Inf` values (for example, through use of `na.omit()` and related functions from the `stats` package).",applicable,implemented,untested,R/prediction.R,mm_predict,,,low,on_missing
+RE2.2,Regression,Pre-processing and Variable Transformation,"Regression Software should provide different options for processing missing values in predictor and response data. For example, it should be possible to fit a model with no missing predictor data in order to generate values for all associated response points, even where submitted response values may be missing.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE2.3,Regression,Pre-processing and Variable Transformation,"Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+RE2.4,Regression,Pre-processing and Variable Transformation,"Regression Software should implement pre-processing routines to identify whether aspects of input data are perfectly collinear, notably including:",applicable,implemented,verified,R/leakage.R,(file),tests/testthat/test-leakage.R,,critical,a predictor reproducing the outcome is refused; perfect separation warns and fits
+RE2.4a,Regression,Pre-processing and Variable Transformation,Perfect collinearity among predictor variables,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",critical,
+RE2.4b,Regression,Pre-processing and Variable Transformation,Perfect collinearity between independent and dependent variables,applicable,implemented,verified,R/leakage.R,(file),tests/testthat/test-leakage.R,,critical,a predictor reproducing the outcome is refused; perfect separation warns and fits
+RE3.0,Regression,Algorithms,Issue appropriate warnings or other diagnostic messages for models which fail to converge.,applicable,implemented,untested,R/modeling_rms.R,mm_model,,,critical,"non-convergence diagnostic at modeling_rms.R:476, singular Hessian named"
+RE3.1,Regression,Algorithms,"Enable such messages to be optionally suppressed, yet should ensure that the resultant model object nevertheless includes sufficient data to identify lack of convergence.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE3.2,Regression,Algorithms,"Ensure that convergence thresholds have sensible default values, demonstrated through explicit documentation.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE3.3,Regression,Algorithms,"Allow explicit setting of convergence thresholds, unless reasons against doing so are explicitly documented.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE4.0,Regression,Return Results,"Regression Software should return some form of ""model"" object, generally through using or modifying existing class structures for model objects (such as `lm`, `glm`, or model objects from other packages), or creating a new class of model objects.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"mm_model object carrying schema, outcome and predictor metadata"
+RE4.1,Regression,Return Results,Regression Software may enable an ability to generate a model object without actually fitting values. This may be useful for controlling batch processing of computationally intensive fitting algorithms.,applicable,implemented,verified,R/project.R,mm_project,tests/testthat/test-project.R,,low,a validated printable specification object produced without fitting
+RE4.2,Regression,Return Results,Model coefficients (via `coef()` / `coefficients()`),applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.3,Regression,Return Results,Confidence intervals on those coefficients (via `confint()`),applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.4,Regression,Return Results,"The specification of the model, generally as a formula (via `formula()`)",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.5,Regression,Return Results,Numbers of observations submitted to model (via `nobs()`),applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.6,Regression,Return Results,The variance-covariance matrix of the model parameters (via `vcov()`),applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.7,Regression,Return Results,"Where appropriate, convergence statistics",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.8,Regression,Return Results,"Response variables, and associated ""metadata"" where applicable.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"mm_model object carrying schema, outcome and predictor metadata"
+RE4.9,Regression,Return Results,Modelled values of response variables.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.10,Regression,Return Results,"Model Residuals, including sufficient documentation to enable interpretation of residuals, and to enable users to submit residuals to their own tests.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.11,Regression,Return Results,Goodness-of-fit and other statistics associated such as effect sizes with model coefficients.,applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-metric-reporting.R,,critical,"metrics table: basis, n, events, non_events, c_stat with interval, calibration, Brier, note"
+RE4.12,Regression,Return Results,"Where appropriate, functions used to transform input data, and associated inverse transform functions.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE4.13,Regression,Return Results,"Predictor variables, and associated ""metadata"" where applicable.",applicable,implemented,untested,R/modeling_rms.R,mm_model,,,low,"mm_model object carrying schema, outcome and predictor metadata"
+RE4.14,Regression,Return Results,"Where possible, values should also be provided for extrapolation or forecast *errors*.",applicable,implemented,verified,R/prediction.R,mm_predict,tests/testthat/test-prediction.R,,critical,interval = TRUE returns .lower/.upper from the linear predictor's standard error
+RE4.15,Regression,Return Results,"Sufficient documentation and/or testing should be provided to demonstrate that forecast errors, confidence intervals, or equivalent values increase with forecast horizons.",applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-metric-reporting.R,,critical,"metrics table: basis, n, events, non_events, c_stat with interval, calibration, Brier, note"
+RE4.16,Regression,Return Results,Regression Software which models distinct responses for different categorical groups should include the ability to submit new groups to `predict()` methods.,applicable,implemented,verified,R/prediction.R,mm_predict,tests/testthat/test-prediction.R,,low,prediction on newdata
+RE4.17,Regression,Return Results,Model objects returned by Regression Software should implement or appropriately extend a default `print` method which provides an on-screen summary of model (input) parameters and (output) coefficients.,applicable,implemented,untested,R/modeling_rms.R,print.mm_model,,,low,registered print method
+RE4.18,Regression,Return Results,"Regression Software may also implement `summary` methods for model objects, and in particular should implement distinct `summary` methods for any cases in which calculation of summary statistics is computationally non-trivial (for example, for bootstrapped estimates of confidence intervals).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE5.0,Regression,Documentation,"Scaling relationships between sizes of input data (numbers of observations, with potential extension to numbers of variables/columns) and speed of algorithm.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE6.0,Regression,Visualization,"Model objects returned by Regression Software (see* **RE4***) should have default `plot` methods, either through explicit implementation, extension of methods for existing model objects, or through ensuring default methods work appropriately.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE6.1,Regression,Visualization,"Where the default `plot` method is **NOT** a generic `plot` method dispatched on the class of return objects (that is, through an S3-type `plot.<myclass>` function or equivalent), that method dispatch (or equivalent) should nevertheless exist in order to explicitly direct users to the appropriate function.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE6.2,Regression,Visualization,"The default `plot` method should produce a plot of the `fitted` values of the model, with optional visualisation of confidence intervals or equivalent.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE6.3,Regression,Visualization,"Where a model object is used to generate a forecast (for example, through a `predict()` method), the default `plot` method should provide clear visual distinction between modelled (interpolated) and forecast (extrapolated) values.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+RE7.0,Regression,Testing,"Tests with noiseless, exact relationships between predictor (independent) data.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE7.0a,Regression,Testing,"In particular, these tests should confirm ability to reject perfectly noiseless input data.",applicable,implemented,verified,R/leakage.R,(file),tests/testthat/test-leakage.R,,low,tests confirming noiseless input is rejected
+RE7.1,Regression,Testing,"Tests with noiseless, exact relationships between predictor (independent) and response (dependent) data.",applicable,implemented,verified,R/leakage.R,(file),tests/testthat/test-leakage.R,,low,tests confirming noiseless input is rejected
+RE7.1a,Regression,Testing,"In particular, these tests should confirm that model fitting is at least as fast or (preferably) faster than testing with equivalent noisy data (see RE2.4b).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE7.2,Regression,Testing,Demonstrate that output objects retain aspects of input data such as row or case names (see **RE1.3**).,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+RE7.3,Regression,Testing,Demonstrate and test expected behaviour when objects returned from regression software are submitted to the accessor methods of **RE4.2**--**RE4.7**.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",high,
+RE7.4,Regression,Testing,"Extending directly from **RE4.15**, where appropriate, tests should demonstrate and confirm that forecast errors, confidence intervals, or equivalent values increase with forecast horizons.",applicable,implemented,verified,R/validation.R,mm_validate,tests/testthat/test-discrimination-interval.R,,low,every degenerate c-statistic interval case
+PD1.0,Distributions,Documentation,Software should provide references justifying choice and usage of particular probability distributions.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+PD2.0,Distributions,Packages for Representing Distributions,"Where possible, software should represent probability distributions using a package for general representation.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD3.0,Distributions,Algorithms,"Manipulation of probability distributions should very generally be analytic, with numeric manipulations only implemented with clear justification (ideally including references).",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD3.1,Distributions,Algorithms,Operations on probability distributions should generally be contained within separate functions which themselves accept the names of the distributions as one input parameter.,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD3.2,Distributions,Algorithms,"Use of optimisation routines to estimate parameters from probability distributions should explicitly specify and explain values of all parameters, including all uses of default parameters.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+PD3.3,Distributions,Algorithms,"Return objects which include values generated from optimisation algorithms should include information on optimisation algorithm and performance, minimally including the name of the algorithm used, the convergence tolerance, and the number of iterations.",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+PD3.4,Distributions,Algorithms,"Use of routines to integrate probability distributions should explicitly document conditions under which integrals are expected to remain stable, and ideally include pre-processing checks for potentially unstable behaviour.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD3.5,Distributions,Algorithms,"Integration routines should only rely on discrete summation where such use can be justified (for example, through providing a literature reference), in which case the following applies:",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD3.5a,Distributions,Algorithms,"Use of discrete summation to approximate integrals must demonstrate that the Reimann sum has a finite limit (or, equivalently, must explicitly describe the conditions under which the sum may be expected to be finite).",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD4.0,Distributions,Testing,"The numeric outputs of probability distribution functions should be tested, not just output structures. These tests should generally be tests for numeric equality.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD4.1,Distributions,Testing,Tests for numeric equality should compare the output of of probability distribution functions with the output of code which explicitly demonstrates how such values are derived (generally defined in the same location in test files).,not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD4.2,Distributions,Testing,"All functions constructed in accordance with **PD2.1** - that is, which use a fixed distribution, and which name that distribution as an input parameter - should be tested using at least two different distributions.",not applicable,not applicable,not applicable,,,,,low,no referent in this package
+PD4.3,Distributions,Testing,"Tests of optimisation or integration algorithms should compare default results with results generated with alternative values for every parameter, including all parameters for the chosen algorithm (whether exposed as function inputs or not).",applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,
+PD4.4,Distributions,Testing,Tests of optimisation or integration algorithms should compare equivalent results generated with at least one alternative algorithm.,applicable,missing,untested,,,,"achievable in the current architecture, not yet written",medium,

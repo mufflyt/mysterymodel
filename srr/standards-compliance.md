@@ -27,6 +27,34 @@ verdict below is my reading of the source against the standard text, not a
 developer assertion. That distinction matters for how the proportions should be
 read, and it is why the conservative denominator is used throughout.
 
+## Compliance metrics, reported separately
+
+**Revised 2026-11-22 under the remediation specification.** The first version of
+this document reported one number per standards set, mixing standards that are
+*satisfied* with standards that are *achievable*. That makes "95.8% Regression"
+read as implementation completeness when it is applicability. The four measures
+below are now computed separately from `srr/verdict-ledger.csv`.
+
+| measure | value | meaning |
+|---|---:|---|
+| applicability | 213 / 254 | standards that apply to this package at all |
+| **implementation completeness** | **122 / 213 = 57.3%** | applicable standards actually satisfied by code today |
+| **test-verified completeness** | **72 / 213 = 33.8%** | satisfied *and* exercised by a named test file |
+| unresolved | 91 / 213 | applicable and not satisfied: 89 achievable, 2 not viable |
+
+The denominator is **213 applicable**, which is the 211 positive verdicts plus
+the 2 negative ones: a negative verdict is applicable, it simply cannot be
+satisfied within this design. The per-set proportions in the sections below are
+**applicability**, not implementation, and are labelled as such.
+
+**Verification is the weakest of the three and the honest number to quote.** A
+standard counts as verified here only when the ledger names a test file that
+exercises it. Fifty implemented standards have no named test, mostly the
+documentation standards, where the evidence is prose and the ledger's
+`evidence_file` points at README or `inst/`. Those are not defects, but neither
+are they test-verified, and the gap between 57.3% and 33.8% is exactly that
+distinction.
+
 ## Method, and how to check it
 
 Verdicts are at the level of the individual standard identifier, including
