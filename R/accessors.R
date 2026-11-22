@@ -27,6 +27,7 @@
 #' @param ... Passed to the underlying `rms` method where one is used.
 #'
 #' @return As documented per method below.
+#' @importFrom stats coef confint fitted formula nobs residuals vcov
 #' @name mm_model-accessors
 #' @seealso [mm_validate()] for performance, which these do not report.
 NULL

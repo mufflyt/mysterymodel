@@ -18,7 +18,20 @@
 #' stored coefficients, refuses an unseen level by name and marks a row outside
 #' the development range, which is the behaviour a clinical calculator needs.
 #'
-#' No confidence interval is shown, because [mm_predict()] does not produce one.
+#' An interval IS shown, and what it covers is narrower than it looks. It comes
+#' from [mm_predict()]`(interval = TRUE)`, which is the standard error of the
+#' linear predictor transformed to the probability scale: it covers how
+#' precisely these coefficients were estimated, and not how much people sharing
+#' a covariate pattern differ from one another, nor the choices that produced
+#' the model. A reader who takes "95% CI 4% to 9%" as the range the patient's
+#' own risk lies in has read it as something it is not. See the `interval`
+#' argument of [mm_predict()] for the full statement, and review finding `D-1`
+#' in `review/findings.csv` for the recommendation that the displayed label
+#' carry the caveat rather than leaving it in the documentation.
+#'
+#' This paragraph previously said that no interval was shown because
+#' [mm_predict()] does not produce one. Both halves were false: it produces
+#' one, and `output$interval` renders it.
 #'
 #' @param model A [mm_model()].
 #' @param title The heading. Defaults to the outcome the model predicts.

@@ -29,3 +29,12 @@ export(mm_project)
 export(mm_splines)
 export(mm_synthetic_cohort)
 export(mm_validate)
+importFrom(stats,
+  coef,
+  confint,
+  fitted,
+  formula,
+  nobs,
+  residuals,
+  vcov
+)

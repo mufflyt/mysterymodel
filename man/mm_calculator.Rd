@@ -97,7 +97,20 @@ in an empty environment and carries no cohort to recover: see DEC-015 and
 stored coefficients, refuses an unseen level by name and marks a row outside
 the development range, which is the behaviour a clinical calculator needs.
 
-No confidence interval is shown, because \code{\link[=mm_predict]{mm_predict()}} does not produce one.
+An interval IS shown, and what it covers is narrower than it looks. It comes
+from \code{\link[=mm_predict]{mm_predict()}}\code{(interval = TRUE)}, which is the standard error of the
+linear predictor transformed to the probability scale: it covers how
+precisely these coefficients were estimated, and not how much people sharing
+a covariate pattern differ from one another, nor the choices that produced
+the model. A reader who takes "95\% CI 4\% to 9\%" as the range the patient's
+own risk lies in has read it as something it is not. See the \code{interval}
+argument of \code{\link[=mm_predict]{mm_predict()}} for the full statement, and review finding \code{D-1}
+in \code{review/findings.csv} for the recommendation that the displayed label
+carry the caveat rather than leaving it in the documentation.
+
+This paragraph previously said that no interval was shown because
+\code{\link[=mm_predict]{mm_predict()}} does not produce one. Both halves were false: it produces
+one, and \code{output$interval} renders it.
 }
 \examples{
 cohort <- mm_synthetic_cohort(n = 300, seed = 1)
