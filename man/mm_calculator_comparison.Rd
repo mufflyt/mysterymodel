@@ -13,8 +13,9 @@ mm_calculator_comparison(
 )
 }
 \arguments{
-\item{saved}{A list of kept rows, each with \code{values}, \code{pred}, \code{lower},
-\code{upper} and \code{extrapolated}.}
+\item{saved}{A list of kept rows, each with \code{values}, \code{pred} and
+\code{extrapolated}. \code{lower} and \code{upper} are accepted and retained on the
+record but are not read: nothing is drawn from them (finding \code{D-1}).}
 
 \item{threshold}{The risk the bands are relative to.}
 
@@ -31,14 +32,10 @@ A Shiny tag, or \code{NULL} when nothing has been kept.
 Taken from \code{DynNom}, which is the one thing that package does that this one
 did not: a prediction on its own answers nothing, and the question a reader
 actually has is what the number would be if one value were different. So
-rows accumulate and are drawn against a common scale, with the interval
-beside each, which is the only way the difference between two of them can
-be read honestly.
-}
-\details{
-Drawn as bars rather than through a plotting package. \code{DynNom} reaches for
-\code{plotly} and \code{ggplot2} to put eleven points on one axis; the same picture
-is a few positioned divs, and a calculator that needs no graphics device is
-one that can be served anywhere.
+rows accumulate and are drawn against a common scale, so two of them can be
+compared. Each row shows its estimate as a dot; no uncertainty range is
+drawn beside it, by owner decision on review finding \code{D-1}. The bounds are
+still carried in each record for anyone working with the numbers rather than
+reading the screen.
 }
 \keyword{internal}

@@ -626,17 +626,15 @@ mm_calculator_defaults <- function(model) {
 #' Taken from `DynNom`, which is the one thing that package does that this one
 #' did not: a prediction on its own answers nothing, and the question a reader
 #' actually has is what the number would be if one value were different. So
-#' rows accumulate and are drawn against a common scale, with the interval
-#' beside each, which is the only way the difference between two of them can
-#' be read honestly.
+#' rows accumulate and are drawn against a common scale, so two of them can be
+#' compared. Each row shows its estimate as a dot; no uncertainty range is
+#' drawn beside it, by owner decision on review finding `D-1`. The bounds are
+#' still carried in each record for anyone working with the numbers rather than
+#' reading the screen.
 #'
-#' Drawn as bars rather than through a plotting package. `DynNom` reaches for
-#' `plotly` and `ggplot2` to put eleven points on one axis; the same picture
-#' is a few positioned divs, and a calculator that needs no graphics device is
-#' one that can be served anywhere.
-#'
-#' @param saved A list of kept rows, each with `values`, `pred`, `lower`,
-#'   `upper` and `extrapolated`.
+#' @param saved A list of kept rows, each with `values`, `pred` and
+#'   `extrapolated`. `lower` and `upper` are accepted and retained on the
+#'   record but are not read: nothing is drawn from them (finding `D-1`).
 #' @param threshold The risk the bands are relative to.
 #' @param higher_is Whether a higher prediction is the worse outcome.
 #' @param subject What one row is, in the singular.
@@ -647,8 +645,13 @@ mm_calculator_comparison <- function(saved, threshold,
                                      higher_is = "worse",
                                      subject = "patient", specs = NULL) {
   if (!length(saved)) return(NULL)
+  # Scaled by the widest ESTIMATE, not the widest stored bound. It used to be
+  # the bound, which was right while a bar reached that far: the bar justified
+  # the empty track. With the bar withdrawn (finding D-1) a stored upper of
+  # 0.60 beside estimates near 0.10 ended the axis at 63% and crammed every
+  # dot into the left sixth, with nothing on the page explaining the rest.
   top <- min(1, max(4 * threshold,
-                    vapply(saved, function(r) r$upper, numeric(1)) * 1.05))
+                    vapply(saved, function(r) r$pred, numeric(1)) * 1.05))
   pos <- function(x) 100 * min(1, max(0, x)) / top
   at <- function(x) sprintf("%.4f%%", pos(x))
 

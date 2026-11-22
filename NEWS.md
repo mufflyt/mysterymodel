@@ -259,16 +259,23 @@ implemented, the record in `inst/decisions.md` that settled it.
   the linear predictor, because the fitted value is what the rest of the
   package is checked against, the nomogram to 1e-16 among it, and an interval
   is not a reason to compute it a different way.
-* The calculator shows that interval, and the caveat that used to apologise
-  for its absence now says what it covers: the uncertainty in these
-  coefficients, not how much people sharing a covariate pattern differ from
-  one another, and not which predictors were chosen or what shape they were
-  given.
+* **The calculator does not show that interval**, by owner decision on review
+  finding `D-1`. It is parameter uncertainty on the probability scale, and a
+  reader shown it beside one person's risk would reasonably take it for the
+  range that person's own risk lies in, which is a wider quantity this package
+  does not compute. The number is still computed, still returned by
+  `mm_predict(interval = TRUE)` and still carried on each saved record; it is
+  the display that was withdrawn, and the panel's caveat now separates
+  parameter, estimated-risk and prediction uncertainty by name rather than
+  describing the one it used to print. An earlier draft of this entry said the
+  calculator showed the interval, which is no longer true.
 * Rows accumulate and are compared, which is the one idea worth taking from
   `DynNom`. A single prediction answers nothing; the question a reader has is
   what the number would be if one value were different. Kept rows are drawn
-  against a common scale with their intervals beside them, each hoverable for
-  the values that produced it, and an extrapolated row says so. Drawn as
+  against a common scale, each row's estimate marked by a dot and hoverable
+  for the values that produced it, and an extrapolated row says so. No
+  uncertainty range is drawn beside a row, and the axis is scaled by the widest
+  estimate rather than by a bound nothing draws. Drawn as
   positioned divs: `DynNom` reaches for `ggplot2`, `plotly` and `stargazer` to
   put eleven points on one axis, and a calculator that needs no graphics
   device is one that can be served anywhere.

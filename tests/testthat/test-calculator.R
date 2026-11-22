@@ -567,18 +567,24 @@ test_that("a kept row's bar is placed where the numbers say", {
   html <- paste(as.character(mm_calculator_comparison(
     list(keep(0.10, 0.05, 0.20)), threshold = 0.05)), collapse = " ")
 
-  # The scale still ends at four times the reference, stretched if need be by
-  # the widest stored upper bound: max(4 * 0.05, 0.20 * 1.05) = 0.21. The
-  # bound is still in the record and still sets the scale even though no bar
-  # is drawn from it, which is finding D-1's "keep the statistics, drop the
-  # display" in one line of arithmetic.
-  expect_match(html, "on a common scale ending at 21%")
+  # The scale ends at four times the reference, stretched if need be by the
+  # widest ESTIMATE: max(4 * 0.05, 0.10 * 1.05) = 0.20. It used to be stretched
+  # by the widest stored upper bound, which was right while a bar reached that
+  # far; with the bar withdrawn (finding D-1) a bound of 0.20 ended the axis at
+  # 21% and left a fifth of the track reserved for nothing.
+  expect_match(html, "on a common scale ending at 20%")
   expect_match(html, "change a value and see what it moves")
   # The interval bar's own placement is no longer asserted because the bar is
   # gone; the dot that marks the estimate is still placed by arithmetic.
-  expect_no_match(html, "right:", fixed = TRUE)
-  expect_match(html, sprintf("left: %.4f%%", 100 * 0.10 / 0.21),
+  # Matching the bar's class rather than "right:", which also appears in the
+  # hover text whenever a predictor label or value happens to contain it.
+  expect_no_match(html, 'class="compare-ci"', fixed = TRUE)
+  expect_match(html, sprintf("left: %.4f%%", 100 * 0.10 / 0.20),
                fixed = TRUE)
+  # and the stored bound no longer moves the axis at all
+  wider_bound <- paste(as.character(mm_calculator_comparison(
+    list(keep(0.10, 0.05, 0.60)), threshold = 0.05)), collapse = " ")
+  expect_match(wider_bound, "on a common scale ending at 20%")
 
   # The dot is never positioned outside its own track, whatever the numbers.
   wide <- paste(as.character(mm_calculator_comparison(
