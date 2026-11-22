@@ -38,9 +38,16 @@ below are now computed separately from `srr/verdict-ledger.csv`.
 | measure | value | meaning |
 |---|---:|---|
 | applicability | 213 / 254 | standards that apply to this package at all |
-| **implementation completeness** | **122 / 213 = 57.3%** | applicable standards actually satisfied by code today |
-| **test-verified completeness** | **72 / 213 = 33.8%** | satisfied *and* exercised by a named test file |
-| unresolved | 91 / 213 | applicable and not satisfied: 89 achievable, 2 not viable |
+| **implementation completeness** | **131 / 213 = 61.5%** | applicable standards actually satisfied by code today |
+| **test-verified completeness** | **81 / 213 = 38.0%** | satisfied *and* exercised by a named test file |
+| unresolved | 82 / 213 | applicable and not satisfied: 80 achievable, 2 not viable |
+
+The implemented figure rose from 122 to 131 when `R/accessors.R` landed. Nine
+standards closed, not the seventeen first mapped to that work package:
+`RE4.2` to `RE4.6`, `RE4.9`, `RE4.10`, `RE4.18` and `RE7.3`. Convergence
+statistics (`RE4.7`), transformation accessors (`RE4.12`), the save-and-reload
+examples (`ML4.7`, `ML5.2b`, `ML5.2c`) and the precision controls (`EA4.1`,
+`EA5.3`) are still unwritten, so they stay missing.
 
 The denominator is **213 applicable**, which is the 211 positive verdicts plus
 the 2 negative ones: a negative verdict is applicable, it simply cannot be

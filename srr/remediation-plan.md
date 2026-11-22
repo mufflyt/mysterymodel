@@ -44,7 +44,8 @@ model object is reachable through the ordinary generics.
 | | work package | standards closed | cumulative implemented | size |
 |---|---|---:|---:|---|
 | | *starting point* | | 122 | |
-| WP1 | Accessors, `summary()` and serialization | 17 | 139 | small |
+| WP1 | Accessors and `summary()` | **9, done** | **131** | small |
+| WP1b | Convergence statistics, transformation accessors, save-and-reload examples, precision controls | 8 | 139 | small |
 | WP2 | A `plot()` method and its documentation | 4 | 143 | small |
 | WP3 | Convergence controls exposed | 6 | 149 | small |
 | WP4 | Input coercion layer | 17 | 166 | medium |
@@ -73,11 +74,15 @@ Machine Learning ones are the save-and-reload standards, which a `summary()`
 and a documented serialization example close together; `EA4.1` and `EA5.3` are
 the numeric-precision and storage-mode parts of a column summary.
 
-**The situation.** `NAMESPACE` registers nine methods and all nine are `print`.
-The fitted `rms` object is already stored at `model$fit`, so every accessor the
-standards ask for is a delegation away. A caller who wants a coefficient today
-must reach into `model$fit` themselves, which means the package's own object is
-less usable than the one it wraps.
+**Status: done in `f43884e`**, and the claim this section originally made was
+wrong. It said "every accessor the standards ask for is a delegation away".
+Three are not, which P0 established by running the generics rather than reading
+the object's shape: `fitted()` on an `rms::lrm()` fit returns `NULL`,
+`confint()` errors in `confint.glm`'s profiling, and `summary()` on an `rms`
+fit reports effect sizes rather than a model summary. See
+`review/p0-baseline.md`. This is recorded rather than quietly corrected because
+a plan that was confidently wrong about its cheapest item is worth knowing
+about when reading its estimates for the rest.
 
 **Write, in a new `R/accessors.R`:**
 
