@@ -50,3 +50,17 @@ testthat::test_that("treat-all and treat-none have exact references", {
   testthat::expect_equal(curve$net_benefit_all, 0)
   testthat::expect_equal(curve$net_benefit_model, 0.5)
 })
+
+testthat::test_that("factor event direction cannot be guessed", {
+  testthat::expect_error(
+    mysterymodel::mm_decision_curve(
+      factor(c("case", "control", "case", "control")),
+      c(0.8, 0.2, 0.7, 0.3),
+      thresholds = 0.5
+    ), "explicit")
+  testthat::expect_error(
+    mysterymodel::mm_decision_curve(
+      c(0, 1), c(0.1, 0.9), thresholds = 0.5,
+      positive = 0
+    ), "only for factor")
+})
