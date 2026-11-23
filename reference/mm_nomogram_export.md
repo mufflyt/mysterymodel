@@ -5,7 +5,7 @@ Export the nomogram as vector and raster files
 ## Usage
 
 ``` r
-mm_nomogram_export(nom, out_dir, slug, width, height)
+mm_nomogram_export(nom, out_dir, slug, width, height, id = NULL)
 ```
 
 ## Arguments

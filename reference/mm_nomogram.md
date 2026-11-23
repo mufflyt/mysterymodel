@@ -14,9 +14,13 @@ mm_nomogram(
   model,
   out_dir = NULL,
   tolerance = 1e-06,
-  width = 13,
-  height = 9,
-  fun_at = NULL
+  width = NULL,
+  height = NULL,
+  fun_at = NULL,
+  funlabel = "Predicted risk",
+  labels = NULL,
+  level_case = c("title", "asis"),
+  id = NULL
 )
 ```
 
@@ -40,15 +44,58 @@ mm_nomogram(
 
 - width, height:
 
-  Inches. The default is the landscape shape the specification asks for.
+  Inches. `NULL`, the default, sizes the sheet to the model: a
+  nomogram's rows do not get shorter when there are more of them, so a
+  page of fixed height crushes a model with many predictors into an
+  unreadable sheet. The ENT applicant model, 27 axes on the 9 inches
+  that suited 3, printed row labels across their own tick marks.
 
 - fun_at:
 
   Risk ticks for the printed risk axis.
 
+- funlabel:
+
+  The printed risk axis's own label. Not every model this package fits
+  predicts a risk: the same machinery drew a nomogram for the chance of
+  matching into a residency, where "Predicted risk" is the wrong noun on
+  a sheet handed to the person it is about.
+
+- labels:
+
+  Printed names for the predictor axes, as a named character vector. The
+  usual way to set these is
+  [`Hmisc::label()`](https://rdrr.io/pkg/Hmisc/man/label.html) on the
+  cohort before fitting, which `rms` carries into the drawn sheet on its
+  own; this argument is for relabelling a model that is already fitted.
+  Renaming happens after the sheet has been checked against
+  [`mm_predict()`](https://mufflyt.github.io/mysterymodel/reference/mm_predict.md)
+  and never before, so the check matches axes to predictors by the names
+  the fit gave them and a printed name cannot change what was verified.
+
+- level_case:
+
+  What to do with the level text a categorical axis prints. Levels
+  arrive as they were typed into a data-entry form, so a published sheet
+  carries `no AOA at school` down the middle of the page. `"title"`, the
+  default, title cases them for printing and leaves a word carrying a
+  capital of its own alone, so `AOA` and `USMLE` survive. `"asis"`
+  prints them exactly as the fit holds them. Like `labels`, this happens
+  after the sheet has been checked and never before.
+
+- id:
+
+  Optional text appended to the exported filenames, as
+  `<slug>_nomogram_<id>.pdf`. Two fits of the same project otherwise
+  write the same three filenames, and the export refuses to overwrite,
+  so this is how both sheets reach disk. A run id, a date, or whatever
+  distinguishes the fits; it is used verbatim.
+
 ## Value
 
-An object of class `mm_nomogram`.
+An object of class `mm_nomogram`. Its `nomogram` element is the sheet
+that was checked, carrying the levels the fit holds; `drawn` is the copy
+that was printed, with any renaming and title casing applied.
 
 ## Details
 

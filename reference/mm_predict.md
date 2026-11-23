@@ -6,7 +6,13 @@ predicts on the response scale from the stored `rms` fit.
 ## Usage
 
 ``` r
-mm_predict(model, newdata, on_missing = c("stop", "na"))
+mm_predict(
+  model,
+  newdata,
+  on_missing = c("stop", "na"),
+  interval = FALSE,
+  level = 0.95
+)
 ```
 
 ## Arguments
@@ -33,10 +39,28 @@ mm_predict(model, newdata, on_missing = c("stop", "na"))
   rather than relaxing the refusal that a clinician holding an
   incomplete record most needs.
 
+- interval:
+
+  Whether to return a confidence interval on the predicted probability.
+  The interval comes from the standard error of the linear predictor at
+  the supplied values, transformed to the probability scale, so it is an
+  interval for the model's own estimate and not for the person. It
+  covers how precisely these coefficients were estimated. It does not
+  cover how much people sharing a covariate pattern differ from one
+  another, and it does not cover the choices that produced the model:
+  which predictors, which shape, which sample. A model short of the size
+  its shape requires has an interval that is too narrow for the same
+  reason its coefficients are too extreme.
+
+- level:
+
+  The coverage. Only read when `interval` is `TRUE`.
+
 ## Value
 
 A data frame with one row per input row: `.pred` on the probability
 scale, and `.extrapolated` marking rows outside the development range.
+With `interval = TRUE`, also `.lower` and `.upper`.
 
 ## Details
 

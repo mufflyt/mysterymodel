@@ -96,7 +96,7 @@ lp <- as.numeric(model$fit$linear.predictors)
 c(intercept = unname(coef(glm(y ~ 1, family = binomial(), offset = lp))[1]),
   slope     = unname(coef(glm(y ~ lp, family = binomial()))[2]))
 #>    intercept        slope 
-#> 8.172466e-17 1.000000e+00
+#> 2.898248e-16 1.000000e+00
 ```
 
 The package detects the identity rather than assuming it, so a fitting
@@ -130,7 +130,7 @@ detail <- validation$full_process_detail
 detail$covers
 #> [1] "knot placement" "datadist"       "factor levels"
 cat(detail$note, "\n")
-#> full-process bootstrap, 100 of 100 resamples valid. Re-derives knots, datadist and factor levels per resample; imputation, selection and tuning are not in this pipeline yet. Resampled by whole pid. The correction is a mean over resamples and carries a Monte Carlo standard error of 0.00441 on the c-statistic and 0.02021 on the slope, so these figures are determined to about 2 decimal place(s) and not to as many as they print with
+#> full-process bootstrap, 100 of 100 resamples valid. Re-derives knot placement, datadist, factor levels per resample; HELD FIXED, so the optimism excludes it: which predictors are splined; which interactions are in the model. Correct if prespecified; if it was chosen by looking at these rows, pass `refit` so the choice is re-made per resample. Resampled by whole pid. The correction is a mean over resamples and carries a Monte Carlo standard error of 0.00441 on the c-statistic and 0.02021 on the slope, so these figures are determined to about 2 decimal place(s) and not to as many as they print with
 ```
 
 `covers` is a list that will grow. Imputation, selection, tuning and
@@ -180,8 +180,14 @@ c(no_information_brier = detail$no_information_brier,
 #>          0.007040662
 ```
 
-On a cohort of 150 that correction moved the reported number from -0.024
-to -0.040, so it is not a rounding matter.
+On a cohort of 150, that correction moved the reported number from
+-0.024 to -0.040 when the change was made, so it is not a rounding
+matter. That pair is a measurement from the time of the change and is
+not reproducible from the code as it now stands: the differenced
+quantity no longer exists, and `optimism[["brier_scaled"]]` is derived
+consistently with the corrected value, so differencing and deriving now
+agree exactly. The figures above, from this vignette’s own cohort, are
+the ones a reader can check.
 
 Resamples that cannot be fitted are counted, not dropped quietly:
 
@@ -478,6 +484,7 @@ holey_validation
 #>   development eligibility: 389 of 404 scored, 15 missing a predictor, 0 missing the outcome, 0 both
 #>   held out eligibility: 175 of 196 scored, 13 missing a predictor, 6 missing the outcome, 2 both
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 50 of 50 valid.
+#>   Held fixed, and so NOT in that correction: which predictors are splined; which interactions are in the model.
 #>   Its correction carries a Monte Carlo standard error of 0.00632 on C; rms does not return
 #>   the per-resample values its own row is averaged over, so the
 #>   same figure cannot be given for the fixed-model row.
@@ -613,7 +620,7 @@ table cannot drift from its model without the pairing changing:
 identical(validation$fingerprint, model$fingerprint)
 #> [1] TRUE
 substr(validation$fingerprint, 1, 16)
-#> [1] "92df44fff5c5dae3"
+#> [1] "84e29ec808a5bc50"
 ```
 
 Report the held-out row when a split exists, the full-process row when

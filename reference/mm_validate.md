@@ -7,7 +7,7 @@ another is the commonest way a published model flatters itself.
 ## Usage
 
 ``` r
-mm_validate(model, cohort, B = 200L, full_process = FALSE)
+mm_validate(model, cohort, B = 200L, full_process = FALSE, refit = NULL)
 ```
 
 ## Arguments
@@ -30,6 +30,16 @@ mm_validate(model, cohort, B = 200L, full_process = FALSE)
 
   Also run the full-process bootstrap. Off by default because it refits
   `B` times and costs accordingly.
+
+- refit:
+
+  `NULL`, or a `function(project, draw)` returning an
+  [`mm_model()`](https://mufflyt.github.io/mysterymodel/reference/mm_model.md)
+  fitted on `draw`, used only when `full_process = TRUE`. It is the
+  strategy's own data-dependent steps - a selection, tuning, an
+  imputation - made repeatable inside a resample, so their optimism
+  reaches the correction instead of being excluded from it. Checked
+  against `model` on the development rows before any resample is drawn.
 
 ## Value
 
@@ -64,9 +74,12 @@ The bases are:
 - **bootstrap, full process**, with `full_process = TRUE`. Refits the
   whole strategy inside every resample, so the optimism corrected
   includes the data-dependent choices the fixed-model bootstrap
-  inherits. See
-  [`mm_full_process()`](https://mufflyt.github.io/mysterymodel/reference/mm_full_process.md)
-  for what it does and does not re-execute.
+  inherits. What it re-executes on its own is knot placement, `datadist`
+  and factor levels; pass `refit` to put a selection step, tuning or an
+  imputation inside the resampling too. The result's
+  `full_process_detail$held_fixed` names every data-dependent choice
+  that was inherited instead, and is empty only when there was none. See
+  [`mm_full_process()`](https://mufflyt.github.io/mysterymodel/reference/mm_full_process.md).
 
 ## Incomplete rows
 

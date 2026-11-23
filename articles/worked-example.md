@@ -431,7 +431,7 @@ fits$D
 #>   held out   190 rows
 #>   parameters 9 non-intercept, 710 short of the sample they need
 #>   apparent C 0.7116
-#>   fingerprint 3b00d7880d0bada1
+#>   fingerprint b3f37e1158cc3266
 ```
 
 ``` r
@@ -445,10 +445,10 @@ do.call(rbind, lapply(names(fits), function(k) {
              fingerprint = substr(m$fingerprint, 1, 10))
 }))
 #>   analysis n_supplied n_dev events n_held parameters apparent_C fingerprint
-#> 1        A        741   741     83      0          6     0.6425  20486eeb8c
-#> 2        B        741   741     83      0          8     0.6584  b40edbe891
-#> 3        C        741   741     83      0          9     0.6695  93ca893c56
-#> 4        D        551   551     64    190          9     0.7116  3b00d7880d
+#> 1        A        741   741     83      0          6     0.6425  d2c5779ca4
+#> 2        B        741   741     83      0          8     0.6584  90dee135d7
+#> 3        C        741   741     83      0          9     0.6695  dadffb3bf1
+#> 4        D        551   551     64    190          9     0.7116  b3f37e1158
 ```
 
 The sample-size gate is reported per analysis, and it is the honest
@@ -491,12 +491,14 @@ and reconstructible on demand:
 schema <- mysterymodel:::mm_schema(plan$D, parts$dev)
 str(schema$predictors[c("age", "indication")])
 #> List of 2
-#>  $ age       :List of 2
+#>  $ age       :List of 3
 #>   ..$ type : chr "numeric"
 #>   ..$ range: num [1:2] 40.2 95
-#>  $ indication:List of 2
+#>   ..$ label: chr "age"
+#>  $ indication:List of 3
 #>   ..$ type  : chr "categorical"
 #>   ..$ levels: chr [1:3] "incontinence" "prolapse" "retention"
+#>   ..$ label : chr "indication"
 identical(schema$predictors, fits$D$schema$predictors)
 #> [1] TRUE
 ```
@@ -727,6 +729,7 @@ checked$D
 #>   bootstrap, full process  n=551   64/487 C=0.6752 no interval, see note  slope=0.8446
 #>   held out                 n=190   19/171 C=0.4974 (0.3275-0.6673)  slope=0.2950
 #>   Full process re-derives knot placement, datadist, factor levels per resample; 60 of 60 valid.
+#>   Held fixed, and so NOT in that correction: which predictors are splined; which interactions are in the model.
 #>   Its correction carries a Monte Carlo standard error of 0.00429 on C; rms does not return
 #>   the per-resample values its own row is averaged over, so the
 #>   same figure cannot be given for the fixed-model row.
@@ -830,9 +833,9 @@ withheld <- mysterymodel:::mm_withhold_identity_calibration(apparent)
 rbind(computed = c(intercept = apparent$cal_intercept,
                    slope = apparent$cal_slope),
       reported = c(withheld$cal_intercept, withheld$cal_slope))
-#>             intercept slope
-#> computed -1.40273e-15     1
-#> reported           NA    NA
+#>              intercept slope
+#> computed -1.082912e-15     1
+#> reported            NA    NA
 ```
 
 ### The full-process bootstrap, on its own
@@ -908,7 +911,7 @@ mysterymodel:::mm_check_resamples(2.7)
 
 figures <- file.path(tempdir(), "worked-example")
 nom <- mm_nomogram(fits$D, out_dir = figures, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.pdf, /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.svg, /tmp/Rtmp1Zg5XE/worked-example/uds-d_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmptWtw8n/worked-example/uds-d_nomogram.pdf, /tmp/RtmptWtw8n/worked-example/uds-d_nomogram.svg, /tmp/RtmptWtw8n/worked-example/uds-d_nomogram.png
 nom
 #> <mm_nomogram>
 #>   axes            age, bmi, sex (prior_uti=no), sex (prior_uti=yes), indication
@@ -1064,9 +1067,9 @@ ticks, so the extremes of the sum are the sums of the extremes.
 ``` r
 
 nom$reading_error_by_axis
-#>                lo         hi
-#> age -6.661338e-16 0.01936783
-#> bmi -6.661338e-16 0.00000000
+#>                lo           hi
+#> age  0.000000e+00 1.936783e-02
+#> bmi -2.220446e-16 4.440892e-16
 ```
 
 Which says where the coarseness is, and so which axis would need more
@@ -1099,7 +1102,7 @@ c(between_ticks = direct$bound, lp_scale = direct$lp,
 
 exported <- mysterymodel:::mm_nomogram_export(
   nom$nomogram, figures, "worked-example", width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.pdf, /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.svg, /tmp/Rtmp1Zg5XE/worked-example/worked-example_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmptWtw8n/worked-example/worked-example_nomogram.pdf, /tmp/RtmptWtw8n/worked-example/worked-example_nomogram.svg, /tmp/RtmptWtw8n/worked-example/worked-example_nomogram.png
 basename(exported)
 #> [1] "worked-example_nomogram.pdf" "worked-example_nomogram.svg"
 #> [3] "worked-example_nomogram.png"
@@ -1162,10 +1165,10 @@ do.call(rbind, lapply(names(fits), function(k) data.frame(
   validation_matches = identical(checked[[k]]$fingerprint,
                                  fits[[k]]$fingerprint))))
 #>   analysis coefficients  development validation_matches
-#> 1        A 20486eeb8ce2 c9552f752ad9               TRUE
-#> 2        B b40edbe891b8 c9552f752ad9               TRUE
-#> 3        C 93ca893c5644 d3e0c5b952e9               TRUE
-#> 4        D 3b00d7880d0b a97f8dd9ff7e               TRUE
+#> 1        A d2c5779ca4af c9552f752ad9               TRUE
+#> 2        B 90dee135d7c6 c9552f752ad9               TRUE
+#> 3        C dadffb3bf174 d3e0c5b952e9               TRUE
+#> 4        D b3f37e1158cc a97f8dd9ff7e               TRUE
 ```
 
 A and B share a development sample and differ in shape, so their
@@ -1189,16 +1192,35 @@ c(functions = length(everything),
   exported = length(intersect(everything, exported_fns)),
   used_here = sum(used))
 #> functions  exported used_here 
-#>        55        10        40
+#>        93        22        40
 sort(everything[!used])
-#>  [1] "mm_anova_block"           "mm_candidate_pairs"      
-#>  [3] "mm_draw_splines"          "mm_exclusive_axes"       
-#>  [5] "mm_interaction_health"    "mm_interaction_rank"     
-#>  [7] "mm_interaction_support"   "mm_matrix_rank"          
-#>  [9] "mm_min_resamples"         "mm_no_corrected_interval"
-#> [11] "mm_no_information"        "mm_parameter_budget"     
-#> [13] "mm_reference_profile"     "mm_undrawable_blocks"    
-#> [15] "mm_unfittable_ordered"
+#>  [1] "mm_an"                        "mm_anova_block"              
+#>  [3] "mm_band_text_clinician"       "mm_band_text_self"           
+#>  [5] "mm_calculator"                "mm_calculator_band"          
+#>  [7] "mm_calculator_comparison"     "mm_calculator_css"           
+#>  [9] "mm_calculator_defaults"       "mm_calculator_disclaimer"    
+#> [11] "mm_calculator_gated_input"    "mm_calculator_gates"         
+#> [13] "mm_calculator_gauge"          "mm_calculator_icons"         
+#> [15] "mm_calculator_ids"            "mm_calculator_model_card"    
+#> [17] "mm_calculator_nomogram"       "mm_calculator_nomogram_panel"
+#> [19] "mm_calculator_threshold"      "mm_calculator_ui"            
+#> [21] "mm_candidate_pairs"           "mm_check_positive"           
+#> [23] "mm_collinearity_report"       "mm_cor_pairs"                
+#> [25] "mm_decision_curve"            "mm_draw_splines"             
+#> [27] "mm_exclusive_axes"            "mm_gvif"                     
+#> [29] "mm_interaction_health"        "mm_interaction_rank"         
+#> [31] "mm_interaction_support"       "mm_matrix_rank"              
+#> [33] "mm_min_resamples"             "mm_no_corrected_interval"    
+#> [35] "mm_no_information"            "mm_nomogram_page"            
+#> [37] "mm_parameter_budget"          "mm_recal_apply"              
+#> [39] "mm_recal_by"                  "mm_recal_intercept"          
+#> [41] "mm_recal_mi"                  "mm_recal_slope"              
+#> [43] "mm_redun_check"               "mm_reference_profile"        
+#> [45] "mm_relabel_axes"              "mm_require_fit"              
+#> [47] "mm_risk_ticks"                "mm_rubin"                    
+#> [49] "mm_title_case"                "mm_title_case_levels"        
+#> [51] "mm_undrawable_blocks"         "mm_unfittable_ordered"       
+#> [53] "mm_vif_check"
 ```
 
 The ones it does not reach are helpers whose results are already on the
