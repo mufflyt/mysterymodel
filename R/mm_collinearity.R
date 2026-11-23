@@ -105,14 +105,16 @@ mm_cor_pairs <- function(d, max = 0.5) {
 #'   the model, not a problem with it
 #' @return list(vif, redun, pairs, ok, text)
 #' @export
-mm_collinearity_report <- function(fit, d, outcome) {
+mm_collinearity_report <- function(fit, d, outcome,
+                                  vif_max = 4, redun_r2 = 0.9,
+                                  pair_max = 0.5) {
   preds <- d[, setdiff(names(d), outcome), drop = FALSE]
-  v <- mm_vif_check(fit)
-  r <- mm_redun_check(preds)
-  p <- mm_cor_pairs(preds)
+  v <- mm_vif_check(fit, max = vif_max)
+  r <- mm_redun_check(preds, r2 = redun_r2)
+  p <- mm_cor_pairs(preds, max = pair_max)
   txt <- c(v$reason, r$reason,
-           if (!nrow(p)) sprintf("pairs: no numeric pair at |rho| >= %g", 0.5)
-           else sprintf("pairs at |rho| >= %g: %s", 0.5,
+           if (!nrow(p)) sprintf("pairs: no numeric pair at |rho| >= %g", pair_max)
+           else sprintf("pairs at |rho| >= %g: %s", pair_max,
                         paste(sprintf("%s/%s %+.2f", p$a, p$b, p$rho),
                               collapse = ", ")))
   list(vif = v, redun = r, pairs = p, ok = v$ok && r$ok,
