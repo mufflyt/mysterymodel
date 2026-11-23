@@ -301,6 +301,60 @@ The 2 skips are the two source-scanning blocks of
 installed tree. The other 27 assertions in that file test rendered output and
 do run under check, so the D-1 decision is guarded in both lanes.
 
+## 7d. W-4, and adversarial cover for the warning-audit fixes
+
+Writing adversarial tests for W-2 and W-3 produced a third finding. W-4:
+`mm_calculator_defaults()` validated the categorical default against the schema
+and returned the numeric one unchecked. The schema's range comes from the rows
+the model was fitted on and `datadist` from what it was given, so the two can
+disagree -- the same schema-versus-filtering family as M09. With them
+disagreeing the calculator opened on a value outside the developed range, which
+is to say already extrapolating, and a missing one opened the form on a blank
+field. `test-calculator.R` asserts the in-range property, but only for an
+uncorrupted fit, so nothing covered the asymmetry.
+
+Fixed by clamping out-of-range to the nearer bound and falling back to the
+midpoint of the developed range when the value is non-finite or non-numeric.
+**A presentation choice the owner should see:** the midpoint is in range by
+construction but it is not the cohort median and must not be read as one. The
+alternative was to error on an inconsistent fitted object, which would stop the
+app starting.
+
+`tests/testthat/test-adversarial-defaults-and-ticks.R`, 172 assertions, tries
+to make each guard wrong in BOTH directions, because a guard that is too
+aggressive is as much a defect as a missing one and the minimal confirmations
+written alongside the fixes could not tell them apart.
+
+| mutation | injected defect | classification | evidence |
+|---|---|---|---|
+| MW2-a | delete the `any(is.finite())` guard, the exact pre-fix code | **DETECTED** | 7 assertions; the two base min/max warnings return |
+| MW2-b | `any()` -> `all()`: over-aggressive instead of absent | **DETECTED** | 5 assertions; a usable axis carrying NAs came back empty, and `all()` of an empty vector is `TRUE` so zero-length and `NULL` fall through to `range()` and warn anyway |
+| MW3 | delete the `%in% levels` check, the W-3 defect | **DETECTED** | 13 assertions; `actual: "vanished"` |
+| MW4 | return the numeric default unchecked, the W-4 defect | **DETECTED** | 24 assertions; `broken_to(1e+06)` returned 1000000 against a range ending at 95 |
+
+Baseline green before each, the mutation applied with its diff printed and the
+file hash shown changing, and every file hash-verified identical to baseline
+after. The errors raised inside MW3 and MW4 are the package's own validation
+refusing to score the patient the form would have opened on (`site` has
+level(s) the model never saw; 1 row(s) have a missing predictor) -- genuine
+downstream consequences, and in both cases the classification rests on the
+assertion failures rather than on the error.
+
+MW2-b is the one no minimal test would have caught, and it is the reason the
+blocks are written in pairs. An over-aggressive guard turns two warnings into a
+silently blank risk axis on a sheet that should have been drawn, which is the
+worse of the two failures.
+
+**A harness correction, recorded because it nearly shipped.** The first run of
+this campaign returned no result line for all four mutations and my classifier
+defaulted the missing result to SURVIVED. A classification taken from a tool
+that did not report is not a result in either direction. The harness now
+captures stderr, compares on tokens rather than an exact string, and refuses to
+classify without a result line. This is the third harness defect in two
+campaigns, all of the same shape.
+
+After W-4: `Status: OK`, `FAIL 0 | WARN 7 | SKIP 2 | PASS 1721`.
+
 ## 8. Acceptance checklist
 
 | # | item | state |

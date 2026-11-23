@@ -616,7 +616,21 @@ mm_calculator_defaults <- function(model) {
       }
       typical
     } else {
-      typical
+      # SYMMETRIC WITH THE CATEGORICAL BRANCH ABOVE, which refuses an
+      # "Adjust to" the schema does not recognise. This branch used to return
+      # whatever datadist held, unchecked, so a fit whose datadist and schema
+      # disagree about a predictor opened the form already extrapolating, and a
+      # missing one opened it on a blank field. The two can disagree: the
+      # schema is built from the rows the model was fitted on, datadist from
+      # what it was given. That is a state of an inconsistent fitted object,
+      # not a statistic, so the value is brought back into the developed range
+      # rather than shown as it stands (finding W-4).
+      rng <- specs[[p]]$range
+      if (!is.numeric(typical) || length(typical) != 1L ||
+          !is.finite(typical)) {
+        return(mean(rng))
+      }
+      min(max(typical, rng[1]), rng[2])
     }
   }), names(specs))
 }
