@@ -35,10 +35,12 @@ Imports:
     utils
 Suggests: 
     caret,
+    dcurves,
     Hmisc,
     knitr,
     ragg,
     rmarkdown,
+    sandwich,
     shiny,
     svglite,
     testthat (>= 3.0.0)

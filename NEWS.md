@@ -86,6 +86,62 @@ implemented, the record in `inst/decisions.md` that settled it.
   bound. A corrected c-statistic carries no interval and says why: that needs
   a nested bootstrap, which is not implemented (#19, DEC-006).
 
+## Acting on what validation measures
+
+Ported from the `nomogram-final` analysis repository this package was
+extracted from, where each had been written against a real failure. Three
+capabilities the package measured but could not act on, or did not have:
+
+* `mm_recal_intercept()`, `mm_recal_slope()`, `mm_recal_apply()`,
+  `mm_recal_by()`, `mm_rubin()` and `mm_recal_mi()` recalibrate a frozen
+  model. `mm_validate()` reported a calibration intercept and slope and
+  offered no way to correct them, which matters because a reader takes an
+  absolute probability off a nomogram's bottom axis, so a bias on the
+  log-odds scale is the error that reaches them and discrimination says
+  nothing about it. A correction is monotone, so it cannot reorder any two
+  patients and cannot repair discrimination: that is asserted, not assumed.
+  `b` is tested against 1 rather than 0, because a slope correction of 1 is
+  no correction. Standard errors are cluster-robust when a cluster is given
+  and `sandwich` is installed, and the returned `cluster_robust` flag says
+  which was used rather than leaving a caller to assume. Pooling across
+  imputations goes through Rubin's rules, because averaging the estimates
+  alone reports the within-imputation error as the whole uncertainty and
+  hides the between-imputation variance, making an interval too narrow
+  precisely because the missing data were handled properly.
+
+* `mm_decision_curve()` computes net benefit across treatment thresholds,
+  which the package had no form of. The arithmetic agrees with
+  `dcurves::dca()` to 1e-12 at every threshold, including ties exactly on the
+  threshold; `dcurves` is a test-time reference and not a dependency.
+  Computing a decision curve is not the same as being entitled to publish
+  one: net benefit is an explicit trade of a benefit against a harm and means
+  nothing until the decision-maker, the action and the two outcomes being
+  traded are named.
+
+* `mm_vif_check()`, `mm_redun_check()`, `mm_cor_pairs()` and
+  `mm_collinearity_report()` are collinearity diagnostics, which the package
+  had none of. Three questions, because each misses what the others catch:
+  variance inflation is per parameter and blind to a variable predictable
+  from a combination of others while correlating strongly with none;
+  redundancy asks exactly that; the Spearman pair matrix names the pair a
+  human can act on. `mm_collinearity_report()` requires the cohort and checks
+  it against the model's development fingerprint, because `mm_model()` does
+  not retain the rows it was fitted on and diagnostics on a different frame
+  of the same shape would read as though they described the fit.
+
+Outcome coercion in all of these goes through `mm_event_indicator()`, the
+rule the rest of the package uses, rather than the private rule the originals
+carried: a bare `as.numeric()` turns a No/Yes factor into 1 and 2, and two
+conventions would let a cohort be fitted one way round and recalibrated the
+other with nothing saying so. `mm_check_positive()` refuses a declared event
+level the outcome does not carry, which `mm_project()` already does for
+everything that goes through a project but which these entry points accept
+directly.
+
+Two functions were deliberately not ported: `mm_logit()`, a clamped variant
+no ported function needed here, and `mm_recal_axis()`, which is bound to the
+source project's held-out cycles and artefact layout.
+
 ## Refusing what cannot be meant
 
 * A predictor that reproduces the outcome, or its exact complement, is refused

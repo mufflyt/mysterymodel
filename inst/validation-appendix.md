@@ -18,9 +18,14 @@ why most of the defects listed at the end were found there.
 
 ## 1. The test suite
 
-`testthat`, 24 files, **271 test blocks containing 1079 assertions**, zero
-failures and zero skips. The package has 10 exported functions, 9 registered
-print methods and 45 internal `mm_` functions across 15 source files.
+`testthat`, 37 files, **396 test blocks containing 1893 assertions**, zero
+failures. Two blocks skip under `R CMD check` and section 6 says which and
+why. The package has 22 exported functions, 18 registered S3 methods and 92
+internal `mm_` functions across 20 source files.
+
+Every count in this paragraph is measured from the tree at the commit this
+appendix was written against, and the assertion total is the one `R CMD check`
+itself reported rather than a separate run.
 
 | file | blocks | assertions | what it holds |
 |---|---|---|---|
@@ -99,6 +104,88 @@ written and are recorded as such: one tampered with a value an axis pins as
 length one, so `rep(length.out = 1)` returned the original and the sabotage
 was a no-op; the other assumed a rank check on the supplied cohort would miss
 aliasing, when `model.matrix()` drops incomplete rows itself.
+
+## 3b. Recalibration, decision curves and collinearity
+
+Three capabilities were ported from `nomogram-final`, the analysis repository
+this package was extracted from. Each existed there because of a real failure,
+and the port is documented in
+`review/import-candidates-from-nomogram-final.md` with a per-function
+reconciliation in `review/nomogram-port-function-inventory.csv`.
+
+**What they are for.** `mm_validate()` reports a calibration intercept and
+slope and had no way to act on them. That gap matters because a reader takes an
+absolute probability off a nomogram's bottom axis or a calculator's figure, so a
+bias on the log-odds scale is the error that reaches them, and discrimination
+says nothing about it. In the source project the held-out c-statistic was
+ordinary at 0.753 against 0.809 apparent, while the held-out calibration
+intercept was +0.596 because the base rate had moved.
+
+**The invariant that governs recalibration.** `a + b * lp` with `b > 0` is
+monotone, so no two patients can change places and the c-statistic is unchanged
+**by arithmetic rather than by luck**. The suite asserts it directly, comparing
+`order()` before and after at three values of `b`. The consequence is the thing
+to keep straight: a correction is not a remedy for a model that does not
+discriminate, and a model recalibrated on a sample must not have its
+performance on that same sample reported as validation.
+
+`b` is tested against 1, not against 0. A slope correction of 1 is no
+correction, so `b = 1` is the null that matters; `b = 0` would ask whether the
+model discriminates at all, which is a different question.
+
+**The anchor with a known answer.** A maximum-likelihood logistic fit is
+calibrated on the sample that produced it by construction, so the apparent
+intercept correction is exactly 0 and the apparent slope exactly 1. The suite
+pins both to 1e-6. Drift there is an arithmetic error in the correction rather
+than a finding about the model, which is what makes it the one case where the
+right answer is known in advance.
+
+**Pooling across imputations.** `mm_rubin()` carries the between-imputation
+variance, `T = Ubar + (1 + 1/m) * B`. Omitting that term is invisible in the
+wrong direction: the point estimate stays correct and only the interval is too
+narrow, so an interval would be understated precisely because the missing data
+had been handled properly. Imputations whose estimate or standard error is not
+finite are dropped **and counted**, so one that failed to converge cannot
+become a silent absence from `B`.
+
+**Net benefit.** `mm_decision_curve()` agrees with `dcurves::dca()` to 1e-12 at
+every threshold, including ties exactly on the threshold, and is also checked
+against a four-patient fixture small enough to verify by hand. `dcurves` is a
+test-time reference, not a dependency. Computing a decision curve is not the
+same as being entitled to publish one: net benefit is an explicit trade of a
+benefit against a harm and means nothing until the decision-maker, the action
+and the two outcomes being traded are named.
+
+**Collinearity, three ways.** Variance inflation is per parameter and blind to
+a variable predictable from a combination of others while correlating strongly
+with none; redundancy asks exactly that; the Spearman pair matrix names the
+pair a human can act on. `mm_collinearity_report()` requires the cohort and
+verifies it against the model's development fingerprint, because `mm_model()`
+does not retain the rows it was fitted on and diagnostics computed on a
+different frame of the same shape would read as though they described the fit.
+
+**Mutation evidence.** Twelve mutations over the three modules, all DETECTED,
+recorded in `review/mutation-evidence.csv` with the driver kept at
+`review/mutation-campaign.py` so the run can be repeated. Two are worth naming:
+
+- *MP06* rewrites the slope test to compare `b` against 0 instead of 1. The
+  apparent-recalibration anchor catches it, because `b_p` collapses to about 0
+  on a fit whose slope is exactly 1, which reads as "this model needs
+  correcting" for a model that needs none.
+- *MP08* drops the `(1 + 1/m)` inflation from Rubin's rules. The pooled
+  standard error silently equals the within-imputation one.
+
+*MP12 survived its first attempt, and the test was at fault rather than the
+mutation.* The assertion was that the returned pairs equalled themselves in
+sorted order, which is vacuous whenever the fixture's natural order is already
+descending, and it was. `which(arr.ind = TRUE)` walks the lower triangle column
+by column, so the fixture was rebuilt with a weak first pair and a strong last
+pair; unsorted it reports 0.24 first, sorted it reports 0.98 first. With the
+sort removed the test now fails on four assertions.
+
+**What has no mutation coverage.** Internal-external cross-validation, the
+TRIPOD+AI reporting checklist and model updating are staged in a draft pull
+request and are not in this tree. Nothing in this section describes them.
 
 ## 4. External validation
 
