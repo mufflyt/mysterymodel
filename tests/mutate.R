@@ -39,6 +39,11 @@ mm_run_mutant_suite <- function(package_path, test_file, timeout = 180L) {
     "  }",
     "  state$failures <- as.integer(",
     "    sum(counts$failed) + sum(counts$error))",
+    "  if (!'test' %in% names(counts)) {",
+    "    stop('testthat did not identify individual tests')",
+    "  }",
+    "  failed <- counts$failed > 0 | counts$error > 0",
+    "  state$failed_tests <- as.character(counts$test[failed])",
     "  state$status <- 'COMPLETED'",
     "  saveRDS(state, receipt)",
     "}, error = function(e) {",
@@ -87,7 +92,13 @@ assert_green_baseline <- function(package_path, test_file) {
 # A single exact-anchor mutation in an already prepared disposable package.
 # The caller must supply its own disposable package copy and a targeted test.
 mm_apply_mutation <- function(package_path, relative_path, from, to,
-                              test_file, timeout = 180L) {
+                              test_file, expected_test,
+                              timeout = 180L) {
+  if (!is.character(expected_test) ||
+      length(expected_test) != 1L || !nzchar(expected_test)) {
+    stop("expected_test must identify the intended detector.",
+         call. = FALSE)
+  }
   target <- file.path(package_path, relative_path)
   if (!file.exists(target)) {
     return(list(status = "SURVIVED", failures = NA_integer_,
@@ -103,7 +114,8 @@ mm_apply_mutation <- function(package_path, relative_path, from, to,
   checked <- mm_run_mutant_suite(package_path, test_file,
                                   timeout = timeout)
   if (!identical(checked$status, "COMPLETED")) return(checked)
-  checked$status <- if (checked$failures > 0L) {
+  checked$status <- if (checked$failures > 0L &&
+                        expected_test %in% checked$failed_tests) {
     "DETECTED"
   } else {
     "SURVIVED"
