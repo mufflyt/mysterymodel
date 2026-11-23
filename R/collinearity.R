@@ -30,14 +30,73 @@
 # computed on a frame the model never saw would describe a different sample
 # from the fit and read as though they described the fit.
 
-#' Variance inflation factors above a threshold
+#' Generalized variance inflation factors per variable
+#'
+#' Fox and Monette's generalized variance inflation factor, computed from the
+#' correlation matrix of the coefficient estimates:
+#' `GVIF = det(R_jj) * det(R_-j-j) / det(R)`. For a one-parameter term it
+#' equals the ordinary variance inflation factor. `vif_scale` is
+#' `GVIF^(1/df)`, which puts a multi-parameter term back on the scale a reader
+#' compares against 4.
+#'
+#' @param fit An `rms` fit carrying an `assign` list.
+#' @return A data frame of `variable`, `df`, `gvif`, `adjusted` and
+#'   `vif_scale`, or `NULL` when the grouping is unavailable.
+#' @keywords internal
+mm_gvif <- function(fit) {
+  V <- stats::vcov(fit)
+  nm <- rownames(V)
+  if (is.null(nm) || is.null(fit$assign)) return(NULL)
+  drop_int <- which(nm %in% c("Intercept", "(Intercept)"))
+  keep <- setdiff(seq_along(nm), drop_int)
+  if (length(keep) < 2L) return(NULL)
+  R <- stats::cov2cor(V[keep, keep, drop = FALSE])
+  detR <- det(R)
+  if (!is.finite(detR) || detR <= 0) return(NULL)
+  asg <- fit$assign
+  # The printed variable name, not the formula term: rms calls a spline term
+  # "rms::rcs(age, 4)" and a reader is looking for "age".
+  labels <- names(asg)
+  if (!is.null(fit$Design$name) && length(fit$Design$name) == length(asg)) {
+    labels <- fit$Design$name
+  }
+  rows <- lapply(seq_along(asg), function(i) {
+    cols <- asg[[i]] - length(drop_int)
+    cols <- cols[cols >= 1L & cols <= ncol(R)]
+    if (!length(cols)) return(NULL)
+    df <- length(cols)
+    other <- if (length(cols) == ncol(R)) 1 else
+      det(R[-cols, -cols, drop = FALSE])
+    g <- det(R[cols, cols, drop = FALSE]) * other / detR
+    data.frame(variable = labels[[i]], df = df, gvif = g,
+               adjusted = g^(1 / (2 * df)), vif_scale = g^(1 / df),
+               stringsAsFactors = FALSE)
+  })
+  rows <- rows[!vapply(rows, is.null, logical(1))]
+  if (!length(rows)) return(NULL)
+  out <- do.call(rbind, rows)
+  out[order(-out$vif_scale), , drop = FALSE]
+}
+
+#' Variance inflation, per variable and per parameter
+#'
+#' THE GATE IS PER VARIABLE AND THE DETAIL IS PER PARAMETER, which is the
+#' requirement `inst/capability-matrix.md` finding 3 states and the reason it
+#' states it: `rms::vif()` is per model-matrix parameter, and the bases of one
+#' restricted cubic spline are collinear with each other by construction. On an
+#' ordinary spline model the per-parameter figures reach 126 and a check that
+#' gated on them would refuse every model fitted with `nonlinear =`. The
+#' per-variable figure alone reassures without detail, so both are returned and
+#' both are labelled.
 #'
 #' @param model An [mm_model()], or the `rms::lrm` fit inside one.
-#' @param max Flag parameters at or above this variance inflation factor.
-#'   The default of 4 is the square of the conventional `sqrt(VIF) > 2` flag:
+#' @param max Flag a VARIABLE at or above this variance inflation factor. The
+#'   default of 4 is the square of the conventional `sqrt(VIF) > 2` flag:
 #'   below it a coefficient is readable.
-#' @return A list with the sorted `vif` vector, the `flagged` subset, `ok`,
-#'   and a one-line `reason`.
+#' @return A list with the per-variable `gvif` table, the sorted per-parameter
+#'   `vif` vector, `flagged` (the per-parameter subset at or above `max`),
+#'   `flagged_variables`, `ok` (decided on the per-variable figure), and a
+#'   one-line `reason` naming both.
 #' @examples
 #' cohort <- mm_synthetic_cohort(n = 250, seed = 5)
 #' fit <- suppressWarnings(mm_model(
@@ -60,15 +119,33 @@ mm_vif_check <- function(model, max = 4) {
   }
   v <- sort(rms::vif(fit), decreasing = TRUE)
   flagged <- v[v >= max]
-  list(vif = v, flagged = flagged, ok = length(flagged) == 0L,
-       reason = if (!length(v)) "VIF: no parameters to check"
-       else if (length(flagged) == 0L)
-         sprintf("VIF: highest %.2f (%s), none at or above %g",
-                 v[1], names(v)[1], max)
-       else
-         sprintf("VIF: %d parameter(s) at or above %g: %s", length(flagged),
-                 max, paste(sprintf("%s %.2f", names(flagged), flagged),
-                            collapse = ", ")))
+  g <- mm_gvif(fit)
+  # The verdict rests on the per-variable figure when it is available. Without
+  # the grouping there is nothing to aggregate by, and falling back to the
+  # per-parameter gate is stated in the reason rather than left to be assumed.
+  flagged_vars <- if (is.null(g)) character(0) else
+    g$variable[g$vif_scale >= max]
+  ok <- if (is.null(g)) length(flagged) == 0L else !length(flagged_vars)
+
+  per_param <- if (!length(v)) "no parameters to check"
+    else if (!length(flagged))
+      sprintf("highest %.2f (%s), none at or above %g", v[1], names(v)[1], max)
+    else sprintf("%d parameter(s) at or above %g: %s", length(flagged), max,
+                 paste(sprintf("%s %.2f", names(flagged), flagged),
+                       collapse = ", "))
+  per_var <- if (is.null(g))
+      "per variable: not available, so the verdict is the per-parameter one"
+    else if (!length(flagged_vars))
+      sprintf("per variable: highest %.2f (%s, %d df), none at or above %g",
+              g$vif_scale[1], g$variable[1], g$df[1], max)
+    else sprintf("per variable: %d at or above %g: %s", length(flagged_vars),
+                 max, paste(sprintf("%s %.2f",
+                                    g$variable[g$vif_scale >= max],
+                                    g$vif_scale[g$vif_scale >= max]),
+                            collapse = ", "))
+  list(gvif = g, vif = v, flagged = flagged,
+       flagged_variables = flagged_vars, ok = ok,
+       reason = paste0("VIF: ", per_var, "; per parameter: ", per_param))
 }
 
 #' Which variables are predictable from the others

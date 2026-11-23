@@ -129,6 +129,23 @@ capabilities the package measured but could not act on, or did not have:
   not retain the rows it was fitted on and diagnostics on a different frame
   of the same shape would read as though they described the fit.
 
+`mm_vif_check()` gates on the PER-VARIABLE generalized variance inflation
+factor (Fox and Monette), computed from the correlation matrix of the
+coefficient estimates, and reports the per-parameter `rms::vif()` figures
+beside it, labelled. The distinction is not cosmetic: the bases of one
+restricted cubic spline are collinear with each other by construction, so on
+an ordinary model fitted with `nonlinear = ` the per-parameter figures reach
+126 and a check that gated on them would refuse every spline model. This is
+the requirement `inst/capability-matrix.md` finding 3 had already stated,
+before any collinearity function existed to meet it. A genuinely duplicated
+predictor is still refused.
+
+`_pkgdown.yml` now lists every documented topic, and
+`test-pkgdown-index-complete.R` keeps it that way in both directions. The site
+build had been failing since the accessors were added: a curated reference
+index is the one artefact that using the package cannot check, so twelve
+topics had accumulated unlisted, the oldest for weeks.
+
 Outcome coercion in all of these goes through `mm_event_indicator()`, the
 rule the rest of the package uses, rather than the private rule the originals
 carried: a bare `as.numeric()` turns a No/Yes factor into 1 and 2, and two

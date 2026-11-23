@@ -18,41 +18,36 @@ why most of the defects listed at the end were found there.
 
 ## 1. The test suite
 
-`testthat`, 37 files, **396 test blocks containing 1893 assertions**, zero
-failures. Two blocks skip under `R CMD check` and section 6 says which and
-why. The package has 22 exported functions, 18 registered S3 methods and 92
-internal `mm_` functions across 20 source files.
+`testthat`, 38 files, **399 test blocks containing 1926 assertions**, zero
+failures and zero skips when run against the source tree. The package has 22
+exported functions, 18 registered S3 methods and 93 internal `mm_` functions
+across 20 source files.
 
-Every count in this paragraph is measured from the tree at the commit this
-appendix was written against, and the assertion total is the one `R CMD check`
-itself reported rather than a separate run.
+Every count here is measured, not carried forward. The figures are the
+in-repository ones, because they are the stable measure of how much is
+asserted: `R CMD check` runs the suite against the installed tree, where the
+structural blocks that read `R/` and `_pkgdown.yml` cannot see them and skip,
+so its assertion count is slightly lower by construction. Section 6 names
+which blocks those are.
 
 | file | blocks | assertions | what it holds |
 |---|---|---|---|
+| `test-calculator.R` | 29 | 184 | the front end: form, server, gauge, comparison rows, and the figures it may not show |
+| `test-adversarial-defaults-and-ticks.R` | 9 | 172 | every guard of findings W-2, W-3 and W-4, tried wrong in both directions |
 | `test-interactions.R` | 15 | 92 | the rank invariant, LR against an independent nested fit, candidate parsing |
 | `test-discrimination-interval.R` | 11 | 88 | every degenerate c-statistic interval, against an independent `pROC` call |
-| `test-metric-reporting.R` | 16 | 71 | one scaled-Brier reference, withheld identity calibration, refused inputs |
+| `test-recalibrate.R` | 13 | 88 | a = 0 and b = 1 on the development sample, order preserved, Rubin by hand |
+| `test-metric-reporting.R` | 16 | 73 | one scaled-Brier reference, withheld identity calibration, refused inputs |
+| `test-estimability-depth.R` | 11 | 72 | separation as a definition, complexity reporting, convergence |
 | `test-saboteurs-2.R` | 21 | 70 | tampering with the plan, the screen, the drawn sheet |
 | `test-baseline-and-scope.R` | 11 | 65 | declared baselines, tabulation outcomes, ordered factors, event direction |
+| `test-accessors.R` | 11 | 64 | the eight generics, and the three that cannot delegate to `rms` |
 | `test-resampling.R` | 5 | 61 | clustered draws, whole units, refused identifiers |
+| `test-collinearity.R` | 9 | 59 | three diagnostics, and the spline whose own bases must not flag it |
 | `test-validation.R` | 11 | 58 | the four bases, the resample floor, the Monte Carlo error |
-| `test-eligibility.R` | 11 | 52 | one rule for fitting and scoring, exclusions counted apart |
-| `test-plan-and-drawing.R` | 8 | 49 | the project's plan, departures, undrawable blocks, exclusive axes |
-| `test-estimability-depth.R` | 8 | 48 | separation as a definition, complexity reporting, convergence |
-| `test-splines.R` | 9 | 47 | both allocations, the adjusted reference, no p-value |
-| `test-leakage.R` | 19 | 44 | duplication errors, separation warnings, association silence |
-| `test-sample-size.R` | 13 | 41 | the fitted sample, not the supplied one |
-| `test-saboteurs.R` | 20 | 36 | the original twenty, each verified against a disabled guard |
-| `test-model-reference.R` | 16 | 35 | the schema a deployed model may receive |
-| `test-bootstrap-fidelity.R` | 7 | 33 | the unit drawn, the resamples fitted, the cohort identity |
-| `test-ordered-predictors.R` | 6 | 31 | ordered against nominal against scored, and the invariances |
-| `test-project.R` | 11 | 23 | a plan that cannot be meant fails closed |
-| `test-reading-error.R` | 6 | 22 | the between-tick bound, searched for counterexamples |
-| `test-cleaning.R` | 11 | 18 | the ledger reconciles or errors |
-| `test-nomogram.R` | 8 | 17 | agreement at ticks, tick profiles |
-| `test-full-process.R` | 7 | 16 | what the strategy bootstrap re-executes |
-| `test-eda.R` | 9 | 15 | denominators travel with percentages |
-| `test-synthetic.R` | 7 | 15 | determinism, and the caller's random-number state |
+| `test-eligibility.R` | 13 | 56 | one rule for fitting and scoring, exclusions counted apart |
+| `test-nomogram.R` | 13 | 53 | the sheet against the model, read-back, and a quiet empty axis |
+| `test-decision-curve.R` | 12 | 40 | `dcurves` agreement to 1e-12, and four patients done by hand |
 
 Two habits run through it. Expected values are **computed independently in
 the test** rather than recorded from a previous run, so a test fails when the
@@ -155,6 +150,19 @@ test-time reference, not a dependency. Computing a decision curve is not the
 same as being entitled to publish one: net benefit is an explicit trade of a
 benefit against a harm and means nothing until the decision-maker, the action
 and the two outcomes being traded are named.
+
+**The per-variable gate, and why it is not the per-parameter one.**
+`rms::vif()` is per model-matrix parameter, and the bases of one restricted
+cubic spline are collinear with each other by construction. On an ordinary
+model fitted with `nonlinear = "age"` the per-parameter figures are 14.4, 126.4
+and 71.4 for the three `age` columns, so a check that gated on them would
+refuse every spline model this package can fit. `mm_vif_check()` therefore
+gates on Fox and Monette's generalized variance inflation factor per variable,
+computed from the correlation matrix of the coefficient estimates, which puts
+that same `age` term at 1.01 on the comparable scale while still printing the
+per-parameter values beside it. `inst/capability-matrix.md` finding 3 stated
+this requirement before any collinearity function existed to meet it, and the
+first port of this module did not meet it.
 
 **Collinearity, three ways.** Variance inflation is per parameter and blind to
 a variable predictable from a combination of others while correlating strongly

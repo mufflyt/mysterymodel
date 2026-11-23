@@ -154,3 +154,48 @@ test_that("the VIF check accepts either an mm_model or the fit inside it", {
   f <- mm_clean_fixture()
   expect_equal(mm_vif_check(f$fit)$vif, mm_vif_check(f$fit$fit)$vif)
 })
+
+test_that("a spline model is not flagged for the collinearity of its own bases", {
+  # THE FALSE ALARM THIS FILE EXISTS TO PREVENT, and the requirement stated in
+  # inst/capability-matrix.md finding 3 before the function was ported.
+  # rms::vif() is per model-matrix parameter and the bases of one restricted
+  # cubic spline are collinear with each other BY CONSTRUCTION: on an ordinary
+  # spline model they reach 126, so a check gated on the per-parameter figures
+  # would refuse every model fitted with nonlinear =. The gate is therefore the
+  # per-variable generalized VIF and the per-parameter values are reported
+  # beside it, labelled.
+  cohort <- mm_synthetic_cohort(n = 400, seed = 3)
+  fit <- suppressWarnings(mm_model(
+    mm_project("sp", "event", c("age", "bmi", "sex"), nonlinear = "age",
+               positive_class = 1, cohort = cohort), cohort))
+  v <- mm_vif_check(fit)
+
+  # The per-parameter figures are alarming and are still reported.
+  expect_gt(max(v$vif), 50)
+  expect_true(any(grepl("^age", names(v$flagged))))
+  # The verdict is not taken from them.
+  expect_true(v$ok)
+  expect_identical(v$flagged_variables, character(0))
+  expect_match(v$reason, "per variable:")
+  expect_match(v$reason, "per parameter:")
+
+  # The spline carries its degrees of freedom, and on the comparable scale it
+  # is nowhere near the threshold.
+  g <- v$gvif
+  expect_true(is.data.frame(g))
+  expect_setequal(g$variable, c("age", "bmi", "sex"))
+  expect_identical(g$df[g$variable == "age"], 3L)
+  expect_lt(g$vif_scale[g$variable == "age"], 2)
+  # A one-parameter term's generalized VIF IS the ordinary one.
+  expect_equal(g$vif_scale[g$variable == "bmi"], unname(v$vif[["bmi"]]),
+               tolerance = 1e-8)
+  expect_equal(g$gvif[g$variable == "bmi"], g$vif_scale[g$variable == "bmi"])
+  # vif_scale is GVIF^(1/df), and adjusted is its square root.
+  expect_equal(g$adjusted, g$vif_scale^0.5, tolerance = 1e-10)
+
+  # And a genuinely collinear pair is still refused, so the per-variable gate
+  # has not simply been made permissive.
+  f <- mm_collin_fixture()
+  expect_false(mm_vif_check(f$fit)$ok)
+  expect_setequal(mm_vif_check(f$fit)$flagged_variables, c("age", "age_copy"))
+})

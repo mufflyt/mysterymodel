@@ -9,3 +9,5 @@
 ^CITATION\.cff$
 ^\.DS_Store$
 ^data-raw$
+^review$
+^srr$
