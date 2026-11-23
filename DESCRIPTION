@@ -34,7 +34,10 @@ Imports:
     stats,
     utils
 Suggests: 
+    Hmisc,
     knitr,
+    pkgload,
+    sandwich,
     ragg,
     rmarkdown,
     svglite,
