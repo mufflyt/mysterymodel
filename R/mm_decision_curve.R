@@ -48,11 +48,18 @@ mm_decision_curve <- function(obs, pred, thresholds = seq(0, 0.5, by = 0.01),
       stop("mm_decision_curve(): the outcome is a factor with ", length(lv),
            " levels (", paste(lv, collapse = ", "), "). Net benefit needs two.",
            call. = FALSE)
-    pos <- positive %||% lv[2L]
+    if (is.null(positive)) {
+      stop("mm_decision_curve(): factor outcomes require an explicit ",
+           "positive event level.", call. = FALSE)
+    }
+    pos <- positive
     if (!pos %in% lv)
       stop("mm_decision_curve(): positive = '", pos, "' is not a level of the ",
            "outcome (", paste(lv, collapse = ", "), ").", call. = FALSE)
     y <- as.integer(obs == pos)
+  } else if (!is.null(positive)) {
+    stop("mm_decision_curve(): positive is only for factor outcomes.",
+         call. = FALSE)
   } else if (is.logical(obs)) {
     y <- as.integer(obs)
   } else if (is.numeric(obs)) {
