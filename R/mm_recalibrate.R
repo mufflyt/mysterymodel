@@ -126,7 +126,11 @@ mm_recal_slope <- function(lp, y, cluster = NULL) {
 #' Returns probabilities, which is what the nomogram's bottom axis shows.
 #' @export
 mm_recal_apply <- function(lp, a, b = 1) {
-  stopifnot(is.finite(a), is.finite(b))
+  if (length(a) != 1L || length(b) != 1L ||
+      !is.finite(a) || !is.finite(b) || b <= 0) {
+    stop('Recalibration requires a finite intercept and positive slope.',
+         call. = FALSE)
+  }
   stats::plogis(a + b * as.numeric(lp))
 }
 
