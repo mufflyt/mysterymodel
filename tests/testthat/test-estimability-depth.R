@@ -204,3 +204,112 @@ test_that("separation is the strict definition, with no gap required", {
     as_fit(c(0.40, 0.44, 0.50, 0.50, 0.55, 0.60)), y)
   expect_false(touching$complete_separation)
 })
+
+test_that("a singular Hessian names the design or the data, whichever it is", {
+  # Found on caret's German Credit, which is one-hot encoded with every level
+  # kept: each group of indicators sums to the intercept, so 61 columns span
+  # 48 dimensions and 13 coefficients are not identified. The message used to
+  # blame separation for both causes, and the fix differs: drop a level, or
+  # reduce the model.
+  # caret is a Suggests, so it may not be there. The invariance this test
+  # asserts is also covered on synthetic data above; what caret adds is a
+  # published cohort that really is encoded this way.
+  skip_if_not_installed("caret")
+  data(GermanCredit, package = "caret", envir = environment())
+  credit <- GermanCredit
+  credit$bad <- as.integer(credit$Class == "Bad")
+  predictors <- setdiff(names(credit), c("Class", "bad"))
+
+  design <- stats::model.matrix(
+    stats::as.formula(paste("~", paste(predictors, collapse = " + "))),
+    data = credit)
+  design <- design[, colnames(design) != "(Intercept)", drop = FALSE]
+  expect_lt(mysterymodel:::mm_matrix_rank(design), ncol(design))
+
+  fit_it <- function(p) tryCatch(suppressWarnings(mm_model(
+    mm_project("gc", "bad", p, positive_class = 1,
+               cohort = credit, seed = 1978), credit)),
+    error = function(e) conditionMessage(e))
+
+  # Two of this cohort's indicator columns are zero for every one of the 1000
+  # rows. That is the more specific cause and it is reported first, by name,
+  # because dropping a column nobody can estimate is a smaller change than
+  # reducing the model.
+  constant <- fit_it(predictors)
+  expect_true(is.character(constant))
+  expect_match(constant, "do not vary among the 1000 row")
+  expect_match(constant, "`Purpose.Vacation` is 0 in every one of them")
+  expect_match(constant, "`Personal.Female.Single` is 0 in every one of them")
+
+  # With those gone the design is still deficient, for the other reason, and
+  # gets the other message.
+  deficient <- fit_it(setdiff(predictors,
+                              c("Purpose.Vacation", "Personal.Female.Single")))
+  expect_true(is.character(deficient))
+  expect_match(deficient, "the reason is the design and not the data")
+  expect_match(deficient, "exact combinations of the others")
+  expect_match(deficient, "sum to the intercept")
+  expect_no_match(deficient, "separates the outcome")
+
+  # The other cause, on a design of full rank, gets the other message.
+  cohort <- mm_synthetic_cohort(n = 600, prevalence = 0.15, seed = 1978)
+  male <- cohort$sex == "male"
+  cohort$event[male] <- as.integer(cohort$age[male] > 70)
+  separated <- tryCatch(suppressWarnings(mm_model(
+    mm_project("s", "event", c("age", "bmi", "sex"), positive_class = 1,
+               cohort = cohort, seed = 1978),
+    cohort, interactions = list(c("age", "sex")))),
+    error = function(e) conditionMessage(e))
+  expect_true(is.character(separated))
+  expect_match(separated, "design is of full rank")
+  expect_match(separated, "separates the outcome")
+  expect_no_match(separated, "exact combinations of the others")
+})
+
+test_that("the event of a Bad/Good outcome must be declared", {
+  # German Credit again. Sort puts Bad first, so an inferred event would be
+  # Good: a model of creditworthiness reported as a model of default.
+  skip_if_not_installed("caret")
+  data(GermanCredit, package = "caret", envir = environment())
+  expect_error(mm_project("gc", "Class", c("Duration", "Amount"),
+                          cohort = GermanCredit),
+               "neither of them says which is the event")
+  expect_no_error(mm_project("gc", "Class", c("Duration", "Amount"),
+                             positive_class = "Bad",
+                             cohort = GermanCredit))
+})
+
+test_that("a rank-deficient design is named without needing caret", {
+  # The same property as the German Credit test above, on indicator columns
+  # built here, so the check does not depend on an optional package.
+  set.seed(1978)
+  n <- 400
+  group <- sample(c("a", "b", "c"), n, TRUE)
+  cohort <- data.frame(
+    x = stats::rnorm(n),
+    is_a = as.integer(group == "a"),
+    is_b = as.integer(group == "b"),
+    is_c = as.integer(group == "c"),
+    y = stats::rbinom(n, 1L, 0.3))
+  # Every level kept, so the three indicators sum to one on every row.
+  expect_true(all(cohort$is_a + cohort$is_b + cohort$is_c == 1L))
+
+  project <- mm_project("ind", "y", c("x", "is_a", "is_b", "is_c"),
+                        positive_class = 1, cohort = cohort, seed = 1978)
+  design <- stats::model.matrix(~ x + is_a + is_b + is_c, data = cohort)
+  design <- design[, colnames(design) != "(Intercept)", drop = FALSE]
+  expect_equal(ncol(design), 4L)
+  expect_equal(mysterymodel:::mm_matrix_rank(design), 3L)
+
+  raised <- tryCatch(suppressWarnings(mm_model(project, cohort)),
+                     error = function(e) conditionMessage(e))
+  expect_true(is.character(raised))
+  expect_match(raised, "the reason is the design and not the data")
+  expect_match(raised, "4 column\\(s\\) span only 3 dimension\\(s\\)")
+  expect_match(raised, "sum to the intercept")
+
+  # Dropping one indicator makes it estimable, which is the advice given.
+  fixed <- mm_project("ind", "y", c("x", "is_b", "is_c"),
+                      positive_class = 1, cohort = cohort, seed = 1978)
+  expect_s3_class(suppressWarnings(mm_model(fixed, cohort)), "mm_model")
+})

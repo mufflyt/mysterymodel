@@ -4,7 +4,7 @@
 \alias{mm_nomogram_export}
 \title{Export the nomogram as vector and raster files}
 \usage{
-mm_nomogram_export(nom, out_dir, slug, width, height)
+mm_nomogram_export(nom, out_dir, slug, width, height, id = NULL)
 }
 \arguments{
 \item{nom}{An \code{rms} nomogram.}

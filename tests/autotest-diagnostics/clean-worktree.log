@@ -1,0 +1,335 @@
+Loading required namespace: devtools
+ℹ Loading mysterynpi
+* installing *source* package ‘mysterynpi’ ...
+** this is package ‘mysterynpi’ version ‘0.10.0’
+** using non-staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** tests
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+  converting help for package ‘mysterynpi’
+    affirm_unique_index                     example
+    as_linkage_table                        example
+    benchmark_axes                          example
+    benchmark_comparison                    example
+    benchmark_decisions                     example
+    check_scalar                            example
+    compact_name_key                        example
+    count_missing_values                    example
+    drop_vector_attributes                  example
+    finite_or_na                            example
+    graduation_year_agreement               example
+    graduation_year_band                    example
+    is_undefined_number                     example
+    match_npi                               example
+    name_surname_components                 example
+    name_surname_match_type                 example
+    names_have_compatible_given             example
+    names_have_compatible_surname           example
+    nickname_dictionary_version             example
+    read_name_column                        example
+    reject_list_columns                     example
+    resolve_na_action                       example
+    resolve_one_to_one                      example
+    strip_med_suffix                        example
+    surname_key_variants                    example
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded
+* DONE (mysterynpi)
+WARN: longer object length is not a multiple of shorter object length | call: str_const_i > testthat_start 
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+Note: method with signature 'DBIConnection#Id' chosen for function 'dbExistsTable',
+ target signature 'duckdb_connection#Id'.
+ "duckdb_connection#ANY" would also be valid
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+duckdb is storing downloaded extensions and secrets under ~/.duckdb:
+i /Users/tylermuffly/.duckdb
+This persists across sessions and is shared with the DuckDB CLI and other clients.
+i Run duckdb(shared_home = FALSE) to use a temporary directory instead.
+i See ?duckdb_storage for details and alternatives.
+ERROR: Test failures. 
+elapsed 266 s

@@ -35,13 +35,79 @@ test_that("every basis survives being added, in order", {
 })
 
 test_that("it names what it re-executed, and what it did not", {
+  # THE CLAIM IS COMPUTED. This used to assert the string "imputation,
+  # selection and tuning are not in this pipeline yet", which was written when
+  # none of them existed and went on passing after mm_splines() and
+  # mm_interactions() shipped - so the guard pinned a reassurance in place
+  # precisely for the caller who had screened, picked, and most needed to
+  # doubt it. The fixture splines `age`, which is a choice this function
+  # inherits, so held_fixed has to say so.
   f <- fp_fixture()
   v <- mm_validate(f$model, f$cohort, B = 15, full_process = TRUE)
   detail <- v$full_process_detail
   expect_true(all(c("knot placement", "datadist", "factor levels") %in%
                     detail$covers))
+  expect_true("which predictors are splined" %in% detail$held_fixed)
   note <- v$metrics$note[v$metrics$basis == "bootstrap, full process"]
-  expect_match(note, "imputation, selection and tuning are not in this")
+  expect_match(note, "HELD FIXED, so the optimism excludes it")
+  expect_match(note, "which predictors are splined", fixed = TRUE)
+  # And it no longer says the thing that was never checked against behaviour.
+  expect_no_match(note, "not in this pipeline", fixed = TRUE)
+  # A model that prespecifies its whole shape holds nothing fixed, and says
+  # that rather than saying nothing.
+  plain <- suppressWarnings(mm_model(f$model$project, f$cohort))
+  w <- mm_validate(plain, f$cohort, B = 15, full_process = TRUE)
+  expect_identical(w$full_process_detail$held_fixed, character(0))
+  expect_match(w$metrics$note[w$metrics$basis == "bootstrap, full process"],
+               "no data-dependent choice is held fixed")
+})
+
+test_that("a refit puts the caller's own choice inside the optimism", {
+  f <- fp_fixture()
+  # The strategy, made repeatable. Here it only reproduces the model, which is
+  # the honest minimum: a real one would select or tune on `draw`.
+  calls <- 0L
+  again <- function(project, draw) {
+    calls <<- calls + 1L
+    suppressWarnings(mm_model(project, draw, nonlinear = "age",
+                              check_leakage = FALSE))
+  }
+  v <- mm_validate(f$model, f$cohort, B = 15, full_process = TRUE,
+                   refit = again)
+  detail <- v$full_process_detail
+  # Once on the development rows to check the equation, then once per resample.
+  expect_identical(calls, 16L)
+  expect_true("the strategy `refit` re-executes" %in% detail$covers)
+  expect_identical(detail$held_fixed, character(0))
+  expect_match(v$metrics$note[v$metrics$basis == "bootstrap, full process"],
+               "`refit` is re-executed per resample", fixed = TRUE)
+  # It really validated: the splined choice is no longer excluded, and the
+  # correction still points the only direction a correction can.
+  expect_lt(detail$corrected[["c_stat"]], detail$apparent$c_stat)
+})
+
+test_that("a refit that fits a different equation is refused, before any resample", {
+  f <- fp_fixture()
+  calls <- 0L
+  other <- function(project, draw) {
+    calls <<- calls + 1L
+    # No spline on age: a different equation from the one being corrected.
+    suppressWarnings(mm_model(project, draw, check_leakage = FALSE))
+  }
+  expect_error(
+    mm_full_process(f$model, f$cohort, B = 15, refit = other),
+    "the optimism would belong to a model nobody fitted")
+  # ONCE. Not sixteen times: the check is what the development-row call is
+  # for, and spending B fits before noticing is how a wrong correction gets
+  # paid for in full.
+  expect_identical(calls, 1L)
+
+  expect_error(mm_full_process(f$model, f$cohort, B = 15, refit = "nope"),
+               "must be a function")
+  expect_error(
+    mm_full_process(f$model, f$cohort, B = 15,
+                    refit = function(project, draw) draw),
+    "must return an mm_model")
 })
 
 test_that("resamples that could not be fitted are counted, not hidden", {

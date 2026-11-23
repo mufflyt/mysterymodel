@@ -59,11 +59,47 @@ reference:
       and held-out numbers are not interchangeable.
     contents:
       - mm_validate
+  - title: Inspect the fit
+    desc: >
+      The standard generics over a fitted model. Three cannot delegate to
+      `rms` and the documentation says which, and why.
+    contents:
+      - mm_model-accessors
+  - title: Recalibrate
+    desc: >
+      Correcting what a model says about the LEVEL of risk, which is the error
+      a reader of an absolute probability actually meets. A correction is
+      monotone, so it reorders nobody and cannot repair discrimination.
+    contents:
+      - mm_recal_intercept
+      - mm_recal_slope
+      - mm_recal_apply
+      - mm_recal_by
+      - mm_recal_mi
+      - mm_rubin
+  - title: Clinical utility
+    desc: >
+      Net benefit across the thresholds a reader might hold. Computing the
+      curve is not authorisation to publish one.
+    contents:
+      - mm_decision_curve
+  - title: Collinearity
+    desc: >
+      Three questions, because each misses what the others catch. The verdict
+      is per variable; the per-parameter detail is reported beside it, since
+      one spline's bases are collinear with each other by construction.
+    contents:
+      - mm_collinearity_report
+      - mm_vif_check
+      - mm_redun_check
+      - mm_cor_pairs
   - title: Present
     desc: >
-      A nomogram that is checked against the model it was drawn from.
+      A nomogram that is checked against the model it was drawn from, and a
+      calculator built from the model's own prediction schema.
     contents:
       - mm_nomogram
+      - mm_calculator
   - title: Data
     contents:
       - mm_synthetic_cohort

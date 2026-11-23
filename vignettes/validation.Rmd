@@ -150,8 +150,13 @@ c(no_information_brier = detail$no_information_brier,
     detail$no_information_brier)
 ```
 
-On a cohort of 150 that correction moved the reported number from -0.024 to
--0.040, so it is not a rounding matter.
+On a cohort of 150, that correction moved the reported number from -0.024 to
+-0.040 when the change was made, so it is not a rounding matter. That pair is a
+measurement from the time of the change and is not reproducible from the code
+as it now stands: the differenced quantity no longer exists, and
+`optimism[["brier_scaled"]]` is derived consistently with the corrected value,
+so differencing and deriving now agree exactly. The figures above, from this
+vignette's own cohort, are the ones a reader can check.
 
 Resamples that cannot be fitted are counted, not dropped quietly:
 

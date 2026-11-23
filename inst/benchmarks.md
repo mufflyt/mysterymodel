@@ -59,6 +59,11 @@ rms      8.1.1
 Hmisc    5.3.0
 ```
 
+| `GermanCredit` | caret | 1000 x 62 | `Class`, Bad/Good, 300 Bad | one-hot indicators keeping every level, so a rank-deficient design |
+
+`caret` is a declared `Suggests`, so this is the one external cohort whose
+checks run on every build rather than being recorded here.
+
 ## What each benchmark found
 
 The defects are recorded in `inst/decisions.md`. In short: `titanic3` found
