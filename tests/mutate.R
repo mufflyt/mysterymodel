@@ -93,11 +93,18 @@ assert_green_baseline <- function(package_path, test_file) {
 # The caller must supply its own disposable package copy and a targeted test.
 mm_apply_mutation <- function(package_path, relative_path, from, to,
                               test_file, expected_test,
-                              timeout = 180L) {
+                              timeout = 180L,
+                              allow_in_place = FALSE) {
   if (!is.character(expected_test) ||
       length(expected_test) != 1L || !nzchar(expected_test)) {
     stop("expected_test must identify the intended detector.",
          call. = FALSE)
+  }
+  if (!isTRUE(allow_in_place) &&
+      file.exists(file.path(package_path, ".git"))) {
+    stop("Refusing to mutate a Git checkout. Pass a disposable copy, or ",
+         "explicitly authorize an isolated worktree with ",
+         "allow_in_place = TRUE.", call. = FALSE)
   }
   target <- file.path(package_path, relative_path)
   if (!file.exists(target)) {
@@ -110,6 +117,14 @@ mm_apply_mutation <- function(package_path, relative_path, from, to,
     return(list(status = "SURVIVED", failures = NA_integer_,
                 reason = "anchor missing or not unique"))
   }
+  backup <- tempfile(fileext = ".R")
+  if (!file.copy(target, backup, overwrite = TRUE)) {
+    stop("Could not preserve original mutation target.", call. = FALSE)
+  }
+  on.exit({
+    file.copy(backup, target, overwrite = TRUE)
+    unlink(backup)
+  }, add = TRUE)
   writeLines(sub(from, to, body, fixed = TRUE), target)
   checked <- mm_run_mutant_suite(package_path, test_file,
                                   timeout = timeout)
