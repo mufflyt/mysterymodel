@@ -54,6 +54,18 @@ mm_iecv <- function(project, cohort, cluster_col,
     held <- as.character(sites) == folds[[i]]
     training <- cohort[!held, , drop = FALSE]
     held_rows <- cohort[held, , drop = FALSE]
+    if (!is.null(project$cluster_id)) {
+      repeated <- intersect(
+        unique(as.character(training[[project$cluster_id]])),
+        unique(as.character(held_rows[[project$cluster_id]]))
+      )
+      repeated <- repeated[!is.na(repeated)]
+      if (length(repeated)) {
+        stop('IECV fold ', folds[[i]], ': ', length(repeated),
+             ' subject cluster(s) appear in training and holdout.',
+             call. = FALSE)
+      }
+    }
     eligible <- mm_evaluable(project, held_rows)
     val <- held_rows[eligible$usable, , drop = FALSE]
     y <- mm_event_indicator(val[[project$outcome]],
