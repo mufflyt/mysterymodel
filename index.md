@@ -64,8 +64,11 @@ and
 [`mm_collinearity_report()`](https://mufflyt.github.io/mysterymodel/reference/mm_collinearity_report.md)
 are the collinearity diagnostics. Twenty-two exported functions in
 total, 399 test blocks carrying 1926 assertions across 38 files, zero
-failures, and `R CMD check --as-cran` reports no errors. What is still
-missing is named in the roadmap below and in the
+failures, and `R CMD check` and the pkgdown build both pass in CI, which
+runs `--as-cran` and treats a warning as a failure. Those counts come
+from `Rscript tools/measure-facts.R --assertions`, which also reports
+whether this file still states them. What is still missing is named in
+the roadmap below and in the
 [changelog](https://mufflyt.github.io/mysterymodel/NEWS.md): imputation
 inside resampling is the largest gap, internal-external validation and
 the reporting end are staged in a draft but not yet merged, and nothing

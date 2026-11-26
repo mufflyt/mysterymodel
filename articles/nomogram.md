@@ -376,7 +376,7 @@ mysterymodel:::mm_off_axis(nom$nomogram, c(min(totals), total, 500))
 
 out <- file.path(tempdir(), "nomogram-article")
 drawn <- mm_nomogram(model, out_dir = out, width = 13, height = 9)
-#> wrote 3 nomogram file(s): /tmp/RtmpAPeUEc/nomogram-article/uds_nomogram.pdf, /tmp/RtmpAPeUEc/nomogram-article/uds_nomogram.svg, /tmp/RtmpAPeUEc/nomogram-article/uds_nomogram.png
+#> wrote 3 nomogram file(s): /tmp/RtmpiwT2Ml/nomogram-article/uds_nomogram.pdf, /tmp/RtmpiwT2Ml/nomogram-article/uds_nomogram.svg, /tmp/RtmpiwT2Ml/nomogram-article/uds_nomogram.png
 basename(drawn$files)
 #> [1] "uds_nomogram.pdf" "uds_nomogram.svg" "uds_nomogram.png"
 ```

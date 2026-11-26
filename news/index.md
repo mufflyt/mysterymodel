@@ -135,6 +135,38 @@ settled it.
   implemented
   ([\#19](https://github.com/mufflyt/mysterymodel/issues/19), DEC-006).
 
+### Keeping the documentation honest
+
+- `tools/measure-facts.R` measures the countable claims this package’s
+  documentation makes about itself (exports, registered methods,
+  internal functions, source files, test files, blocks, and optionally
+  assertions) and reports whether the README and the validation appendix
+  still state them. It prints and does not fail, because a per-number
+  expectation is one more thing to update whenever a test is added and
+  the pressure under that friction runs one way: the expected number
+  gets edited until the build is green, which is the drift wearing a
+  test.
+
+  It also checks the documents, not just the code, because a probe that
+  only prints correct numbers cannot show that the README contains them.
+  On 2026-11-22 the README claimed eleven exported functions, 318 test
+  blocks, 1301 assertions and 25 files while the appendix claimed 24
+  files, 271 blocks, 1079 assertions, 10 exports and 15 source files.
+  Every one was wrong, none sat inside a test contract, and nothing
+  failed for weeks.
+
+  Counted phrases that match no measured value are printed with their
+  phrase rather than adjudicated, because a prose count can legitimately
+  be about a subset: “41 blocks across two files” is the saboteur
+  suites, not the suite.
+
+- `review/release-readiness.md` corrects its own check row. It had
+  recorded `Status: OK` from `R CMD check --no-manual`, which is weaker
+  than the gate: CI runs `--as-cran` with `error_on = "warning"`, and
+  under that invocation the same tree reported one WARNING and one NOTE.
+  Both are fixed and CI passes, but the row had reported a local run as
+  though it were the gate.
+
 ### Acting on what validation measures
 
 Ported from the `nomogram-final` analysis repository this package was
