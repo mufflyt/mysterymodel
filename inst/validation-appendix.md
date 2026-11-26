@@ -23,12 +23,21 @@ failures and zero skips when run against the source tree. The package has 22
 exported functions, 18 registered S3 methods and 93 internal `mm_` functions
 across 20 source files.
 
-Every count here is measured, not carried forward. The figures are the
+Every count here is produced by `Rscript tools/measure-facts.R
+--assertions`, which also reports whether this file and the README still state
+the values it measures. That probe exists because the numbers in this
+paragraph were wrong for weeks, in every component, and none of them sat
+inside a test contract, so nothing failed. The figures they used to claim are
+recorded in the header of that script rather than here, so that the probe does
+not report its own cautionary tale as drift.
+
+Measured, not carried forward. The figures are the
 in-repository ones, because they are the stable measure of how much is
 asserted: `R CMD check` runs the suite against the installed tree, where the
-structural blocks that read `R/` and `_pkgdown.yml` cannot see them and skip,
-so its assertion count is slightly lower by construction. Section 6 names
-which blocks those are.
+structural blocks that read `R/` and `_pkgdown.yml` cannot see them and skip.
+Under check the same suite reports `FAIL 0 | WARN 7 | SKIP 4 | PASS 1908`, and
+both numbers are correct for what they measure. Section 6 names which blocks
+skip and why.
 
 | file | blocks | assertions | what it holds |
 |---|---|---|---|

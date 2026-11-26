@@ -1,15 +1,19 @@
 # Release readiness — mysterymodel
 
-Written against commit `7e2d440` plus the working-tree changes this document
-records, on 2026-11-22. Superseded by any later verification run.
+Written against `dcdc6a8`, the merge of pull request #28 into `main`, on
+2026-11-23 and revised 2026-11-25. Superseded by any later verification run.
+
+Counts here are produced by `Rscript tools/measure-facts.R --assertions`, not
+carried forward by hand.
 
 ## Verified, with the evidence
 
 | gate | state | evidence |
 |---|---|---|
 | `devtools::document()` reproducible | **met** | no-op across four consecutive runs: roxygen regenerates `NAMESPACE` and `man/` identically |
-| `R CMD check` on the tree carrying the ports | **met** | `Status: OK`, zero ERRORs, WARNINGs and NOTEs |
-| suite | **met** | `FAIL 0 \| WARN 7 \| SKIP 2 \| PASS 1893` |
+| `R CMD check`, CI's own invocation | **met** | `R-CMD-check: success` on `c381c26`, the commit merged as `dcdc6a8`. CI runs `--as-cran` with `error_on = "warning"` |
+| pkgdown site builds | **met** | `pkgdown: success` on the same commit, after twelve topics were added to the index |
+| suite | **met** | against the source tree, 399 blocks and 1926 assertions, zero failures and zero skips; under `R CMD check`, `FAIL 0 \| WARN 7 \| SKIP 4 \| PASS 1908`, the four skips being the structural blocks that cannot read `R/` or `_pkgdown.yml` from an installed tree |
 | the 7 warnings are each attributed | **met** | 4 are the package's own Riley adequacy warning on small synthetic cohorts, 3 are `glm.fit` separation warnings from cohorts built deliberately to separate; `inst/validation-appendix.md` section 3b and the acceptance report section 7c |
 | the 2 skips are named | **met** | the two source-scanning blocks of `test-calculator-no-interval.R`, which cannot reach `R/calculator.R` from the installed tree; the other 27 assertions in that file run under check |
 | D-1 preserved | **met** | 29 assertions in `test-calculator-no-interval.R`; no recalibration or decision-curve function touches a calculator display path |
@@ -17,6 +21,15 @@ records, on 2026-11-22. Superseded by any later verification run.
 | PR #27 reconciled function by function | **met** | `review/nomogram-port-function-inventory.csv`, 21 rows; `review/port-decision-ledger.csv`, 14 rows |
 | one authoritative definition per function | **met in this tree** | PR #27 is NOT merged; nothing is defined twice. The hazard is real and named below |
 | README and NEWS reconciled | **met** | every count re-measured; see "Facts re-measured" |
+
+**A correction to this table.** Its first version recorded `Status: OK, zero
+ERRORs, WARNINGs and NOTEs` for the check gate. That verdict came from
+`R CMD check --no-manual`, which is weaker than the gate: CI runs `--as-cran`
+with `error_on = "warning"`, and under that invocation the same tree reported
+one WARNING (an undeclared `withr::` in the tests) and one NOTE (`review` and
+`srr` as non-standard top-level directories). Both are now fixed and CI passes,
+but the row as written reported a local run as though it were the gate. Local
+checks now use CI's arguments.
 
 ## Not met, and blocking
 
@@ -27,7 +40,7 @@ records, on 2026-11-22. Superseded by any later verification run.
 | TRIPOD+AI reporting | `mm_tripod_checklist()` exists only in PR #27. Not imported, no mutation coverage. |
 | model updating | `mm_update_test()` / `mm_update_table()` exist only in PR #27. No dedicated tests there, no mutation coverage. |
 | mutation-harness self-tests | The 14 self-tests the specification requires have not been run against any harness. The driver at `review/mutation-campaign.py` has three of those properties by construction and has not been sabotaged to prove them. |
-| fail-open protection in CI | Not wired. The package currently passes the rule (2 skipped against 1893 executed), so this is insurance rather than a current catch. |
+| fail-open protection in CI | Not wired. The suite skips nothing against the source tree and two structural blocks under `R CMD check`, so the rule would pass today: insurance rather than a current catch. |
 
 ## Merge hazards in PR #27, recorded before any consolidation
 
@@ -58,11 +71,11 @@ Measured from the tree, not carried forward:
 |---|---|
 | exported functions | 22 |
 | registered S3 methods | 18 |
-| internal `mm_` functions | 92 |
+| internal `mm_` functions | 93 |
 | source files in `R/` | 20 |
-| test files | 37 |
-| test blocks | 396 |
-| assertions | 1893, as `R CMD check` reported them |
+| test files | 38 |
+| test blocks | 399 |
+| assertions | 1926 against the source tree. `R CMD check` reports fewer, because the structural blocks that read `R/`, `_pkgdown.yml` and `review/` skip on an installed tree |
 | mutation-evidence rows | 34, of which 32 DETECTED |
 
 The README previously claimed "eleven exported functions, 318 test blocks
